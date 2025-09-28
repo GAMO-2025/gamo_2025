@@ -4,6 +4,9 @@
 db.properties
 application-secret.properties
 
+# Google Cloud service account key
+src/main/resources/google-service-account.json
+
 # Build outputs
 build/
 out/
