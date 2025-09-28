@@ -35,20 +35,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             // 1. 요청 쿠키에서 토큰 추출
             String token = getTokenFromCookie(request);
-            log.info("1. Extracted Token from Cookie: {}", token);
 
             // 2. 토큰이 존재하고 유효하다면
             if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
-                log.info("2. Token validation successful.");
                 // 3. 토큰에서 회원 ID 추출
                 Long memberId = jwtTokenProvider.getMemberIdFromToken(token);
-
-                log.info("3. Extracted Member ID from Token: {}", memberId);
 
                 // 4. 회원 ID로 DB에서 회원 정보 조회
                 Member member = memberRepository.findById(memberId)
                         .orElseThrow(() -> new ServletException("User not found"));
-                log.info("4. Member found in DB: {}", member.getName());
 
                 // 5. UserPrincipal 객체 생성 (인증 객체에 담을 정보)
                 UserPrincipal userPrincipal = new UserPrincipal(member, null);
@@ -60,9 +55,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 // 7. SecurityContext에 인증 객체 저장
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                log.info("5. Authentication successful. SecurityContext updated for member ID: {}", memberId);
-            } else {
-                log.warn("2. Token is null or invalid.");
             }
         } catch (Exception e) {
             logger.error("Could not set user authentication in security context", e);

@@ -20,6 +20,7 @@ public class LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+
         // JWT 생성
         String accessToken = jwtTokenProvider.generateAccessToken(authentication);
 
@@ -35,7 +36,7 @@ public class LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
         // 응답에 쿠키 추가
         response.addCookie(accessTokenCookie);
 
-        // 로그인 성공 시 "/" 페이지로 리다이렉트
+        // 로그인 성공 시 "/home.html" 페이지로 리다이렉트
         getRedirectStrategy().sendRedirect(request, response, "/home.html");
     }
 }

@@ -1,7 +1,6 @@
 # IDE
 .idea/
 .gradle/
-db.properties
 application-secret.properties
 
 # Build outputs

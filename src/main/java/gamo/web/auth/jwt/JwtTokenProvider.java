@@ -5,6 +5,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -13,6 +14,7 @@ import javax.crypto.SecretKey;
 import java.util.Date;
 
 @Component
+@Slf4j
 public class JwtTokenProvider {
 
     private final SecretKey key;
@@ -47,13 +49,14 @@ public class JwtTokenProvider {
             Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
             return true;
         } catch (Exception e) {
+            log.warn("Invalid JWT token: {}", e.getMessage());
             return false;
         }
     }
 
     // 토큰에서 회원 ID (Subject)를 추출하는 메서드
     public Long getMemberIdFromToken(String token) {
-        Claims claims = Jwts.parser() // 👈 Deprecated된 parser() 사용
+        Claims claims = Jwts.parser()
                 .verifyWith(key)
                 .build()
                 .parseSignedClaims(token)
