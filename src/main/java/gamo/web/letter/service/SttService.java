@@ -1,42 +1,81 @@
 package gamo.web.letter.service;
 
-import lombok.RequiredArgsConstructor;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.speech.v1.*;
+import com.google.cloud.storage.BlobInfo;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
+import com.google.api.gax.longrunning.OperationFuture;
+import com.google.protobuf.ByteString;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import com.google.cloud.speech.v1.*;
-import com.google.protobuf.ByteString;
 
-import java.io.IOException;
+import java.io.FileInputStream;
 
 @Service
-@RequiredArgsConstructor
 public class SttService {
 
-    public String convertToText(MultipartFile voiceFile) throws IOException {
-        try (SpeechClient speechClient = SpeechClient.create()) {
-            // 음성 파일 바이트 읽기
-            byte[] audioBytes = voiceFile.getBytes();
-            ByteString audioData = ByteString.copyFrom(audioBytes);
+    @Value("${gcp.project-id}")
+    private String projectId;
 
-            // RecognitionAudio
-            RecognitionAudio audio = RecognitionAudio.newBuilder()
-                    .setContent(audioData)
-                    .build();
+    @Value("${gcp.credentials.location}")
+    private String credentialsPath;
 
-            // RecognitionConfig
+    private final String bucketName = "gamo_bucket";
+
+    // GCS 업로드
+    private String uploadToGcs(MultipartFile file) throws Exception {
+        Storage storage = StorageOptions.newBuilder()
+                .setProjectId(projectId)
+                .setCredentials(GoogleCredentials.fromStream(new FileInputStream(credentialsPath)))
+                .build()
+                .getService();
+
+        String objectName = "stt/" + System.currentTimeMillis() + "-" + file.getOriginalFilename();
+        BlobInfo blobInfo = BlobInfo.newBuilder(bucketName, objectName).build();
+        storage.create(blobInfo, file.getBytes());
+
+        return "gs://" + bucketName + "/" + objectName;
+    }
+
+    // 장기간 음성 처리
+    private String longRunningTranscribe(String gcsUri) throws Exception {
+        try (SpeechClient speechClient = SpeechClient.create(
+                SpeechSettings.newBuilder()
+                        .setCredentialsProvider(() -> GoogleCredentials.fromStream(new FileInputStream(credentialsPath)))
+                        .build()
+        )) {
             RecognitionConfig config = RecognitionConfig.newBuilder()
-                    .setEncoding(RecognitionConfig.AudioEncoding.LINEAR16) // wav 파일이면 LINEAR16
-                    .setLanguageCode("ko-KR") // 한국어
-                    .setSampleRateHertz(16000) // 녹음 샘플링레이트
+                    .setEncoding(RecognitionConfig.AudioEncoding.WEBM_OPUS)
+                    .setLanguageCode("ko-KR")
                     .build();
 
-            // 음성 인식 요청
-            RecognizeResponse response = speechClient.recognize(config, audio);
-            StringBuilder sb = new StringBuilder();
-            for (SpeechRecognitionResult result : response.getResultsList()) {
-                sb.append(result.getAlternatives(0).getTranscript());
+            RecognitionAudio audio = RecognitionAudio.newBuilder()
+                    .setUri(gcsUri)
+                    .build();
+
+            OperationFuture<LongRunningRecognizeResponse, LongRunningRecognizeMetadata> response =
+                    speechClient.longRunningRecognizeAsync(config, audio);
+
+            LongRunningRecognizeResponse longResponse = response.get();
+
+            StringBuilder transcript = new StringBuilder();
+            for (SpeechRecognitionResult result : longResponse.getResultsList()) {
+                transcript.append(result.getAlternatives(0).getTranscript());
             }
-            return sb.toString();
+
+            return transcript.toString();
+        }
+    }
+
+    public String transcribe(MultipartFile voiceFile) {
+        try {
+            String gcsUri = uploadToGcs(voiceFile);
+            return longRunningTranscribe(gcsUri);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("STT 변환 실패: " + e.getMessage());
         }
     }
 }

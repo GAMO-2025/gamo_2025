@@ -1,11 +1,11 @@
 package gamo.web.letter.service;
 
-import gamo.web.letter.Member;
-import gamo.web.letter.MemberRepository;
 import gamo.web.letter.domain.InputType;
 import gamo.web.letter.domain.Letter;
 import gamo.web.letter.dto.LetterRequest;
 import gamo.web.letter.repository.LetterRepository;
+import gamo.web.member.domain.Member;
+import gamo.web.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,18 +30,15 @@ public class LetterService {
         Member receiver = memberRepository.findById(request.getReceiverId())
                 .orElseThrow(() -> new IllegalArgumentException("잘못된 수신자 ID"));
 
-        if (!sender.getFamilyId().equals(receiver.getFamilyId())) {
+        if (!sender.getFamily().getId().equals(receiver.getFamily().getId())) {
             throw new IllegalArgumentException("같은 가족이 아닙니다.");
         }
+
 
         // STT 처리
         String content = request.getContent();
         if ("STT".equalsIgnoreCase(request.getInputType()) && request.getVoiceFile() != null) {
-            try {
-                content = sttService.convertToText(request.getVoiceFile());
-            } catch (IOException e) {
-                throw new RuntimeException("STT 변환 실패", e);
-            }
+            content = sttService.transcribe(request.getVoiceFile());
         }
 
         // 이미지 저장
