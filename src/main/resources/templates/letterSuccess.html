@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>편지 전송 완료</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        .success-box {
+            text-align: center;
+            padding: 40px;
+            border-radius: 12px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .success-box h1 {
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+
+        .success-box p {
+            color: #333333;
+            margin-bottom: 30px;
+        }
+
+        .success-box a {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 8px;
+            background-color: #007bff;
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .success-box a:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+<div class="success-box">
+    <h1>편지가 성공적으로 전송되었습니다!</h1>
+    <p th:text="'받는 사람: ' + ${receiverName}"></p>
+    <a th:href="@{/letters/new}">새 편지 작성하기</a>
+</div>
+</body>
+</html>
