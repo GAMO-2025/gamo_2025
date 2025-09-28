@@ -1,6 +1,10 @@
+jwt:
+  access-token-validity-in-seconds: 86400 # 하루를 accessToken 유효시간으로 설정
+
 spring:
   config:
     import: optional:application-secret.properties
+
   application:
     name: gamo
 
@@ -11,11 +15,14 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     properties:
       hibernate:
         format_sql: true
     show-sql: true
+  mvc:
+    static-path-pattern: /**
+
 
   security:
     oauth2:

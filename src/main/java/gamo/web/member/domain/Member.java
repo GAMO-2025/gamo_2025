@@ -33,7 +33,7 @@ public class Member {
     private String profileImage;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "family_id", nullable = false,
+    @JoinColumn(name = "family_id",
     foreignKey = @ForeignKey(name = "fk_Member_Family"))
     private Family family;
 

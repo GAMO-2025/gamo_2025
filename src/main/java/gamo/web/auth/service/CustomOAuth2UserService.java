@@ -6,15 +6,12 @@ import gamo.web.member.domain.Member;
 import gamo.web.member.repository.MemberRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.Optional;
 
 @Service
@@ -31,14 +28,14 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String userNameAttributeName = userRequest.getClientRegistration().getProviderDetails()
                 .getUserInfoEndpoint().getUserNameAttributeName();
 
-        OAuthDTO oAuthDTO = OAuthDTO.of(registrationId, userNameAttributeName, oAuth2User.getAttributes()); // 👈 변경
+        OAuthDTO oAuthDTO = OAuthDTO.of(registrationId, userNameAttributeName, oAuth2User.getAttributes());
 
-        Member member = saveOrUpdate(oAuthDTO); // 👈 변경
+        Member member = saveOrUpdate(oAuthDTO);
 
         return new UserPrincipal(member, oAuthDTO.getAttributes());
     }
 
-    private Member saveOrUpdate(OAuthDTO attributes) { // 👈 변경
+    private Member saveOrUpdate(OAuthDTO attributes) {
         Optional<Member> memberOptional = memberRepository.findBySocialIdAndProvider(
                 attributes.getSocialId(),
                 attributes.getProvider()
