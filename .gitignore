@@ -1,7 +1,0 @@
-# IDE
-.idea/
-.gradle/
-
-# Build outputs
-build/
-out/
