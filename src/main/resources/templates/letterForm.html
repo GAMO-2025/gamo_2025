@@ -12,20 +12,24 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
+            padding: 10px;
         }
 
         .container {
             background: #fff;
-            width: 600px;
-            padding: 30px;
+            width: 100%;
+            max-width: 420px;
+            padding: 20px;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             text-align: center;
+            box-sizing: border-box;
         }
 
         h2 {
             margin-bottom: 20px;
             color: #343a40;
+            font-size: 20px;
         }
 
         .form-group {
@@ -38,6 +42,7 @@
             display: block;
             margin-bottom: 5px;
             color: #495057;
+            font-size: 14px;
         }
 
         input[type="text"], textarea, select, input[type="file"] {
@@ -67,11 +72,28 @@
             border-radius: 6px;
             cursor: pointer;
             margin-top: 15px;
+            width: 100%;
         }
 
         button:hover {
             background: #0056b3;
         }
+
+        /* 아주 작은 화면에서도 보기 좋게 */
+        @media (max-width: 360px) {
+            h2 {
+                font-size: 18px;
+            }
+            input[type="text"], textarea, select, input[type="file"] {
+                font-size: 13px;
+                padding: 8px;
+            }
+            button {
+                font-size: 14px;
+                padding: 10px;
+            }
+        }
+
     </style>
     <script>
         function toggleInputType() {

@@ -22,7 +22,8 @@ public class SttService {
     @Value("${gcp.credentials.location}")
     private String credentialsPath;
 
-    private final String bucketName = "gamo_bucket";
+    @Value("${gcs.bucket-name}")
+    private String bucketName;
 
     // GCS 업로드
     private String uploadToGcs(MultipartFile file) throws Exception {

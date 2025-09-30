@@ -1,5 +1,8 @@
 package gamo.web.letter.service;
 
+import com.google.cloud.storage.BlobInfo;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
 import gamo.web.letter.domain.InputType;
 import gamo.web.letter.domain.Letter;
 import gamo.web.letter.dto.LetterRequest;
@@ -7,6 +10,7 @@ import gamo.web.letter.repository.LetterRepository;
 import gamo.web.member.domain.Member;
 import gamo.web.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,7 +26,8 @@ public class LetterService {
 
     private final LetterRepository letterRepository;
     private final MemberRepository memberRepository;
-    private final SttService sttService; // 추가
+    private final SttService sttService;
+    private final GcsService gcsService;
 
     public Letter sendLetter(Long senderId, LetterRequest request) {
         Member sender = memberRepository.findById(senderId)
@@ -34,19 +39,20 @@ public class LetterService {
             throw new IllegalArgumentException("같은 가족이 아닙니다.");
         }
 
-
         // STT 처리
         String content = request.getContent();
         if ("STT".equalsIgnoreCase(request.getInputType()) && request.getVoiceFile() != null) {
             content = sttService.transcribe(request.getVoiceFile());
         }
 
-        // 이미지 저장
+        // 이미지 저장 - GCS 업로드
         String letterImgPath = null;
-        if (request.getLetterImg() != null && !request.getLetterImg().isEmpty()) {
-            letterImgPath = saveFile(request.getLetterImg());
+        MultipartFile letterImg = request.getLetterImg();
+        if (letterImg != null && !letterImg.isEmpty()) {
+            letterImgPath = gcsService.uploadFile(letterImg);
         }
 
+        // Letter 엔티티 생성 및 저장
         Letter letter = new Letter();
         letter.setSenderId(senderId);
         letter.setReceiverId(receiver.getId());
@@ -57,17 +63,5 @@ public class LetterService {
         letter.setSentAt(LocalDateTime.now());
 
         return letterRepository.save(letter);
-    }
-
-    private String saveFile(MultipartFile file) {
-        String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-        Path path = Paths.get("uploads/" + fileName);
-        try {
-            Files.createDirectories(path.getParent());
-            file.transferTo(path.toFile());
-        } catch (IOException e) {
-            throw new RuntimeException("파일 저장 실패", e);
-        }
-        return fileName;
     }
 }
