@@ -19,26 +19,40 @@ public class JwtTokenProvider {
 
     private final SecretKey key;
     private final long accessTokenValidityInMilliseconds;
+    private final long refreshTokenValidityInMilliseconds;
 
     public JwtTokenProvider(
             @Value("${jwt.secret}") String secretKey,
-            @Value("${jwt.access-token-validity-in-seconds}") long accessTokenValidityInSeconds) {
+            @Value("${jwt.access-token-validity-in-seconds}") long accessTokenValidityInSeconds,
+            @Value("${jwt.refresh-token-validity-in-seconds}") long refreshTokenValidityInSeconds) {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes);
         this.accessTokenValidityInMilliseconds = accessTokenValidityInSeconds * 1000;
+        this.refreshTokenValidityInMilliseconds = refreshTokenValidityInSeconds * 1000;
     }
 
     // accessToken 생성
-    public String generateAccessToken(Authentication authentication) {
-        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+    public String generateAccessToken(Long memberId) {
 
         Date now = new Date();
         Date validity = new Date(now.getTime() + this.accessTokenValidityInMilliseconds);
 
         return Jwts.builder()
-                .subject(String.valueOf(userPrincipal.getMember().getId()))
+                .subject(String.valueOf(memberId))
                 .issuedAt(now)
                 .expiration(validity)
+                .signWith(key)
+                .compact();
+    }
+
+    // refreshToken 생성
+    public String generateRefreshToken(Long memberId) {
+        Date now = new Date();
+        Date exp = new Date(now.getTime() + refreshTokenValidityInMilliseconds);
+        return Jwts.builder()
+                .subject(String.valueOf(memberId))
+                .issuedAt(now)
+                .expiration(exp)
                 .signWith(key)
                 .compact();
     }

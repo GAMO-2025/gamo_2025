@@ -34,7 +34,8 @@ public class SecurityConfig {
 
                 // 개발 초기니까 일단 모든 요청 다 허용! 나중에 코드 수정해야함
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/login/**", "/oauth2/**").permitAll()
+                        .requestMatchers("/login/**", "/oauth2/**", "/auth/reissue",
+                                "/css/**", "/js/**", "/svgs/**").permitAll()
                         .requestMatchers("/api/member/**").authenticated()
                         .anyRequest().permitAll()
                 )
@@ -42,6 +43,7 @@ public class SecurityConfig {
 
                 // 소셜 로그인 설정
                 .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/login")
                         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                         .successHandler(loginSuccessHandler)
                 );

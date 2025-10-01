@@ -1,5 +1,6 @@
 jwt:
-  access-token-validity-in-seconds: 86400 # 하루를 accessToken 유효시간으로 설정
+  access-token-validity-in-seconds: 3600 # 하루를 accessToken 유효시간으로 설정
+  refresh-token-validity-in-seconds: 2592000
 
 spring:
   config:
