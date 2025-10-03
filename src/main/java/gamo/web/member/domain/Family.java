@@ -21,4 +21,7 @@ public class Family {
     @OneToMany(mappedBy = "family", cascade = CascadeType.ALL)
     @Builder.Default
     private List<Member> members = new ArrayList<>();
+
+    @Column(nullable = true)
+    private String familyCode;
 }

@@ -42,4 +42,9 @@ public class Member {
         this.profileImage = picture;
         return this;
     }
+
+    public Member setFamily(Family family) {
+        this.family = family;
+        return this;
+    }
 }
