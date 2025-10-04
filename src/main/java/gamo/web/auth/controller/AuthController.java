@@ -1,10 +1,11 @@
-// gamo.web.auth.controller.AuthController
 package gamo.web.auth.controller;
 
 import gamo.web.auth.jwt.JwtTokenProvider;
 import gamo.web.auth.refresh.RefreshToken;
 import gamo.web.auth.refresh.RefreshTokenRepository;
+import gamo.web.member.domain.Member;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.Response;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,7 +13,8 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Arrays;
 
 @RestController
@@ -22,6 +24,10 @@ public class AuthController {
 
     private final JwtTokenProvider tokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
+
+    // 한국 시간대
+    ZoneId KST = ZoneId.of("Asia/Seoul");
+
 
     @PostMapping("/reissue")
     public ResponseEntity<Void> reissue(HttpServletRequest request, HttpServletResponse response) {
@@ -36,7 +42,7 @@ public class AuthController {
         }
 
         RefreshToken stored = refreshTokenRepository.findByToken(refreshToken)
-                .filter(rt -> rt.getExpiresAt().isAfter(Instant.now()))
+                .filter(rt -> rt.getExpiresAt().isAfter(LocalDateTime.now(KST)))
                 .orElse(null);
 
         if (stored == null) {
@@ -54,7 +60,7 @@ public class AuthController {
         refreshTokenRepository.save(RefreshToken.builder()
                 .memberId(memberId)
                 .token(newRefresh)
-                .expiresAt(Instant.now().plusSeconds(30L * 24 * 3600))
+                .expiresAt(LocalDateTime.now().plusDays(30))
                 .build());
 
         ResponseCookie accessCookie = ResponseCookie.from("accessToken", newAccess)

@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -17,6 +17,7 @@ public class RefreshToken {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "token_id")
     private Long id;
 
     @Column(nullable=false)
@@ -26,6 +27,6 @@ public class RefreshToken {
     private String token;
 
     @Column(nullable=false)
-    private Instant expiresAt;
+    private LocalDateTime expiresAt;
 
 }

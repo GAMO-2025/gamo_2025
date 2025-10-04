@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Component
 @RequiredArgsConstructor
@@ -37,7 +37,7 @@ public class LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
         refreshTokenRepository.save(RefreshToken.builder()
                 .memberId(memberId)
                 .token(refreshToken)
-                .expiresAt(Instant.now().plusSeconds(30L * 24 * 3600)) // 프로퍼티로 치환 가능
+                .expiresAt(LocalDateTime.now().plusDays(30)) // 프로퍼티로 치환 가능
                 .build());
 
         // 쿠키 생성 및 설정

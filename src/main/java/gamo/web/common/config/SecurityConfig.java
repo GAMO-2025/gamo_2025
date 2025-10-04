@@ -1,4 +1,4 @@
-package gamo.web.auth;
+package gamo.web.common.config;
 
 import gamo.web.auth.handler.LoginSuccessHandler;
 import gamo.web.auth.jwt.JwtAuthenticationFilter;
@@ -6,11 +6,13 @@ import gamo.web.auth.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
@@ -24,6 +26,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(AbstractHttpConfigurer::disable)
@@ -34,11 +37,19 @@ public class SecurityConfig {
 
                 // 개발 초기니까 일단 모든 요청 다 허용! 나중에 코드 수정해야함
                 .authorizeHttpRequests(authz -> authz
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
                         .requestMatchers("/login/**", "/oauth2/**", "/auth/reissue",
+                                "/api/member/dev/login",
                                 "/css/**", "/js/**", "/svgs/**").permitAll()
                         .requestMatchers("/api/member/**").authenticated()
                         .anyRequest().permitAll()
                 )
+
+
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
                 // 소셜 로그인 설정

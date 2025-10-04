@@ -64,8 +64,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String getTokenFromCookie(HttpServletRequest request) {
+
+        //Swagger 테스트를 위한 거
+        String bearerToken = request.getHeader("Authorization");
+        if (StringUtils.hasText(bearerToken)) {
+            if (bearerToken.startsWith("Bearer ")) {
+                return bearerToken.substring(7);
+            } else {
+                return bearerToken; // Bearer 없이 토큰만 들어와도 허용
+            }
+        }
         Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
+        if (request.getCookies() != null) {
             return Arrays.stream(cookies)
                     .filter(cookie -> "accessToken".equals(cookie.getName()))
                     .map(Cookie::getValue)
