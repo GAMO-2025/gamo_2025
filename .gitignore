@@ -7,3 +7,5 @@ application-secret.properties
 # Build outputs
 build/
 out/
+
+*.json
