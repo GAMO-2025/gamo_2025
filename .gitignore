@@ -1,8 +1,13 @@
 # IDE
 .idea/
 .gradle/
-db.properties
+.DS_Store
+Thumbs.db
 application-secret.properties
+**/node_modules/
+npm-debug.log
+src/main/resources/static/main.css
+data.sql
 
 # Build outputs
 build/
