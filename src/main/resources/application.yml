@@ -45,9 +45,9 @@ spring:
 
   spring:
     cloud:
-    gcp:
-      storage:
-        credentials:
-          location: src/main/resources/photo_api.json
-        project-id: gamo-473408
-        bucket: gamo_photo_buket
+      gcp:
+        storage:
+          credentials:
+            location: classpath:photo_api.json
+          project-id: gamo-473408
+          bucket: gamo_photo_buket
