@@ -14,6 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 @Getter
 @Builder
+@Getter
 public class Family {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
