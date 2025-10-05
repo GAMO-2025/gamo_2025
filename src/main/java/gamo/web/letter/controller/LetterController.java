@@ -1,14 +1,16 @@
 package gamo.web.letter.controller;
 
-import gamo.web.letter.Nickname;
-import gamo.web.letter.NicknameRepository;
 import gamo.web.letter.domain.Letter;
 import gamo.web.letter.dto.LetterRequest;
+import gamo.web.letter.repository.LetterRepository;
 import gamo.web.letter.service.LetterService;
 import gamo.web.member.domain.Member;
+import gamo.web.member.domain.Nickname;
 import gamo.web.member.repository.MemberRepository;
+import gamo.web.member.repository.NicknameRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,6 +24,7 @@ public class LetterController {
     private final LetterService letterService;
     private final MemberRepository memberRepository;
     private final NicknameRepository nicknameRepository;
+    private final LetterRepository letterRepository;
 
     // 편지 작성 화면
     @GetMapping("/letters/new")
@@ -45,7 +48,7 @@ public class LetterController {
         // 가족원 표시용 DTO 생성 (nickname 있으면 alias, 없으면 "닉네임이 없습니다")
         List<FamilyDisplay> familyDisplayList = familyList.stream()
                 .map(member -> {
-                    String displayName = nicknameRepository.findByUserIdAndAliasUserId(loginMemberId, member.getId())
+                    String displayName = nicknameRepository.findByMemberIdAndAliasMemberId(loginMemberId, member.getId())
                             .map(Nickname::getAlias)
                             .orElse("닉네임이 없습니다");
                     return new FamilyDisplay(member.getId(), displayName);
@@ -71,18 +74,32 @@ public class LetterController {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 수신자입니다."));
 
         // 수신자 표시 이름 조회
-        String receiverName = nicknameRepository.findByUserIdAndAliasUserId(senderId, receiver.getId())
+        String receiverName = nicknameRepository.findByMemberIdAndAliasMemberId(senderId, receiver.getId())
                 .map(Nickname::getAlias)  // 닉네임 있으면 사용
                 .orElse(receiver.getName()); // 없으면 Member name 사용
 
         model.addAttribute("receiverName", receiverName);
 
+        model.addAttribute("letterId", letter.getId());
+
         return "letterSuccess";
     }
 
 
+
     // 화면에 뿌려줄 DTO
     record FamilyDisplay(Long id, String displayName) {}
+
+
+    // 편지 전송 취소
+    @PostMapping("/letters/cancel")
+    @Transactional
+    public String cancelLetter(@RequestParam Long letterId) {
+        letterRepository.findById(letterId).ifPresent(letter -> {
+            letter.setCancelled(true);
+        });
+        return "redirect:/letters/new";
+    }
 }
 
 

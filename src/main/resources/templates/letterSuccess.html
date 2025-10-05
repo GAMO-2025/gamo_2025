@@ -76,7 +76,27 @@
 <div class="success-box">
     <h1>편지가 성공적으로 전송되었습니다!</h1>
     <p th:text="'받는 사람: ' + ${receiverName}"></p>
-    <a th:href="@{/letters/new}">새 편지 작성하기</a>
+
+    <!-- 새 편지 작성 버튼 -->
+    <a th:href="@{/letters/new}"
+       style="display: block; width: 100%; padding: 12px 20px;
+              border-radius: 6px; background-color: #007bff;
+              color: #fff; font-weight: bold; font-size: 16px;
+              text-align: center; margin-bottom: 10px;">
+        새 편지 작성하기
+    </a>
+
+    <!-- 전송 취소 버튼 -->
+    <form th:action="@{/letters/cancel}" method="post">
+        <input type="hidden" name="letterId" th:value="${letterId}" />
+        <button type="submit"
+                style="width:100%; padding:12px 20px; border:none; border-radius:6px;
+                       background-color:#dc3545; color:#fff; font-weight:bold; font-size:16px; cursor:pointer;">
+            전송 취소하기
+        </button>
+    </form>
 </div>
+
+
 </body>
 </html>
