@@ -53,14 +53,14 @@ public class LetterService {
         }
 
         // Letter 엔티티 생성 및 저장
-        Letter letter = new Letter();
-        letter.setSenderId(senderId);
-        letter.setReceiverId(receiver.getId());
-        letter.setTitle(request.getTitle());
-        letter.setContent(content);
-        letter.setLetterImg(letterImgPath);
-        letter.setInputType(InputType.valueOf(request.getInputType()));
-        letter.setSentAt(LocalDateTime.now());
+        Letter letter = Letter.builder()
+                .senderId(senderId)
+                .receiverId(receiver.getId())
+                .title(request.getTitle())
+                .content(content)
+                .letterImg(letterImgPath)
+                .inputType(InputType.valueOf(request.getInputType()))
+                .build();
 
         return letterRepository.save(letter);
     }

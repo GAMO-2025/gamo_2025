@@ -1,20 +1,18 @@
 package gamo.web.letter.domain;
 
+import gamo.web.common.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "letter")
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class Letter {
+@Table(name = "letter")
+public class Letter extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
@@ -24,18 +22,19 @@ public class Letter {
     @Column(name = "receiver_id")
     private Long receiverId;
 
+    @Column(name = "title")
     private String title;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
+    @Column(name = "leter_img")
     private String letterImg;   // 파일 경로
-
-    private LocalDateTime sentAt;
 
     @Enumerated(EnumType.STRING)
     private InputType inputType; // TEXT, STT
 
+    @Column(name = "cancelled")
     private boolean cancelled = false;
 }
 
