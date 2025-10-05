@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>가모 – 로그인</title>
+    <link rel="stylesheet" th:href="@{/main.css}" />
+    <style>
+        /* iOS notch 안전 여백용 (Tailwind로 못하는 부분만 보강) */
+        :root { --safe-top: env(safe-area-inset-top); --safe-bottom: env(safe-area-inset-bottom); }
+    </style>
+</head>
+<body class="bg-neutral-100 flex items-center justify-center min-h-screen">
+
+<main
+        class="relative w-screen h-screen overflow-hidden shadow-xl"
+        style="padding-top: var(--safe-top); padding-bottom: var(--safe-bottom);"
+>
+    <!-- 그라데이션 배경 -->
+    <div class="absolute inset-0 bg-gradient-to-br from-[#7CC571] via-[#A8D78B] to-[#F7EECF]"></div>
+
+    <!-- 콘텐츠 -->
+    <section class="relative z-10 flex h-full flex-col items-center">
+        <!-- 상단 여백 -->
+        <div class="h-16"></div>
+
+        <!-- 타이틀 블록 -->
+        <div class="mt-16 flex flex-col items-center text-white">
+            <p class="text-[18px] font-semibold tracking-tight">시니어 맞춤 가족 소통 서비스</p>
+
+            <!-- 얇은 구분선 -->
+            <div class="mt-3 h-[2px] w-[220px] bg-white/70"></div>
+
+            <h1 class="mt-6 text-[42px] font-extrabold leading-tight">‘가모’</h1>
+        </div>
+
+        <!-- 로고 박스 -->
+        <div class="mt-24 flex items-center justify-center">
+            <!-- 임시 로고 스타일 (이미지 있으면 img로 교체) -->
+             <img th:src="@{/svgs/logo.svg}" alt="가모 로고" class="h-[96px]" />
+
+            </div>
+        </div>
+
+        <!-- 중간 구분선 -->
+        <div class="mt-12 h-[2px] w-[220px] bg-white/70"></div>
+
+        <!-- 카카오로 시작하기 버튼 -->
+        <a
+                id="kakao-login"
+                th:href="@{/oauth2/authorization/kakao}"
+                class="mt-8 inline-flex items-center gap-4 rounded-xl bg-white/0 px-4 py-3 text-white focus-visible:outline-none"
+        >
+             <img th:src="@{/svgs/kakao.svg}" alt="Kakao" class="h-10 w-10 rounded-full shadow" />
+
+            <span class="text-[18px] font-semibold">카카오로 시작하기</span>
+        </a>
+
+        <!-- 하단 제스처 바 여백 비슷하게 -->
+        <div class="mt-auto mb-4"></div>
+    </section>
+</main>
+
+<!-- 필요하면 JS -->
+<script th:src="@{/js/app.js}" defer></script>
+</body>
+</html>
