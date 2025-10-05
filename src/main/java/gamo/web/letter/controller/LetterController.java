@@ -22,85 +22,37 @@ import java.util.Optional;
 public class LetterController {
 
     private final LetterService letterService;
-    private final MemberRepository memberRepository;
-    private final NicknameRepository nicknameRepository;
-    private final LetterRepository letterRepository;
 
     // 편지 작성 화면
     @GetMapping("/letters/new")
     public String showLetterForm(Model model) {
         Long loginMemberId = 1L; // 테스트용 로그인 ID
-        Optional<Member> optionalMe = memberRepository.findById(loginMemberId);
-
-        if (optionalMe.isEmpty()) {
-            model.addAttribute("errorMessage", "로그인 회원이 존재하지 않습니다.");
-            return "errorPage"; // errorPage.html 화면으로 이동
-        }
-
-        Member me = optionalMe.get();
-
-        // 같은 가족원 목록 (나 제외)
-        List<Member> familyList = memberRepository.findByFamily(me.getFamily())
-                .stream()
-                .filter(m -> !m.getId().equals(loginMemberId))
-                .toList();
-
-        // 가족원 표시용 DTO 생성 (nickname 있으면 alias, 없으면 "닉네임이 없습니다")
-        List<FamilyDisplay> familyDisplayList = familyList.stream()
-                .map(member -> {
-                    String displayName = nicknameRepository.findByMemberIdAndAliasMemberId(loginMemberId, member.getId())
-                            .map(Nickname::getAlias)
-                            .orElse("닉네임이 없습니다");
-                    return new FamilyDisplay(member.getId(), displayName);
-                })
-                .toList();
-
+        List<LetterService.FamilyDisplay> familyDisplayList = letterService.getFamilyDisplayList(loginMemberId);
         model.addAttribute("familyList", familyDisplayList);
         return "letterForm";
     }
-
-
 
     // 편지 전송(저장)
     @PostMapping("/letters/send")
     public String submitLetter(@ModelAttribute LetterRequest dto, Model model) {
         Long senderId = 1L;
-
-        // 편지 전송
         Letter letter = letterService.sendLetter(senderId, dto);
 
-        // 수신자 조회
-        Member receiver = memberRepository.findById(dto.getReceiverId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 수신자입니다."));
-
-        // 수신자 표시 이름 조회
-        String receiverName = nicknameRepository.findByMemberIdAndAliasMemberId(senderId, receiver.getId())
-                .map(Nickname::getAlias)  // 닉네임 있으면 사용
-                .orElse(receiver.getName()); // 없으면 Member name 사용
-
+        String receiverName = letterService.getReceiverDisplayName(senderId, dto.getReceiverId());
         model.addAttribute("receiverName", receiverName);
-
         model.addAttribute("letterId", letter.getId());
 
         return "letterSuccess";
     }
 
-
-
-    // 화면에 뿌려줄 DTO
-    record FamilyDisplay(Long id, String displayName) {}
-
-
     // 편지 전송 취소
     @PostMapping("/letters/cancel")
-    @Transactional
     public String cancelLetter(@RequestParam Long letterId) {
-        letterRepository.findById(letterId).ifPresent(letter -> {
-            letter.setCancelled(true);
-        });
+        letterService.cancelLetter(letterId);
         return "redirect:/letters/new";
     }
 }
+
 
 
 
