@@ -12,3 +12,5 @@ data.sql
 # Build outputs
 build/
 out/
+
+*.json
