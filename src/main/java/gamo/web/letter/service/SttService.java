@@ -6,7 +6,6 @@ import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.api.gax.longrunning.OperationFuture;
-import com.google.protobuf.ByteString;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -50,6 +49,7 @@ public class SttService {
             RecognitionConfig config = RecognitionConfig.newBuilder()
                     .setEncoding(RecognitionConfig.AudioEncoding.WEBM_OPUS)
                     .setLanguageCode("ko-KR")
+                    .setEnableAutomaticPunctuation(true)
                     .build();
 
             RecognitionAudio audio = RecognitionAudio.newBuilder()
@@ -73,7 +73,9 @@ public class SttService {
     public String transcribe(MultipartFile voiceFile) {
         try {
             String gcsUri = uploadToGcs(voiceFile);
+
             return longRunningTranscribe(gcsUri);
+
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("STT 변환 실패: " + e.getMessage());

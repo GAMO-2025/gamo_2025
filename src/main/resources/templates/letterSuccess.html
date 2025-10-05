@@ -8,43 +8,69 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+            font-family: 'Arial', sans-serif;
             background-color: #f8f9fa;
+            box-sizing: border-box;
         }
 
         .success-box {
             text-align: center;
-            padding: 40px;
-            border-radius: 12px;
-            background-color: #ffffff;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background-color: #fff;
+            width: 100%;
+            max-width: 420px;        /* 첫 번째 카드와 동일 */
+            padding: 20px;           /* 첫 번째 카드와 동일 */
+            border-radius: 12px;     /* 첫 번째 카드와 동일 */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* 첫 번째 카드와 동일 */
+            box-sizing: border-box;
         }
 
         .success-box h1 {
             color: #28a745;
             margin-bottom: 20px;
+            font-size: 20px;         /* 첫 번째 카드 h2와 비슷하게 맞춤 */
         }
 
         .success-box p {
             color: #333333;
             margin-bottom: 30px;
+            font-size: 14px;
         }
 
         .success-box a {
             display: inline-block;
-            padding: 10px 20px;
-            border-radius: 8px;
+            width: 100%;             /* 첫 번째 카드 버튼과 동일 */
+            padding: 12px 20px;      /* 첫 번째 카드 버튼과 동일 */
+            border-radius: 6px;      /* 첫 번째 카드 버튼과 동일 */
             background-color: #007bff;
             color: #ffffff;
             text-decoration: none;
             font-weight: bold;
+            font-size: 16px;
+            box-sizing: border-box;
         }
 
         .success-box a:hover {
             background-color: #0056b3;
         }
+
+        /* 아주 작은 화면에서도 보기 좋게 */
+        @media (max-width: 360px) {
+            .success-box h1 {
+                font-size: 18px;
+            }
+            .success-box p {
+                font-size: 13px;
+            }
+            .success-box a {
+                font-size: 14px;
+                padding: 10px;
+            }
+        }
     </style>
+
 </head>
 <body>
 <div class="success-box">

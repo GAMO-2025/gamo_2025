@@ -58,8 +58,8 @@ public class LetterController {
 
 
 
-    // 편지 저장
-    @PostMapping("/letters")
+    // 편지 전송(저장)
+    @PostMapping("/letters/send")
     public String submitLetter(@ModelAttribute LetterRequest dto, Model model) {
         Long senderId = 1L;
 
