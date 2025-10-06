@@ -1,21 +1,18 @@
 package gamo.web.letter.controller;
 
+import gamo.web.auth.UserPrincipal;
 import gamo.web.letter.domain.Letter;
 import gamo.web.letter.dto.LetterRequest;
-import gamo.web.letter.repository.LetterRepository;
 import gamo.web.letter.service.LetterService;
 import gamo.web.member.domain.Member;
-import gamo.web.member.domain.Nickname;
-import gamo.web.member.repository.MemberRepository;
-import gamo.web.member.repository.NicknameRepository;
+
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @Controller
 @RequiredArgsConstructor
@@ -25,8 +22,10 @@ public class LetterController {
 
     // 편지 작성 화면
     @GetMapping("/letters/new")
-    public String showLetterForm(Model model) {
-        Long loginMemberId = 1L; // 테스트용 로그인 ID
+    public String showLetterForm(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        Member loginMember = userPrincipal.getMember();
+        Long loginMemberId = loginMember.getId();
+
         List<LetterService.FamilyDisplay> familyDisplayList = letterService.getFamilyDisplayList(loginMemberId);
         model.addAttribute("familyList", familyDisplayList);
         return "letterForm";
@@ -34,11 +33,16 @@ public class LetterController {
 
     // 편지 전송(저장)
     @PostMapping("/letters/send")
-    public String submitLetter(@ModelAttribute LetterRequest dto, Model model) {
-        Long senderId = 1L;
-        Letter letter = letterService.sendLetter(senderId, dto);
+    public String submitLetter(@AuthenticationPrincipal UserPrincipal userPrincipal, @ModelAttribute LetterRequest letterRequest,  Model model) {
+        // 로그인 한 회원 정보 가져오기
+        Member loginMember = userPrincipal.getMember();
+        Long senderId = loginMember.getId();
 
-        String receiverName = letterService.getReceiverDisplayName(senderId, dto.getReceiverId());
+        // 편지 전송
+        Letter letter = letterService.sendLetter(senderId, letterRequest);
+
+        // 수신자 표시 이름 가져오기
+        String receiverName = letterService.getReceiverDisplayName(senderId, letterRequest.getReceiverId());
         model.addAttribute("receiverName", receiverName);
         model.addAttribute("letterId", letter.getId());
 
