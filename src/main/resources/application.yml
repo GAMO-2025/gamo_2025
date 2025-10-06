@@ -51,6 +51,6 @@ spring:
             user-name-attribute: id
 
 gcp:
-  project-id: gamo-473408
+  project-id: ${gcp.project-id}
   credentials:
-    location: src/main/resources/google-service-account.json
+    location: ${gcp.credentials.location}
