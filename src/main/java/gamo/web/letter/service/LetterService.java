@@ -46,7 +46,7 @@ public class LetterService {
                     String displayName = nicknameRepository
                             .findByMemberIdAndAliasMemberId(loginMemberId, member.getId())
                             .map(Nickname::getAlias)
-                            .orElse("닉네임이 없습니다");
+                            .orElse(member.getName());
                     return new FamilyDisplay(member.getId(), displayName);
                 })
                 .toList();
