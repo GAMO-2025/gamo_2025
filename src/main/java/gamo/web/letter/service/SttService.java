@@ -48,6 +48,7 @@ public class SttService {
         )) {
             RecognitionConfig config = RecognitionConfig.newBuilder()
                     .setEncoding(RecognitionConfig.AudioEncoding.WEBM_OPUS)
+                    .setSampleRateHertz(48000) // Opus 샘플레이트 지정
                     .setLanguageCode("ko-KR")
                     .setEnableAutomaticPunctuation(true)
                     .build();
