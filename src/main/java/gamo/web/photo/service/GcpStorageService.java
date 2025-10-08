@@ -15,11 +15,11 @@ import java.util.UUID;
 
 @Service
 public class GcpStorageService {
-    @Value("src\\main\\resources\\photo_api.json")
+    @Value("${gcp.credentials.location}")
 //    @Value("${spring.cloud.gcp.storage.credentials.location}")
     private String keyFileName;
 
-    @Value("gamo_photo_buket")
+    @Value("${gcs.bucket-name}")
 //    @Value("${spring.cloud.gcp.storage.bucket}")
     private String bucketName;
 
@@ -37,13 +37,13 @@ public class GcpStorageService {
         String fileName = UUID.randomUUID().toString();
 
         // 업로드
-        BlobInfo blobInfo = BlobInfo.newBuilder(bucketName, fileName)
+        BlobInfo blobInfo = BlobInfo.newBuilder(bucketName, "photo/"+fileName)
                 .setContentType(file.getContentType())
                 .build();
 
         storage.create(blobInfo, file.getBytes());
 
         // 업로드된 파일 URL 반환
-        return "https://storage.googleapis.com/" + bucketName + "/" + fileName;
+        return "https://storage.googleapis.com/photo/" + bucketName + "/" + fileName;
     }
 }

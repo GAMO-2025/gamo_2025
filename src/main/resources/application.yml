@@ -13,9 +13,10 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
+
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
       hibernate:
         format_sql: true
@@ -42,12 +43,7 @@ spring:
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
 
-
-  spring:
-    cloud:
-      gcp:
-        storage:
-          credentials:
-            location: classpath:photo_api.json
-          project-id: gamo-473408
-          bucket: gamo_photo_buket
+gcp:
+  project-id: ${gcp.project-id}
+  credentials:
+    location: ${gcp.credentials.location}
