@@ -1,0 +1,42 @@
+<footer xmlns:th="http://www.thymeleaf.org"
+        th:fragment="BottomNav(active)"
+        class="fixed inset-x-0 bottom-0 z-40">
+    <nav class="mx-auto w-full">
+        <div class="mx-3 mb-3 rounded-t-[20px] border border-black/5 bg-white/98 shadow-[0_-6px_24px_rgba(0,0,0,0.08)] backdrop-blur">
+            <ul class="grid grid-cols-4 place-items-center py-3 gap-x-4 text-[12px] leading-[1] text-gray-600">
+                <!-- 홈 -->
+                <li>
+                    <a href="/home" class="flex flex-col items-center gap-1">
+                        <img alt="홈" class="block w-6 h-6"
+                             th:src="${active}=='home' ? @{/svgs/ac_footer_home.svg} : @{/svgs/footer_home.svg}" />
+                        <span th:classappend="${active}=='home' ? ' text-black' : ''">홈</span>
+                    </a>
+                </li>
+                <!-- 통화 -->
+                <li>
+                    <a href="/call" class="flex flex-col items-center gap-1">
+                        <img alt="통화" class="block w-6 h-6"
+                             th:src="${active}=='call' ? @{/svgs/ac_footer_call.svg} : @{/svgs/footer_call.svg}" />
+                        <span th:classappend="${active}=='call' ? ' text-black' : ''">통화</span>
+                    </a>
+                </li>
+                <!-- 편지 -->
+                <li>
+                    <a href="/letter" class="flex flex-col items-center gap-1">
+                        <img alt="편지" class="block w-6 h-6"
+                             th:src="${active}=='letters' ? @{/svgs/ac_footer_letter.svg} : @{/svgs/footer_letter.svg}" />
+                        <span th:classappend="${active}=='letters' ? ' text-black' : ''">편지</span>
+                    </a>
+                </li>
+                <!-- 사진 -->
+                <li>
+                    <a href="/photo" class="flex flex-col items-center gap-1">
+                        <img alt="사진" class="block w-6 h-6"
+                             th:src="${active}=='photo' ? @{/svgs/ac_footer_photo.svg} : @{/svgs/footer_photo.svg}" />
+                        <span th:classappend="${active}=='photo' ? ' text-black' : ''">사진</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+</footer>
