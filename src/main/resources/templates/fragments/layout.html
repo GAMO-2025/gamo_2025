@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:fragment="AppLayout(active, contentFrag, scriptFrag=null)">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- 공용 CSS -->
+    <link rel="stylesheet" th:href="@{/main.css}" />
+
+</head>
+
+<body class="bg-neutral-100">
+<div class="w-full min-h-screen bg-white flex flex-col">
+    <!-- 헤더 -->
+    <div th:replace="fragments/header :: Header"></div>
+
+    <!-- 본문 -->
+    <main class="flex-1 px-4 pt-4 pb-[92px] mx-auto w-full">
+        <th:block th:replace="${contentFrag}"></th:block>
+    </main>
+
+    <!-- 푸터 -->
+    <div th:replace="fragments/footer :: BottomNav(${active})"></div>
+</div>
+</body>
+</html>

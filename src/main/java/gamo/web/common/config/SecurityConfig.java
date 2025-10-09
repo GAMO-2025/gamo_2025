@@ -42,7 +42,7 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
-                        .requestMatchers("/login/**", "/oauth2/**", "/auth/reissue",
+                        .requestMatchers("/login/**", "/home/**", "/oauth2/**", "/auth/reissue",
                                 "/api/member/dev/login",
                                 "/css/**", "/js/**", "/svgs/**").permitAll()
                         .requestMatchers("/api/member/**").authenticated()
