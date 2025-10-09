@@ -57,6 +57,6 @@ public class LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
         response.addHeader("Set-Cookie", refreshCookie.toString());
 
         // 로그인 성공 시 "/home.html" 페이지로 리다이렉트
-        getRedirectStrategy().sendRedirect(request, response, "/home.html");
+        getRedirectStrategy().sendRedirect(request, response, "/home");
     }
 }

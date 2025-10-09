@@ -16,6 +16,7 @@
     "electron-to-chromium": "^1.5.228",
     "escalade": "^3.2.0",
     "fraction.js": "^4.3.7",
+    "install": "^0.13.0",
     "nanoid": "^3.3.11",
     "node-releases": "^2.0.21",
     "normalize-range": "^0.1.2",
@@ -26,8 +27,8 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tailwindcss -i ./main.css -o ../resources/static/main.css",
-    "watch": "tailwindcss -i ./main.css --watch"
+    "build": "tailwindcss -i ./main.css -o ../resources/static/main.css --minify",
+    "watch": "tailwindcss -i ./main.css -o ../resources/static/main.css --watch"
   },
   "keywords": [],
   "author": "",
