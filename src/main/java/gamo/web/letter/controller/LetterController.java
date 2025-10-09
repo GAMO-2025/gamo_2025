@@ -20,7 +20,7 @@ public class LetterController {
 
     private final LetterService letterService;
 
-    // 편지 작성 화면
+    // 편지 작성
     @GetMapping("/letters/new")
     public String showLetterForm(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
         Member loginMember = userPrincipal.getMember();

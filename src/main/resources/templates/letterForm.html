@@ -1,124 +1,52 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>편지 작성</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background: #f8f9fa;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 10px;
-        }
-
-        .container {
-            background: #fff;
-            width: 100%;
-            max-width: 420px;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            text-align: center;
-            box-sizing: border-box;
-        }
-
-        h2 {
-            margin-bottom: 20px;
-            color: #343a40;
-            font-size: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-            text-align: left;
-        }
-
-        label {
-            font-weight: bold;
-            display: block;
-            margin-bottom: 5px;
-            color: #495057;
-            font-size: 14px;
-        }
-
-        input[type="text"], textarea, select, input[type="file"] {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ced4da;
-            border-radius: 6px;
-            font-size: 14px;
-            box-sizing: border-box;
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 120px;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        button {
-            background: #007bff;
-            border: none;
-            padding: 12px 20px;
-            color: white;
-            font-size: 16px;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-top: 15px;
-            width: 100%;
-        }
-
-        button:hover {
-            background: #0056b3;
-        }
-
-        /* 아주 작은 화면에서도 보기 좋게 */
-        @media (max-width: 360px) {
-            h2 {
-                font-size: 18px;
+        /* PC: 중앙 정렬 + 고정 너비 + 여백 */
+        @media (min-width: 640px) {
+            body {
+                padding: 2rem;
             }
-            input[type="text"], textarea, select, input[type="file"] {
-                font-size: 13px;
-                padding: 8px;
-            }
-            button {
-                font-size: 14px;
-                padding: 10px;
+            .app-container {
+                max-width: 420px;
+                margin: 0 auto;
+                border-radius: 1rem;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
             }
         }
 
+        /* 모바일: 전체 화면 */
+        @media (max-width: 639px) {
+            body {
+                padding: 0;
+            }
+            .app-container {
+                width: 100%;
+                min-height: 100vh;
+                border-radius: 0;
+                box-shadow: none;
+            }
+        }
     </style>
-    <script>
-        function toggleInputType() {
-            const inputType = document.getElementById("inputType").value;
-            const textInput = document.getElementById("textInput");
-            const voiceInput = document.getElementById("voiceInput");
-
-            if (inputType === "TEXT") {
-                textInput.classList.remove("hidden");
-                voiceInput.classList.add("hidden");
-            } else {
-                textInput.classList.add("hidden");
-                voiceInput.classList.remove("hidden");
-            }
-        }
-    </script>
 </head>
-<body>
-<div class="container">
-    <h2>편지 작성</h2>
-    <form th:action="@{/letters/send}" method="post" enctype="multipart/form-data">
-        <!-- 받는 사람 (가족 드롭다운) -->
-        <div class="form-group">
-            <label for="receiverId">받는 사람</label>
-            <select id="receiverId" name="receiverId" required>
+<body class="bg-gray-100">
+
+<!-- 웹앱 컨테이너 -->
+<div class="app-container bg-white overflow-auto flex flex-col p-5">
+
+    <h2 class="text-center text-gray-800 text-xl font-semibold mb-5">편지 작성</h2>
+
+    <form th:action="@{/letters/send}" method="post" enctype="multipart/form-data" class="flex flex-col gap-4">
+
+        <!-- 받는 사람 -->
+        <div class="flex flex-col">
+            <label for="receiverId" class="font-medium text-gray-700 text-sm mb-1">받는 사람</label>
+            <select id="receiverId" name="receiverId" required
+                    class="border border-gray-300 rounded-md p-2 text-sm">
                 <option value="" disabled selected>가족을 선택하세요</option>
                 <option th:each="family : ${familyList}"
                         th:value="${family.id}"
@@ -128,185 +56,164 @@
         </div>
 
         <!-- 제목 -->
-        <div class="form-group">
-            <label for="title">제목</label>
-            <input type="text" id="title" name="title" required>
+        <div class="flex flex-col">
+            <label for="title" class="font-medium text-gray-700 text-sm mb-1">제목</label>
+            <input type="text" id="title" name="title" required
+                   class="border border-gray-300 rounded-md p-2 text-sm">
         </div>
 
         <!-- 입력 방식 -->
-        <div class="form-group">
-            <label for="inputType">입력 방식</label>
-            <select id="inputType" name="inputType" onchange="toggleInputType()" required>
+        <div class="flex flex-col">
+            <label for="inputType" class="font-medium text-gray-700 text-sm mb-1">입력 방식</label>
+            <select id="inputType" name="inputType" onchange="toggleInputType()" required
+                    class="border border-gray-300 rounded-md p-2 text-sm">
                 <option value="TEXT">텍스트 입력</option>
-                <option value="STT">음성 업로드(STT 변환)</option>
+                <option value="STT">음성 입력(STT 변환)</option>
             </select>
         </div>
 
         <!-- 텍스트 입력 -->
-        <div id="textInput" class="form-group">
-            <label for="content">내용</label>
-            <textarea id="content" name="content"></textarea>
+        <div id="textInput" class="flex flex-col">
+            <label for="content" class="font-medium text-gray-700 text-sm mb-1">내용</label>
+            <textarea id="content" name="content"
+                      class="border border-gray-300 rounded-md p-2 text-sm min-h-[120px] resize-y"></textarea>
         </div>
 
-        <!-- 음성 파일 업로드 + 녹음 -->
-        <!-- 음성 파일 업로드 + 녹음 -->
-        <div id="voiceInput" class="form-group hidden">
-            <p style="font-size: 13px; color: #6c757d;">
-                ※ 녹음하거나 업로드한 음성을 텍스트로 변환합니다.
-            </p>
-            <label for="voiceFile">음성 입력</label>
-            <input type="file" id="voiceFile" name="voiceFile" accept="audio/*">
+        <!-- 음성 입력 -->
+        <div id="voiceInput" class="flex flex-col hidden">
+            <p class="text-gray-500 text-xs mb-1">※ 녹음하거나 업로드한 음성을 텍스트로 변환합니다.</p>
+            <label for="voiceFile" class="font-medium text-gray-700 text-sm mb-1">음성 입력</label>
+            <input type="file" id="voiceFile" name="voiceFile" accept="audio/*"
+                   class="border border-gray-300 rounded-md p-2 text-sm">
 
-            <div style="margin-top: 10px;">
-                <button type="button" id="startRecording">녹음 시작</button>
-                <button type="button" id="stopRecording" disabled>녹음 종료</button>
-                <button type="button" id="sttButton" disabled>텍스트 변환</button>
+            <div class="flex gap-2 mt-2 flex-wrap">
+                <button type="button" id="startRecording"
+                        class="bg-blue-500 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-600">녹음 시작</button>
+                <button type="button" id="stopRecording" disabled
+                        class="bg-blue-500 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-600 disabled:bg-gray-400">녹음 종료</button>
+                <button type="button" id="sttButton" disabled
+                        class="bg-blue-500 text-white px-3 py-1 rounded-md text-sm hover:bg-blue-600 disabled:bg-gray-400">텍스트 변환</button>
             </div>
 
-            <p id="recordStatus" style="font-size: 13px; color: #28a745;"></p>
-
-            <!-- 녹음 재생 -->
-            <audio id="audioPreview" controls class="hidden" style="margin-top:10px;"></audio>
-
-            <!-- STT 변환 결과 표시 -->
-            <textarea id="text" name="text" placeholder="변환된 텍스트가 여기에 표시됩니다." style="margin-top:10px; display:block;"></textarea>
+            <p id="recordStatus" class="text-green-600 text-xs mt-1"></p>
+            <audio id="audioPreview" controls class="hidden mt-2 w-full"></audio>
+            <textarea id="text" name="text"
+                      placeholder="변환된 텍스트가 여기에 표시됩니다."
+                      class="border border-gray-300 rounded-md p-2 text-sm mt-2 min-h-[80px]"></textarea>
         </div>
-
-
-        <script>
-            document.addEventListener('DOMContentLoaded', () => {
-                let mediaRecorder;
-                let audioChunks = [];
-
-                const startBtn = document.getElementById('startRecording');
-                const stopBtn = document.getElementById('stopRecording');
-                const sttBtn = document.getElementById('sttButton');
-                const status = document.getElementById('recordStatus');
-                const audioPreview = document.getElementById('audioPreview');
-                const voiceFileInput = document.getElementById('voiceFile');
-                const contentTextArea = document.getElementById('content');
-
-                startBtn.addEventListener('click', async () => {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorder = new MediaRecorder(stream);
-                    mediaRecorder.start();
-                    audioChunks = [];
-
-                    mediaRecorder.addEventListener('dataavailable', event => {
-                        audioChunks.push(event.data);
-                    });
-
-                    mediaRecorder.addEventListener('stop', () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-
-                        const dataTransfer = new DataTransfer();
-                        dataTransfer.items.add(new File([audioBlob], "recording.wav"));
-                        voiceFileInput.files = dataTransfer.files;
-
-                        audioPreview.src = URL.createObjectURL(audioBlob);
-                        audioPreview.classList.remove('hidden');
-
-                        sttBtn.disabled = false;
-                        status.textContent = "녹음 완료, STT 변환 가능";
-                        console.log("녹음 완료, Blob 생성:", audioBlob);
-                    });
-
-                    startBtn.disabled = true;
-                    stopBtn.disabled = false;
-                    status.textContent = "녹음 중...";
-                });
-
-                stopBtn.addEventListener('click', () => {
-                    mediaRecorder.stop();
-                    startBtn.disabled = false;
-                    stopBtn.disabled = true;
-                    console.log("녹음 중지 버튼 클릭");
-                });
-
-                sttBtn.addEventListener('click', async () => {
-                    console.log("STT 버튼 클릭");
-                    const file = voiceFileInput.files[0];
-                    if (!file) {
-                        alert("녹음 또는 파일을 먼저 선택해주세요.");
-                        console.log("파일 없음");
-                        return;
-                    }
-
-                    const formData = new FormData();
-                    formData.append('voiceFile', file);
-
-                    status.textContent = "STT 변환 중...";
-                    console.log("STT 요청 전, 파일:", file);
-
-                    try {
-                        const response = await fetch('/api/stt', {
-                            method: 'POST',
-                            body: formData
-                        });
-
-                        if (!response.ok) {
-                            status.textContent = "STT 변환 실패: " + response.statusText;
-                            console.error("STT 변환 실패", response.status);
-                            return;
-                        }
-
-                        const data = await response.json();
-                        console.log("STT 응답:", data);
-
-                        const sttTextArea = document.getElementById('text');
-                        sttTextArea.value = data.text;
-
-                        status.textContent = "STT 변환 완료";
-                    } catch (error) {
-                        console.error("STT 변환 에러:", error);
-                        status.textContent = "STT 변환 중 오류 발생";
-                    }
-                });
-            });
-        </script>
-
 
         <!-- 이미지 첨부 -->
-        <div class="form-group">
-            <label for="letterImg">이미지 첨부 (최대 1장)</label>
-            <input type="file" id="letterImg" name="letterImg" accept="image/*">
+        <div class="flex flex-col">
+            <label for="letterImg" class="font-medium text-gray-700 text-sm mb-1">이미지 첨부 (최대 1장)</label>
+            <input type="file" id="letterImg" name="letterImg" accept="image/*"
+                   class="border border-gray-300 rounded-md p-2 text-sm">
         </div>
 
-        <!-- 제출 -->
-        <button type="submit">편지 보내기</button>
+        <!-- 제출 버튼 -->
+        <button type="submit" class="bg-blue-500 text-white rounded-md py-2 text-sm mt-3 hover:bg-blue-600 transition">
+            편지 보내기
+        </button>
 
-        <!-- 로딩 인디케이터 (처음엔 숨김) -->
-        <div id="loading" class="hidden" style="text-align:center; margin-top:20px;">
-            <div class="spinner" style="
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #007bff;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        animation: spin 1s linear infinite;
-        margin: 0 auto;
-    "></div>
-            <p>편지를 보내는 중입니다...</p>
+        <!-- 로딩 -->
+        <div id="loading" class="hidden flex flex-col items-center mt-4">
+            <div class="border-4 border-gray-200 border-t-4 border-t-blue-500 rounded-full w-10 h-10 animate-spin mb-2"></div>
+            <p class="text-gray-600 text-xs">편지를 보내는 중입니다...</p>
         </div>
 
-        <style>
-            @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
-        </style>
-
-        <script>
-            document.addEventListener("DOMContentLoaded", () => {
-                const form = document.querySelector("form");
-                const loading = document.getElementById("loading");
-
-                form.addEventListener("submit", () => {
-                    loading.classList.remove("hidden");  // 로딩 보이기
-                });
-            });
-        </script>
     </form>
 </div>
+
+<!-- JS -->
+<script>
+    function toggleInputType() {
+        const inputType = document.getElementById("inputType").value;
+        const textInput = document.getElementById("textInput");
+        const voiceInput = document.getElementById("voiceInput");
+
+        if (inputType === "TEXT") {
+            textInput.classList.remove("hidden");
+            voiceInput.classList.add("hidden");
+        } else {
+            textInput.classList.add("hidden");
+            voiceInput.classList.remove("hidden");
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const form = document.querySelector("form");
+        const loading = document.getElementById("loading");
+
+        form.addEventListener("submit", () => {
+            loading.classList.remove("hidden");
+        });
+
+        // 녹음 관련 JS
+        let mediaRecorder;
+        let audioChunks = [];
+
+        const startBtn = document.getElementById('startRecording');
+        const stopBtn = document.getElementById('stopRecording');
+        const sttBtn = document.getElementById('sttButton');
+        const status = document.getElementById('recordStatus');
+        const audioPreview = document.getElementById('audioPreview');
+        const voiceFileInput = document.getElementById('voiceFile');
+
+        startBtn.addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.start();
+                audioChunks = [];
+
+                mediaRecorder.addEventListener('dataavailable', event => audioChunks.push(event.data));
+
+                mediaRecorder.addEventListener('stop', () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(new File([audioBlob], "recording.wav"));
+                    voiceFileInput.files = dataTransfer.files;
+                    audioPreview.src = URL.createObjectURL(audioBlob);
+                    audioPreview.classList.remove('hidden');
+                    sttBtn.disabled = false;
+                    status.textContent = "녹음 완료, STT 변환 가능";
+                });
+
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                status.textContent = "녹음 중...";
+            } catch (error) {
+                console.error(error);
+                status.textContent = "마이크 접근 권한이 필요합니다.";
+            }
+        });
+
+        stopBtn.addEventListener('click', () => {
+            mediaRecorder.stop();
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        });
+
+        sttBtn.addEventListener('click', async () => {
+            const file = voiceFileInput.files[0];
+            if (!file) return alert("녹음 또는 파일을 먼저 선택해주세요.");
+
+            const formData = new FormData();
+            formData.append('voiceFile', file);
+
+            status.textContent = "STT 변환 중...";
+            try {
+                const response = await fetch('/api/stt', { method: 'POST', body: formData });
+                if (!response.ok) throw new Error(response.statusText);
+
+                const data = await response.json();
+                document.getElementById('text').value = data.text;
+                status.textContent = "STT 변환 완료";
+            } catch (error) {
+                console.error(error);
+                status.textContent = "STT 변환 중 오류 발생";
+            }
+        });
+    });
+</script>
 </body>
 </html>
