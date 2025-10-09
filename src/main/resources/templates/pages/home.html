@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="fragments/layout :: AppLayout('home', ~{::content}, null)">
+
+<!-- 🔹 본문 내용 슬롯 -->
+<th:block th:fragment="content">
+    <section class="flex flex-col items-center justify-center text-center mt-16">
+        <img src="/svgs/header_logo.svg" alt="Gamo 로고" />
+        <p class="mt-2 text-gray-500">환영합니다! 이곳은 홈 화면입니다 :)</p>
+    </section>
+</th:block>
+
+</html>
