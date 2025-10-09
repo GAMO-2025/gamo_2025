@@ -1,7 +1,8 @@
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '3.5.6'
-	id 'io.spring.dependency-management' version '1.1.7'
+    id 'java'
+    id 'org.springframework.boot' version '3.5.6'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'com.github.node-gradle.node' version '7.0.2'
 }
 
 group = 'gamo'
@@ -9,37 +10,38 @@ version = '0.0.1-SNAPSHOT'
 description = 'Demo project for Spring Boot'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
 }
 
 configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation "org.thymeleaf.extras:thymeleaf-extras-springsecurity6"
 	implementation 'com.google.cloud:google-cloud-speech'
 	implementation 'com.google.cloud:google-cloud-storage'
 	implementation platform('com.google.cloud:libraries-bom:26.5.0')
-	compileOnly 'org.projectlombok:lombok'
-	runtimeOnly 'com.mysql:mysql-connector-j'
-	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    compileOnly 'org.projectlombok:lombok'
+    runtimeOnly 'com.mysql:mysql-connector-j'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-	// swagger
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
+    // swagger
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
 
     // Spring Security
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
@@ -48,10 +50,53 @@ dependencies {
     implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
-
-
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+    useJUnitPlatform()
+}
+
+/* =========================
+   Tailwind 자동 빌드 설정
+   ========================= */
+
+node {
+    download = true
+    version = '22.20.0'
+    nodeProjectDir = file('src/main/frontend')
+}
+
+// npm install (package.json / lockfile 변경시에만 실행)
+tasks.named('npmInstall', com.github.gradle.node.npm.task.NpmTask) {
+    args = ['install']
+    inputs.files(
+            file('src/main/frontend/package.json'),
+            file('src/main/frontend/package-lock.json')
+    )
+    outputs.dir('src/main/frontend/node_modules')
+}
+
+// Tailwind 빌드 (npm run build 실행)
+// package.json에 "build": "tailwindcss -i ./main.css -o ../resources/static/main.css --minify" 가 있어야 함
+tasks.register('tailwindBuild', com.github.gradle.node.npm.task.NpmTask) {
+    dependsOn tasks.named('npmInstall')
+    workingDir = file('src/main/frontend')
+    args = ['run', 'build']
+
+    inputs.files(
+            file('src/main/frontend/main.css'),
+            file('src/main/frontend/tailwind.config.js'),
+            file('src/main/frontend/postcss.config.js'),
+            fileTree('src/main/resources/templates') { include '**/*.html' }
+    )
+
+
+    outputs.file('src/main/resources/static/main.css')
+}
+
+tasks.named('processResources') {
+    dependsOn tasks.named('tailwindBuild')
+}
+tasks.named('bootRun') {
+    dependsOn tasks.named('tailwindBuild')
 }
