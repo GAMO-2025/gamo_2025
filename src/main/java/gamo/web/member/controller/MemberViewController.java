@@ -1,7 +1,6 @@
 package gamo.web.member.controller;
 
 import gamo.web.auth.UserPrincipal;
-import gamo.web.member.domain.Member;
 import gamo.web.member.dto.LoginResponseDTO;
 import gamo.web.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +22,6 @@ public class MemberViewController {
         Long memberId = memberService.getMemberId(user);
         LoginResponseDTO member = memberService.getMyInfo(memberId);
         model.addAttribute("member", member); // 타임리프에서 ${member.*}로 접근
-        return "member/mypage";
+        return "pages/member/mypage";
     }
 }

@@ -3,9 +3,8 @@ package gamo.web.auth.controller;
 import gamo.web.auth.jwt.JwtTokenProvider;
 import gamo.web.auth.refresh.RefreshToken;
 import gamo.web.auth.refresh.RefreshTokenRepository;
-import gamo.web.member.domain.Member;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.Response;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -79,5 +78,44 @@ public class AuthController {
         response.addHeader("Set-Cookie", refreshCookie.toString());
 
         return ResponseEntity.ok().build();
+    }
+
+
+    @PostMapping("/logout")
+    @Transactional
+    public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
+
+        String refreshToken = Arrays.stream(request.getCookies() != null ? request.getCookies() : new jakarta.servlet.http.Cookie[0])
+                .filter(c -> "refreshToken".equals(c.getName()))
+                .map(jakarta.servlet.http.Cookie::getValue)
+                .findFirst()
+                .orElse(null);
+
+        if (refreshToken != null) {
+            refreshTokenRepository.deleteByToken(refreshToken);
+        }
+
+        // 일단 https 안쓰기... https 쓰고 싶으면 secure(true)
+        ResponseCookie expiredAccess = ResponseCookie.from("accessToken", "")
+                .httpOnly(true).secure(false).path("/")
+                .maxAge(0) // 즉시 만료
+                .sameSite("Lax")
+                .build();
+
+        ResponseCookie expiredRefresh = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true).secure(false).path("/")
+                .maxAge(0)
+                .sameSite("Lax")
+                .build();
+
+        response.addHeader("Set-Cookie", expiredAccess.toString());
+        response.addHeader("Set-Cookie", expiredRefresh.toString());
+
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+
+        return ResponseEntity.status(303)
+                .header("Location", "/login")
+                .build();
+
     }
 }
