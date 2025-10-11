@@ -1,27 +1,17 @@
 package gamo.web.letter.service;
 
-import com.google.cloud.storage.BlobInfo;
-import com.google.cloud.storage.Storage;
-import com.google.cloud.storage.StorageOptions;
 import gamo.web.letter.domain.InputType;
 import gamo.web.letter.domain.Letter;
-import gamo.web.letter.dto.LetterRequest;
+import gamo.web.letter.dto.LetterRequestDTO;
 import gamo.web.letter.repository.LetterRepository;
 import gamo.web.member.domain.Member;
 import gamo.web.member.domain.Nickname;
 import gamo.web.member.repository.MemberRepository;
 import gamo.web.member.repository.NicknameRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -62,7 +52,7 @@ public class LetterService {
     }
 
     // 편지 전송
-    public Letter sendLetter(Long senderId, LetterRequest request) {
+    public Letter sendLetter(Long senderId, LetterRequestDTO request) {
         Member sender = memberRepository.findById(senderId)
                 .orElseThrow(() -> new IllegalArgumentException("잘못된 발신자 ID"));
         Member receiver = memberRepository.findById(request.getReceiverId())

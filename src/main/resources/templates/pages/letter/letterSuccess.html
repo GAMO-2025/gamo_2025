@@ -3,43 +3,50 @@
       th:replace="~{fragments/layout :: AppLayout('letter', ~{::content}, null)}">
 <th:block th:fragment="content">
 
-    <main class="flex flex-col justify-center items-center flex-1 px-4 min-h-[calc(100vh-168px)]">
-        <section class="flex flex-col items-center justify-center text-center gap-6 w-full max-w-md">
+    <div class="px-4 pt-12 pb-24">
+        <!-- Success Message -->
+        <div class="mb-8 text-center">
+            <h2 class="text-2xl font-bold text-[#AB8D66] mb-3">
+                편지가 성공적으로<br>전달되었습니다!
+            </h2>
+            <p class="text-gray-600 text-sm">
+                받는 사람: <span class="font-semibold" th:text="${receiverName}"></span>
+            </p>
+        </div>
 
-            <h1 class="text-[#AB8D66] text-xl font-bold">편지가 성공적으로 전송되었습니다!</h1>
-            <p class="text-gray-700" th:text="'받는 사람: ' + ${receiverName}"></p>
-
-            <!-- 새 편지 작성 / 전송 취소 버튼 -->
-            <div class="flex flex-col gap-2 w-full">
+        <!-- Action Buttons Card -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-8">
+            <div class="space-y-3">
+                <!-- 새 편지 작성 버튼 -->
                 <a th:href="@{/letter/new}"
-                   class="w-full py-3 bg-[#FFB755] text-black font-semibold text-base rounded-lg hover:brightness-95 transition-colors text-center">
+                   class="block w-full py-3 bg-[#F5BF76] text-white font-semibold text-base rounded-xl text-center hover:brightness-95 transition shadow-sm">
                     새 편지 작성하기
                 </a>
 
+                <!-- 전송 취소 버튼 -->
                 <form th:action="@{/letter/cancel}" method="post" class="w-full">
                     <input type="hidden" name="letterId" th:value="${letterId}" />
                     <button type="submit"
-                            class="w-full py-3 bg-white text-black font-semibold text-base rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                            class="w-full py-3 bg-white text-gray-700 font-medium text-base rounded-xl border border-gray-200 hover:bg-gray-50 transition shadow-sm">
                         전송 취소하기
                     </button>
                 </form>
             </div>
+        </div>
 
-            <!-- 편지 홈 / 편지 보관함 -->
-            <div class="flex w-full gap-4 mt-4">
-                <a th:href="@{/letter}"
-                   class="w-1/2 py-3 border border-[#F5BF76] bg-[#F5BF76] text-white rounded-lg font-semibold text-base text-center hover:brightness-95 transition-colors">
-                    편지 홈
-                </a>
-                <a th:href="@{/letters/list}"
-                   class="w-1/2 py-3 border border-[#F5BF76] bg-[#F5BF76] text-white rounded-lg font-semibold text-base text-center hover:brightness-95 transition-colors">
-                    편지 보관함
-                </a>
-            </div>
+        <!-- Navigation Buttons -->
+        <div class="grid grid-cols-2 gap-3">
+            <a th:href="@{/letter}"
+               class="py-3 bg-white text-[#F5BF76] border border-[#F5BF76] rounded-xl font-medium text-base text-center hover:bg-[#FFF9F0] transition shadow-sm">
+                편지 홈
+            </a>
+            <a th:href="@{/letter/list}"
+               class="py-3 bg-white text-[#F5BF76] border border-[#F5BF76] rounded-xl font-medium text-base text-center hover:bg-[#FFF9F0] transition shadow-sm">
+                편지 보관함
+            </a>
+        </div>
 
-        </section>
-    </main>
-
+    </div>
 
 </th:block>
 </html>

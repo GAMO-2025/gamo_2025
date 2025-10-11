@@ -1,12 +1,11 @@
 package gamo.web.letter.dto;
 
-import gamo.web.letter.domain.InputType;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.web.multipart.MultipartFile;
 
 @Getter @Setter
-public class LetterRequest {
+public class LetterRequestDTO {
     private Long receiverId;
     private String title;
     private String content;

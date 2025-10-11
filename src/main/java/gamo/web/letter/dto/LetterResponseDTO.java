@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Setter
 @Builder
 @AllArgsConstructor
-public class LetterResponse {
+public class LetterResponseDTO {
     private Long id;
     private Long senderId;
     private Long receiverId;
@@ -24,8 +24,8 @@ public class LetterResponse {
     private InputType inputType;
     private boolean cancelled;
 
-    public static LetterResponse from(Letter letter) {
-        return LetterResponse.builder()
+    public static LetterResponseDTO from(Letter letter) {
+        return LetterResponseDTO.builder()
                 .id(letter.getId())
                 .senderId(letter.getSenderId())
                 .receiverId(letter.getReceiverId())

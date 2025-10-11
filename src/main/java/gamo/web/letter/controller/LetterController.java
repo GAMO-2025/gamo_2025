@@ -2,7 +2,7 @@ package gamo.web.letter.controller;
 
 import gamo.web.auth.UserPrincipal;
 import gamo.web.letter.domain.Letter;
-import gamo.web.letter.dto.LetterRequest;
+import gamo.web.letter.dto.LetterRequestDTO;
 import gamo.web.letter.service.LetterService;
 import gamo.web.member.domain.Member;
 import lombok.RequiredArgsConstructor;
@@ -11,10 +11,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
 
 @Controller
 @RequiredArgsConstructor
@@ -35,7 +32,7 @@ public class LetterController {
 
     // 편지 전송(저장)
     @PostMapping("/letter/send")
-    public String submitLetter(@AuthenticationPrincipal UserPrincipal userPrincipal, @ModelAttribute LetterRequest letterRequest,  Model model) {
+    public String submitLetter(@AuthenticationPrincipal UserPrincipal userPrincipal, @ModelAttribute LetterRequestDTO letterRequest, Model model) {
         // 로그인 한 회원 정보 가져오기
         Member loginMember = userPrincipal.getMember();
         Long senderId = loginMember.getId();
@@ -56,5 +53,11 @@ public class LetterController {
     public String cancelLetter(@RequestParam Long letterId) {
         letterService.cancelLetter(letterId);
         return "redirect:/letter/new";
+    }
+
+    // 편지 홈(임시)
+    @GetMapping("/letter")
+    public String showLetterHome() {
+        return "/pages/letter/letterHome";
     }
 }
