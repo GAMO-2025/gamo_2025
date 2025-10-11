@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="fragments/layout :: AppLayout('letter', ~{::content}, null)">
+<th:block th:fragment="content">
+
+    <div class="app-container bg-white overflow-auto flex flex-col p-5">
+
+        <h2 class="text-center text-gray-800 text-xl font-semibold mb-5">편지 작성</h2>
+
+        <form th:action="@{/letter/send}" method="post" enctype="multipart/form-data" class="flex flex-col gap-4">
+
+            <!-- 받는 사람 -->
+            <div class="flex flex-col">
+                <label for="receiverId" class="font-medium text-gray-700 text-sm mb-1">받는 사람</label>
+                <select id="receiverId" name="receiverId" required
+                        class="border border-gray-300 rounded-md p-2 text-sm">
+                    <option value="" disabled selected>가족을 선택하세요</option>
+                    <option th:each="family : ${familyList}"
+                            th:value="${family.id}"
+                            th:text="${family.displayName}">
+                    </option>
+                </select>
+            </div>
+
+            <!-- 제목 -->
+            <div class="flex flex-col">
+                <label for="title" class="font-medium text-gray-700 text-sm mb-1">제목</label>
+                <input type="text" id="title" name="title" required
+                       class="border border-gray-300 rounded-md p-2 text-sm">
+            </div>
+
+            <!-- 입력 방식 -->
+            <div class="flex flex-col">
+                <label for="inputType" class="font-medium text-gray-700 text-sm mb-1">입력 방식</label>
+                <select id="inputType" name="inputType" onchange="toggleInputType()" required
+                        class="border border-gray-300 rounded-md p-2 text-sm">
+                    <option value="TEXT">텍스트 입력</option>
+                    <option value="STT">음성 입력(STT 변환)</option>
+                </select>
+            </div>
+
+            <!-- 텍스트 입력 -->
+            <div id="textInput" class="flex flex-col">
+                <label for="content" class="font-medium text-gray-700 text-sm mb-1">내용</label>
+                <textarea id="content" name="content"
+                          class="border border-gray-300 rounded-md p-2 text-sm min-h-[120px] resize-y"></textarea>
+            </div>
+
+            <!-- 음성 입력 -->
+            <div id="voiceInput" class="flex flex-col hidden">
+                <p class="text-gray-500 text-xs mb-1">※ 녹음하거나 업로드한 음성을 텍스트로 변환합니다.</p>
+                <label for="voiceFile" class="font-medium text-gray-700 text-sm mb-1">음성 입력</label>
+                <input type="file" id="voiceFile" name="voiceFile" accept="audio/*"
+                       class="border border-gray-300 rounded-md p-2 text-sm">
+
+                <div class="flex justify-center gap-2 mt-2 flex-wrap">
+                    <button type="button" id="startRecording"
+                            class="bg-[#F5BF76] text-gray-800 font-semibold px-3 py-1 rounded-md text-sm hover:brightness-95 transition">
+                        녹음 시작
+                    </button>
+                    <button type="button" id="stopRecording" disabled
+                            class="bg-[#F5BF76] text-gray-800 font-semibold px-3 py-1 rounded-md text-sm hover:brightness-95 transition disabled:opacity-50">
+                        녹음 종료
+                    </button>
+                    <button type="button" id="sttButton" disabled
+                            class="bg-[#F5BF76] text-gray-800 font-semibold px-3 py-1 rounded-md text-sm hover:brightness-95 transition disabled:opacity-50">
+                        텍스트 변환
+                    </button>
+                </div>
+
+                <p id="recordStatus" class="text-green-600 text-xs mt-1"></p>
+                <audio id="audioPreview" controls class="hidden mt-2 w-full"></audio>
+                <textarea id="text" name="text"
+                          placeholder="변환된 텍스트가 여기에 표시됩니다."
+                          class="border border-gray-300 rounded-md p-2 text-sm mt-2 min-h-[80px]"></textarea>
+            </div>
+
+            <!-- 이미지 첨부 -->
+            <div class="flex flex-col">
+                <label for="letterImg" class="font-medium text-gray-700 text-sm mb-1">이미지 첨부 (최대 1장)</label>
+                <input type="file" id="letterImg" name="letterImg" accept="image/*"
+                       class="border border-gray-300 rounded-md p-2 text-sm">
+            </div>
+
+            <!-- 제출 버튼 -->
+            <button type="submit"
+                    class="relative overflow-hidden text-white rounded-md py-2 text-sm mt-3 transition duration-300 hover:brightness-95 bg-[#FFB755] flex justify-center items-center w-full gap-2">
+                <span id="submitText" class="font-semibold text-gray-800">보내기</span>
+                <div id="submitSpinner" class="hidden w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            </button>
+
+        </form>
+    </div>
+
+    <!-- JS -->
+    <script>
+        function toggleInputType() {
+            const inputType = document.getElementById("inputType").value;
+            const textInput = document.getElementById("textInput");
+            const voiceInput = document.getElementById("voiceInput");
+
+            if (inputType === "TEXT") {
+                textInput.classList.remove("hidden");
+                voiceInput.classList.add("hidden");
+            } else {
+                textInput.classList.add("hidden");
+                voiceInput.classList.remove("hidden");
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const form = document.querySelector("form");
+            const loading = document.getElementById("loading");
+
+            form.addEventListener("submit", (e) => {
+                const submitBtn = form.querySelector("button[type='submit']");
+                const submitText = document.getElementById("submitText");
+                const submitSpinner = document.getElementById("submitSpinner");
+
+                submitBtn.disabled = true;
+                submitText.textContent = "보내는 중...";
+                submitSpinner.classList.remove("hidden");
+            });
+
+
+            // 녹음 관련 JS
+            let mediaRecorder;
+            let audioChunks = [];
+
+            const startBtn = document.getElementById('startRecording');
+            const stopBtn = document.getElementById('stopRecording');
+            const sttBtn = document.getElementById('sttButton');
+            const status = document.getElementById('recordStatus');
+            const audioPreview = document.getElementById('audioPreview');
+            const voiceFileInput = document.getElementById('voiceFile');
+
+            startBtn.addEventListener('click', async () => {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    mediaRecorder.start();
+                    audioChunks = [];
+
+                    mediaRecorder.addEventListener('dataavailable', event => audioChunks.push(event.data));
+
+                    mediaRecorder.addEventListener('stop', () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(new File([audioBlob], "recording.wav"));
+                        voiceFileInput.files = dataTransfer.files;
+                        audioPreview.src = URL.createObjectURL(audioBlob);
+                        audioPreview.classList.remove('hidden');
+                        sttBtn.disabled = false;
+                        status.textContent = "녹음 완료, STT 변환 가능";
+                    });
+
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                    status.textContent = "녹음 중...";
+                } catch (error) {
+                    console.error(error);
+                    status.textContent = "마이크 접근 권한이 필요합니다.";
+                }
+            });
+
+            stopBtn.addEventListener('click', () => {
+                mediaRecorder.stop();
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+            });
+
+            sttBtn.addEventListener('click', async () => {
+                const file = voiceFileInput.files[0];
+                if (!file) return alert("녹음 또는 파일을 먼저 선택해주세요.");
+
+                const formData = new FormData();
+                formData.append('voiceFile', file);
+
+                status.textContent = "STT 변환 중...";
+                try {
+                    const response = await fetch('/api/stt', { method: 'POST', body: formData });
+                    if (!response.ok) throw new Error(response.statusText);
+
+                    const data = await response.json();
+                    document.getElementById('text').value = data.text;
+                    status.textContent = "STT 변환 완료";
+                } catch (error) {
+                    console.error(error);
+                    status.textContent = "STT 변환 중 오류 발생";
+                }
+            });
+        });
+    </script>
+
+</th:block>
+</html>

@@ -24,7 +24,11 @@ public class SttService {
     @Value("${gcs.bucket-name}")
     private String bucketName;
 
-    // GCS 업로드
+    /**
+     * 1️⃣ GCS에 음성 파일 업로드
+     * - 파일을 지정된 버킷에 업로드
+     * - 업로드 후 "gs://bucketName/파일경로" 형태 URI 반환
+     */
     private String uploadToGcs(MultipartFile file) throws Exception {
         Storage storage = StorageOptions.newBuilder()
                 .setProjectId(projectId)
@@ -39,7 +43,13 @@ public class SttService {
         return "gs://" + bucketName + "/" + objectName;
     }
 
-    // 장기간 음성 처리
+    /**
+     * 2️⃣ Google STT 장시간 음성 처리
+     * - GCS URI를 이용해 음성을 STT로 변환
+     * - WEBM/Opus 파일 지원
+     * - 자동 문장 부호 활성화
+     * - 결과를 문자열로 합쳐서 반환
+     */
     private String longRunningTranscribe(String gcsUri) throws Exception {
         try (SpeechClient speechClient = SpeechClient.create(
                 SpeechSettings.newBuilder()
@@ -48,7 +58,7 @@ public class SttService {
         )) {
             RecognitionConfig config = RecognitionConfig.newBuilder()
                     .setEncoding(RecognitionConfig.AudioEncoding.WEBM_OPUS)
-                    .setSampleRateHertz(48000) // Opus 샘플레이트 지정
+                    .setSampleRateHertz(48000)
                     .setLanguageCode("ko-KR")
                     .setEnableAutomaticPunctuation(true)
                     .build();
@@ -57,11 +67,13 @@ public class SttService {
                     .setUri(gcsUri)
                     .build();
 
+            // 장시간 음성 인식 요청
             OperationFuture<LongRunningRecognizeResponse, LongRunningRecognizeMetadata> response =
                     speechClient.longRunningRecognizeAsync(config, audio);
 
             LongRunningRecognizeResponse longResponse = response.get();
 
+            // 인식된 텍스트 합치기
             StringBuilder transcript = new StringBuilder();
             for (SpeechRecognitionResult result : longResponse.getResultsList()) {
                 transcript.append(result.getAlternatives(0).getTranscript());
@@ -71,12 +83,17 @@ public class SttService {
         }
     }
 
+    /**
+     * 3️⃣ 외부에서 호출하는 메서드
+     * - MultipartFile을 받아서
+     *   1) GCS 업로드
+     *   2) STT 변환
+     * - 최종 텍스트 반환
+     */
     public String transcribe(MultipartFile voiceFile) {
         try {
             String gcsUri = uploadToGcs(voiceFile);
-
             return longRunningTranscribe(gcsUri);
-
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("STT 변환 실패: " + e.getMessage());

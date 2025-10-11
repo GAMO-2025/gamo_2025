@@ -5,14 +5,16 @@ import gamo.web.letter.domain.Letter;
 import gamo.web.letter.dto.LetterRequest;
 import gamo.web.letter.service.LetterService;
 import gamo.web.member.domain.Member;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
 
 @Controller
 @RequiredArgsConstructor
@@ -21,18 +23,18 @@ public class LetterController {
     private final LetterService letterService;
 
     // 편지 작성
-    @GetMapping("/letters/new")
+    @GetMapping("/letter/new")
     public String showLetterForm(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
         Member loginMember = userPrincipal.getMember();
         Long loginMemberId = loginMember.getId();
 
         List<LetterService.FamilyDisplay> familyDisplayList = letterService.getFamilyDisplayList(loginMemberId);
         model.addAttribute("familyList", familyDisplayList);
-        return "letterForm";
+        return "/pages/letter/letterForm";
     }
 
     // 편지 전송(저장)
-    @PostMapping("/letters/send")
+    @PostMapping("/letter/send")
     public String submitLetter(@AuthenticationPrincipal UserPrincipal userPrincipal, @ModelAttribute LetterRequest letterRequest,  Model model) {
         // 로그인 한 회원 정보 가져오기
         Member loginMember = userPrincipal.getMember();
@@ -46,18 +48,13 @@ public class LetterController {
         model.addAttribute("receiverName", receiverName);
         model.addAttribute("letterId", letter.getId());
 
-        return "letterSuccess";
+        return "/pages/letter/letterSuccess";
     }
 
     // 편지 전송 취소
-    @PostMapping("/letters/cancel")
+    @PostMapping("/letter/cancel")
     public String cancelLetter(@RequestParam Long letterId) {
         letterService.cancelLetter(letterId);
-        return "redirect:/letters/new";
+        return "redirect:/letter/new";
     }
 }
-
-
-
-
-
