@@ -15,7 +15,7 @@ import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
-public class LetterController {
+public class LetterViewController {
 
     private final LetterService letterService;
 
