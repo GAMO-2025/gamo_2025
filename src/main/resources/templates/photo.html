@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<h2>사진 목록</h2>
+
+<div class="photo-container">
+    <div>
+        <img th:src="@{'https://storage.cloud.google.com/gamo_bucket/photo/' + ${photoData.url}}" alt="앨범 사진">
+    </div>
+    <p th:text="${#temporals.format(photoData.created_at, 'yyyy-MM-dd HH:mm')}">생성일</p>
+    <div></div>
+</div>
+</body>
+</html>

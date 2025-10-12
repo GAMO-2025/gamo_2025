@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>앨범 사진</title>
+    <style>
+        .photo-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .photo-item {
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+        .photo-item:hover {
+            transform: scale(1.05);
+        }
+        .photo-item img {
+            width: 200px;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<h2>사진 목록</h2>
+
+<div class="photo-container">
+    <div class="photo-item" th:each="photo : ${photoList}">
+        <a th:href="@{'/photo/' + ${photo.photo_id}}">
+            <img th:src="@{'https://storage.cloud.google.com/gamo_bucket/photo/' + ${photo.url}}" alt="앨범 사진">
+        </a>
+    </div>
+</div>
+</body>
+</html>

@@ -1,5 +1,6 @@
 package gamo.web.member.domain;
 
+import gamo.web.photo.domain.Album;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,4 +22,7 @@ public class Family {
     @OneToMany(mappedBy = "family", cascade = CascadeType.ALL)
     @Builder.Default
     private List<Member> members = new ArrayList<>();
+
+    @OneToMany(mappedBy = "family", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Album> albums = new ArrayList<>();
 }
