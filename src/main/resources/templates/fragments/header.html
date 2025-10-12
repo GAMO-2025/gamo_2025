@@ -1,0 +1,26 @@
+<header xmlns:th="http://www.thymeleaf.org"
+        xmlns:sec="https://www.thymeleaf.org/extras/spring-security"
+        th:fragment="Header"
+        class="border-b bg-white">
+    <div class="fixed inset-0 top-0 z-40 mx-auto h-[90px] w-full
+              relative grid grid-cols-[auto_1fr_auto] items-center px-5 py-5">
+
+        <!-- 왼쪽 로고 -->
+        <div class="flex items-center gap-2">
+            <img src="/svgs/header_logo.svg" alt="header logo" />
+        </div>
+
+        <!-- 가운데  -->
+        <h1 class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2
+               text-base font-bold text-gray-900">
+      <span sec:authorize="isAuthenticated()"
+            th:text="${#authentication.principal.member.name + ' 님의 가족모임'}"></span>
+        </h1>
+
+        <!-- 버튼 -->
+        <a href="/member/mypage"
+           class="justify-self-end rounded-full border border-amber-600 px-3 py-1 text-xs text-amber-700">
+            내 정보
+        </a>
+    </div>
+</header>

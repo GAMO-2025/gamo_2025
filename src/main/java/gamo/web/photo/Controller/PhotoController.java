@@ -107,4 +107,9 @@ public class PhotoController {
 //        System.out.println(newUrl);
 //        https://storage.googleapis.com/photo/gamo_bucket/33bd1600-8cee-4071-847c-5dd28de9409d
     }
+
+    @GetMapping(value = "/frontend")
+    public String frontend() {
+        return "checkFrontend";
+    }
 }
