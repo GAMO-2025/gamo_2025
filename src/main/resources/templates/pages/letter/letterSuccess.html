@@ -4,48 +4,45 @@
 <th:block th:fragment="content">
 
     <div class="px-4 pt-12 pb-24">
-        <!-- Success Message -->
-        <div class="mb-8 text-center">
+        <!-- Success Message Card -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-6 text-center">
             <h2 class="text-2xl font-bold text-[#AB8D66] mb-3">
-                편지가 성공적으로<br>전달되었습니다!
+                편지가 성공적으로<br>전송되었습니다!
             </h2>
             <p class="text-gray-600 text-sm">
-                받는 사람: <span class="font-semibold" th:text="${receiverName}"></span>
+                받는 사람: <span class="font-semibold" th:text="${receiverName}">엄마</span>
             </p>
         </div>
 
-        <!-- Action Buttons Card -->
-        <div class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-8">
-            <div class="space-y-3">
-                <!-- 새 편지 작성 버튼 -->
-                <a th:href="@{/letter/new}"
-                   class="block w-full py-3 bg-[#F5BF76] text-white font-semibold text-base rounded-xl text-center hover:brightness-95 transition shadow-sm">
-                    새 편지 작성하기
-                </a>
+        <!-- Action Buttons -->
+        <div class="space-y-3 mb-10">
+            <!-- 새 편지 작성 버튼 -->
+            <a th:href="@{/letter/new}"
+               class="block w-full py-3 bg-[#F5BF76] text-gray-700 font-semibold text-base rounded-xl text-center hover:brightness-95 transition shadow-sm">
+                새 편지 작성하기
+            </a>
 
-                <!-- 전송 취소 버튼 -->
-                <form th:action="@{/letter/cancel}" method="post" class="w-full">
-                    <input type="hidden" name="letterId" th:value="${letterId}" />
-                    <button type="submit"
-                            class="w-full py-3 bg-white text-gray-700 font-medium text-base rounded-xl border border-gray-200 hover:bg-gray-50 transition shadow-sm">
-                        전송 취소하기
-                    </button>
-                </form>
-            </div>
+            <!-- 전송 취소 버튼 -->
+            <form th:action="@{/letter/cancel}" method="post" class="w-full">
+                <input type="hidden" name="letterId" th:value="${letterId}" />
+                <button type="submit"
+                        class="w-full py-3 bg-white text-gray-700 font-medium text-base rounded-xl border border-gray-200 hover:bg-gray-50 transition shadow-sm">
+                    전송 취소하기
+                </button>
+            </form>
         </div>
 
         <!-- Navigation Buttons -->
         <div class="grid grid-cols-2 gap-3">
             <a th:href="@{/letter}"
-               class="py-3 bg-white text-[#F5BF76] border border-[#F5BF76] rounded-xl font-medium text-base text-center hover:bg-[#FFF9F0] transition shadow-sm">
+               class="py-3 bg-white text-[#FFB755] border border-[#FFB755] rounded-xl font-medium text-base text-center hover:bg-[#FFF9F0] transition shadow-sm">
                 편지 홈
             </a>
             <a th:href="@{/letter/list}"
-               class="py-3 bg-white text-[#F5BF76] border border-[#F5BF76] rounded-xl font-medium text-base text-center hover:bg-[#FFF9F0] transition shadow-sm">
+               class="py-3 bg-white text-[#FFB755] border border-[#FFB755] rounded-xl font-medium text-base text-center hover:bg-[#FFF9F0] transition shadow-sm">
                 편지 보관함
             </a>
         </div>
-
     </div>
 
 </th:block>
