@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
-@Repository
 public interface MemberRepository extends JpaRepository<Member, Long> {
     Optional<Member> findBySocialIdAndProvider(String socialId, String provider);
     List<Member> findByFamily(Family family);
