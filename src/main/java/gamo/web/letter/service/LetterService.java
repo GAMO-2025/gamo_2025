@@ -2,6 +2,7 @@ package gamo.web.letter.service;
 
 import gamo.web.letter.domain.InputType;
 import gamo.web.letter.domain.Letter;
+import gamo.web.letter.dto.LetterCountDto;
 import gamo.web.letter.dto.LetterRequestDTO;
 import gamo.web.letter.repository.LetterRepository;
 import gamo.web.member.domain.Member;
@@ -95,4 +96,13 @@ public class LetterService {
 
     // 화면에 뿌릴 DTO
     public record FamilyDisplay(Long id, String displayName) {}
+
+    // 편지 개수 조회
+    public LetterCountDto getLetterCounts(Long userId) {
+        Long receivedCount = letterRepository.countByReceiverId(userId);
+        Long sentCount = letterRepository.countBySenderId(userId);
+        Long unreadCount = letterRepository.countByReceiverIdAndIsReadFalse(userId);
+
+        return new LetterCountDto(receivedCount, sentCount, unreadCount);
+    }
 }

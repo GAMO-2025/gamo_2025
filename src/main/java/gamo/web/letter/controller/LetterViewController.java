@@ -2,6 +2,7 @@ package gamo.web.letter.controller;
 
 import gamo.web.auth.UserPrincipal;
 import gamo.web.letter.domain.Letter;
+import gamo.web.letter.dto.LetterCountDto;
 import gamo.web.letter.dto.LetterRequestDTO;
 import gamo.web.letter.service.LetterService;
 import gamo.web.member.domain.Member;
@@ -55,9 +56,16 @@ public class LetterViewController {
         return "redirect:/letter/new";
     }
 
-    // 편지 홈(임시)
+    // 편지 홈
     @GetMapping("/letter")
-    public String showLetterHome() {
+    public String showLetterHome(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        Member loginMember = userPrincipal.getMember();
+        Long loginMemberId = loginMember.getId();
+
+        // 편지 개수 조회
+        LetterCountDto letterCounts = letterService.getLetterCounts(loginMemberId);
+        model.addAttribute("letterCounts", letterCounts);
+
         return "/pages/letter/letterHome";
     }
 }
