@@ -9,6 +9,9 @@ npm-debug.log
 src/main/resources/static/main.css
 data.sql
 
+# Google Cloud service account key
+src/main/resources/google-service-account.json
+
 # Build outputs
 build/
 out/

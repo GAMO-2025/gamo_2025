@@ -29,7 +29,7 @@ public class Member {
     @Column(nullable = false, length = 20)
     private String provider;
 
-    @Column(nullable = false, name = "profile_image")
+    @Column(name = "profile_image")
     private String profileImage;
 
     @ManyToOne(fetch = FetchType.LAZY)
