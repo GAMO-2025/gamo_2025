@@ -23,6 +23,7 @@ public class LetterService {
     private final NicknameRepository nicknameRepository;
     private final SttService sttService;
     private final GcsService gcsService;
+    private final AiCorrectService aiCorrectService;
 
     // 편지 작성 화면용 가족 목록
     public List<FamilyDisplay> getFamilyDisplayList(Long loginMemberId) {
@@ -62,16 +63,16 @@ public class LetterService {
             throw new IllegalArgumentException("같은 가족이 아닙니다.");
         }
 
+        // 기본 content
         String content = request.getContent();
-        if ("STT".equalsIgnoreCase(request.getInputType()) && request.getVoiceFile() != null) {
-            content = sttService.transcribe(request.getVoiceFile());
-        }
 
+        // 이미지 업로드
         String letterImgPath = null;
         if (request.getLetterImg() != null && !request.getLetterImg().isEmpty()) {
             letterImgPath = gcsService.uploadFile(request.getLetterImg());
         }
 
+        // DB 저장
         Letter letter = Letter.builder()
                 .senderId(senderId)
                 .receiverId(receiver.getId())

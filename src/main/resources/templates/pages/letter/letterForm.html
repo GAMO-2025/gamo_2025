@@ -76,16 +76,17 @@
 
                     <p id="recordStatus" class="text-[#F5BF76] text-sm text-center mb-2"></p>
                     <audio id="audioPreview" controls class="hidden w-full mb-3 rounded-xl"></audio>
-                    <textarea id="text" name="text"
-                              placeholder="변환된 텍스트가 여기에 표시됩니다."
+
+                    <!-- 화면 표시용 textarea (서버 전송 X) -->
+                    <textarea id="text" placeholder="변환된 텍스트가 여기에 표시됩니다."
                               class="w-full border border-gray-200 rounded-xl p-3 text-sm min-h-[120px] focus:outline-none focus:ring-2 focus:ring-[#F5BF76] focus:border-transparent"></textarea>
 
                     <!-- AI 교정 버튼 -->
                     <button type="button" id="aiCorrectBtn"
-                            class="w-full mt-3 bg-[#AB8D66] text-white font-medium rounded-xl py-2 text-sm hover:brightness-95 transition disabled:opacity-50">
-                        ✨ AI 교정하기
+                            class="w-full mt-3 bg-[#AB8D66] text-white font-medium rounded-xl py-2 text-sm hover:brightness-95 transition disabled:opacity-50 flex justify-center items-center gap-2">
+                        <span id="aiCorrectText"> AI 교정하기</span>
+                        <div id="aiCorrectSpinner" class="hidden w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     </button>
-
                 </div>
 
                 <!-- 이미지 첨부 -->
@@ -110,41 +111,31 @@
     <script>
         function toggleInputType() {
             const inputType = document.getElementById("inputType").value;
-            const textInput = document.getElementById("textInput");
-            const voiceInput = document.getElementById("voiceInput");
-
-            if (inputType === "TEXT") {
-                textInput.classList.remove("hidden");
-                voiceInput.classList.add("hidden");
-            } else {
-                textInput.classList.add("hidden");
-                voiceInput.classList.remove("hidden");
-            }
+            document.getElementById("textInput").classList.toggle("hidden", inputType !== "TEXT");
+            document.getElementById("voiceInput").classList.toggle("hidden", inputType !== "STT");
         }
 
         document.addEventListener("DOMContentLoaded", () => {
             const form = document.querySelector("form");
 
-            form.addEventListener("submit", (e) => {
+            form.addEventListener("submit", () => {
                 const submitBtn = form.querySelector("button[type='submit']");
-                const submitText = document.getElementById("submitText");
-                const submitSpinner = document.getElementById("submitSpinner");
-
                 submitBtn.disabled = true;
-                submitText.textContent = "보내는 중...";
-                submitSpinner.classList.remove("hidden");
+                document.getElementById("submitText").textContent = "보내는 중...";
+                document.getElementById("submitSpinner").classList.remove("hidden");
             });
 
-            // 녹음 관련 JS
+            // 녹음 관련
             let mediaRecorder;
             let audioChunks = [];
-
             const startBtn = document.getElementById('startRecording');
             const stopBtn = document.getElementById('stopRecording');
             const sttBtn = document.getElementById('sttButton');
             const status = document.getElementById('recordStatus');
             const audioPreview = document.getElementById('audioPreview');
             const voiceFileInput = document.getElementById('voiceFile');
+            const contentTextarea = document.getElementById('content'); // 서버 전송용
+            const displayTextarea = document.getElementById('text');     // 화면 표시용
 
             startBtn.addEventListener('click', async () => {
                 try {
@@ -153,30 +144,29 @@
                     mediaRecorder.start();
                     audioChunks = [];
 
-                    mediaRecorder.addEventListener('dataavailable', event => audioChunks.push(event.data));
-
+                    mediaRecorder.addEventListener('dataavailable', e => audioChunks.push(e.data));
                     mediaRecorder.addEventListener('stop', () => {
                         const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                        const dataTransfer = new DataTransfer();
-                        dataTransfer.items.add(new File([audioBlob], "recording.wav"));
-                        voiceFileInput.files = dataTransfer.files;
+                        const dt = new DataTransfer();
+                        dt.items.add(new File([audioBlob], "recording.wav"));
+                        voiceFileInput.files = dt.files;
                         audioPreview.src = URL.createObjectURL(audioBlob);
                         audioPreview.classList.remove('hidden');
                         sttBtn.disabled = false;
-                        sttBtn.classList.remove('bg-gray-300', 'text-gray-600');
-                        sttBtn.classList.add('bg-[#AB8D66]', 'text-white');
+                        sttBtn.classList.remove('bg-gray-300','text-gray-600');
+                        sttBtn.classList.add('bg-[#AB8D66]','text-white');
                         status.textContent = "✓ 녹음 완료, STT 변환 가능";
                     });
 
                     startBtn.disabled = true;
-                    startBtn.classList.remove('bg-[#F5BF76]', 'text-white');
-                    startBtn.classList.add('bg-gray-300', 'text-gray-600');
+                    startBtn.classList.remove('bg-[#F5BF76]','text-white');
+                    startBtn.classList.add('bg-gray-300','text-gray-600');
                     stopBtn.disabled = false;
-                    stopBtn.classList.remove('bg-gray-300', 'text-gray-600');
-                    stopBtn.classList.add('bg-[#F5BF76]', 'text-white');
+                    stopBtn.classList.remove('bg-gray-300','text-gray-600');
+                    stopBtn.classList.add('bg-[#F5BF76]','text-white');
                     status.textContent = "● 녹음 중...";
-                } catch (error) {
-                    console.error(error);
+                } catch(e) {
+                    console.error(e);
                     status.textContent = "⚠ 마이크 접근 권한이 필요합니다.";
                     status.classList.add('text-red-500');
                 }
@@ -185,38 +175,89 @@
             stopBtn.addEventListener('click', () => {
                 mediaRecorder.stop();
                 startBtn.disabled = false;
-                startBtn.classList.remove('bg-gray-300', 'text-gray-600');
-                startBtn.classList.add('bg-[#F5BF76]', 'text-white');
+                startBtn.classList.remove('bg-gray-300','text-gray-600');
+                startBtn.classList.add('bg-[#F5BF76]','text-white');
                 stopBtn.disabled = true;
-                stopBtn.classList.remove('bg-[#F5BF76]', 'text-white');
-                stopBtn.classList.add('bg-gray-300', 'text-gray-600');
+                stopBtn.classList.remove('bg-[#F5BF76]','text-white');
+                stopBtn.classList.add('bg-gray-300','text-gray-600');
             });
 
             sttBtn.addEventListener('click', async () => {
                 const file = voiceFileInput.files[0];
-                if (!file) return alert("녹음 또는 파일을 먼저 선택해주세요.");
+                if(!file) return alert("녹음 또는 파일을 먼저 선택해주세요.");
 
-                const formData = new FormData();
-                formData.append('voiceFile', file);
+                const fd = new FormData();
+                fd.append('voiceFile', file);
 
                 status.textContent = "⏳ STT 변환 중...";
                 status.classList.remove('text-red-500');
                 status.classList.add('text-[#F5BF76]');
 
                 try {
-                    const response = await fetch('/api/stt', { method: 'POST', body: formData });
-                    if (!response.ok) throw new Error(response.statusText);
+                    const response = await fetch('/api/stt', { method:'POST', body: fd });
+                    if(!response.ok) throw new Error(response.statusText);
 
                     const data = await response.json();
-                    document.getElementById('text').value = data.text;
+                    displayTextarea.value = data.text; // 화면 표시용
+                    contentTextarea.value = data.text; // 서버 전송용
                     status.textContent = "✓ STT 변환 완료";
-                } catch (error) {
-                    console.error(error);
+                } catch(e) {
+                    console.error(e);
                     status.textContent = "⚠ STT 변환 중 오류 발생";
                     status.classList.remove('text-[#F5BF76]');
                     status.classList.add('text-red-500');
                 }
             });
+
+            // AI 교정
+            document.getElementById("aiCorrectBtn").addEventListener("click", async () => {
+                const btn = document.getElementById("aiCorrectBtn");
+                const spinner = document.getElementById("aiCorrectSpinner");
+                const originalText = displayTextarea.value.trim();
+
+                if(!originalText) {
+                    status.textContent = "⚠ 교정할 내용을 입력하세요.";
+                    status.classList.remove('text-[#F5BF76]');
+                    status.classList.add('text-red-500');
+                    return;
+                }
+
+                btn.disabled = true;
+                spinner.classList.remove("hidden");
+                status.textContent = "⏳ AI 교정 중...";
+                status.classList.remove('text-red-500');
+                status.classList.add('text-[#F5BF76]');
+
+                try {
+                    const resp = await fetch('/api/ai-correct', {
+                        method:"POST",
+                        headers:{ "Content-Type":"application/json" },
+                        body: JSON.stringify({ text: originalText })
+                    });
+                    const result = await resp.json();
+
+                    if(!resp.ok) throw new Error(result.detail || "AI 교정 요청 실패");
+
+                    if(result.status===200 && result.corrected_text){
+                        displayTextarea.value = result.corrected_text; // 화면 표시
+                        contentTextarea.value = result.corrected_text; // 서버 전송용
+                        status.textContent = "✓ AI 교정 완료";
+                    } else {
+                        status.textContent = "⚠ AI 교정 실패";
+                        status.classList.remove('text-[#F5BF76]');
+                        status.classList.add('text-red-500');
+                    }
+                } catch(e){
+                    console.error("AI 교정 오류:", e);
+                    status.textContent = "⚠ AI 교정 중 오류 발생";
+                    status.classList.remove('text-[#F5BF76]');
+                    status.classList.add('text-red-500');
+                } finally {
+                    btn.disabled = false;
+                    spinner.classList.add("hidden");
+                }
+            });
+
         });
     </script>
 
