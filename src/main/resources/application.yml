@@ -14,9 +14,10 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
+
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
       hibernate:
         format_sql: true
@@ -25,6 +26,7 @@ spring:
   sql:
     init:
       mode: always
+      continue-on-error: true
       encoding: UTF-8
   mvc:
     static-path-pattern: /**
@@ -47,3 +49,14 @@ spring:
             token-uri: https://kauth.kakao.com/oauth/token
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
+
+  servlet:
+    multipart:
+      max-file-size: 50MB       # 파일 하나당 최대 크기
+      max-request-size: 50MB    # 요청 전체 최대 크기 (여러 파일 포함)
+
+
+gcp:
+  project-id: ${gcp.project-id}
+  credentials:
+    location: ${gcp.credentials.location}
