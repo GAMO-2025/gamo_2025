@@ -9,6 +9,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
-    Optional<Member> findBySocialIdAndProvider(String socialId, String provider);
+    Optional<Member> findBySocialIdAndProviderAndStatus(String socialId, String provider, Member.MemberStatus status);
     List<Member> findByFamily(Family family);
 }

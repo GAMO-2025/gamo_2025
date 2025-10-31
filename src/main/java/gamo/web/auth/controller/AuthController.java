@@ -3,6 +3,7 @@ package gamo.web.auth.controller;
 import gamo.web.auth.jwt.JwtTokenProvider;
 import gamo.web.auth.refresh.RefreshToken;
 import gamo.web.auth.refresh.RefreshTokenRepository;
+import gamo.web.auth.service.LogoutService;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseCookie;
@@ -23,6 +24,7 @@ public class AuthController {
 
     private final JwtTokenProvider tokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final LogoutService logoutService;
 
     // 한국 시간대
     ZoneId KST = ZoneId.of("Asia/Seoul");
@@ -48,14 +50,15 @@ public class AuthController {
             return ResponseEntity.status(401).build();
         }
 
+        refreshTokenRepository.deleteByToken(refreshToken);
+//        refreshTokenRepository.save(stored);
+
         Long memberId = tokenProvider.getMemberIdFromToken(refreshToken);
 
         // Access 재발급
         String newAccess = tokenProvider.generateAccessToken(memberId);
-
-        refreshTokenRepository.save(stored);
-
         String newRefresh = tokenProvider.generateRefreshToken(memberId);
+
         refreshTokenRepository.save(RefreshToken.builder()
                 .memberId(memberId)
                 .token(newRefresh)
@@ -95,23 +98,7 @@ public class AuthController {
             refreshTokenRepository.deleteByToken(refreshToken);
         }
 
-        // 일단 https 안쓰기... https 쓰고 싶으면 secure(true)
-        ResponseCookie expiredAccess = ResponseCookie.from("accessToken", "")
-                .httpOnly(true).secure(false).path("/")
-                .maxAge(0) // 즉시 만료
-                .sameSite("Lax")
-                .build();
-
-        ResponseCookie expiredRefresh = ResponseCookie.from("refreshToken", "")
-                .httpOnly(true).secure(false).path("/")
-                .maxAge(0)
-                .sameSite("Lax")
-                .build();
-
-        response.addHeader("Set-Cookie", expiredAccess.toString());
-        response.addHeader("Set-Cookie", expiredRefresh.toString());
-
-        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        logoutService.performLogout(request, response);
 
         return ResponseEntity.status(303)
                 .header("Location", "/login")
