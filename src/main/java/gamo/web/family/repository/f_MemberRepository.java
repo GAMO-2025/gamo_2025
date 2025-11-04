@@ -1,13 +1,12 @@
 package gamo.web.family.repository;
 
-import gamo.web.member.domain.Family;
 import gamo.web.member.domain.Member;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
-public class MemberRepository {
+@Repository
+public class f_MemberRepository {
 
     @PersistenceContext
     private EntityManager em;

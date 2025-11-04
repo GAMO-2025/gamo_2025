@@ -4,12 +4,16 @@ import gamo.web.member.domain.Family;
 import gamo.web.member.domain.Member;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
-public class FamilyRepository {
+@Getter
+@Setter
+public class f_FamilyRepository {
 
     @PersistenceContext
     private EntityManager em;
@@ -19,8 +23,14 @@ public class FamilyRepository {
     }
 
     public Family findByCode(String code) {
-        return em.find(Family.class, code);
+        return em.createQuery("SELECT f FROM Family f WHERE f.familyCode = :code", Family.class)
+                .setParameter("code", code)
+                .getSingleResult();
     }
+
+//    public Family findByCode(String code) {
+//        return em.find(Family.class, code);
+//    }
 
     public List<Member> findAll(Long familyId) {
         return em.createQuery(

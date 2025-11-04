@@ -1,30 +1,33 @@
 package gamo.web.family.service;
 
-import gamo.web.family.repository.FamilyRepository;
+import gamo.web.family.repository.f_FamilyRepository;
+import gamo.web.family.repository.f_MemberRepository;
 import gamo.web.member.domain.Family;
 import gamo.web.member.domain.Member;
 import gamo.web.member.repository.MemberRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class FamilyService {
 
-    @Autowired
-    FamilyRepository familyRepository;
-    MemberRepository memberRepository;
+    private final f_FamilyRepository familyRepository;
+    private final f_MemberRepository memberRepository;
 
     public List<Member> allMember(Long id) { //가족 구성원 조회
         return familyRepository.findAll(id);
     }
 
+    @Transactional
     public void create(Member member) { //가족 생성
         //멤버의 가족아이디가 null인지 검사
-        if(member.getFamily() == null)
+        if(member.getFamily() != null)
             throw new IllegalStateException("이미 가입한 가족 그룹이 존재합니다");
 
         //family 테이블에 값 생성
@@ -33,8 +36,7 @@ public class FamilyService {
         familyRepository.save(family);
 
         //멤버의 가족아이디 설정
-        Member starter = memberRepository.findById(member.getId())
-                .orElseThrow(()->new IllegalArgumentException("존재하지 않는 회원입니다."));
+        Member starter = memberRepository.findById(member.getId());
         starter.setFamily(family);
     }
 
