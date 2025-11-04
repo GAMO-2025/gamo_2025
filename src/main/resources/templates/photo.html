@@ -1,14 +1,119 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
-<body>
-<h2>사진 목록</h2>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>가모 – 앨범</title>
+    <link rel="stylesheet" th:href="@{/main.css}" />
+    <style>
+        /* iOS notch 안전 여백용 (Tailwind로 못하는 부분만 보강) */
+        :root { --safe-top: env(safe-area-inset-top); --safe-bottom: env(safe-area-inset-bottom); }
+    </style>
+</head>
+<body class="bg-neutral-100 flex items-center justify-center min-h-screen">
 
-<div class="photo-container">
-    <div>
-        <img th:src="@{'https://storage.cloud.google.com/gamo_bucket/photo/' + ${photoData.url}}" alt="앨범 사진">
+<!-- 헤더 -->
+<div th:replace="fragments/header :: header"></div>
+<main
+        class="relative w-screen min-h-screen overflow-auto shadow-xl"
+        style="padding-top: 90px; padding-bottom: var(--safe-bottom);"
+>
+    <div class="flex items-center justify-center"
+         style="height: calc(100vh - 90px - 60px - var(--safe-bottom));">
+        <img th:src="@{'https://storage.cloud.google.com/gamo_bucket/photo/' + ${photoData.url}}"
+             class="w-full h-auto object-contain">
     </div>
-    <p th:text="${#temporals.format(photoData.created_at, 'yyyy-MM-dd HH:mm')}">생성일</p>
-    <div></div>
-</div>
+    <div class="flex items-center justify-between w-full px-4 mt-4 absolute" style="bottom: 90px;">
+
+        <!-- 좋아요 버튼 -->
+        <button class="flex items-center gap-2 text-red-500"
+                th:attr="data-id=${photoData.photo_id}" id="like-btn">
+            <img th:src="${isLikedByUser} ? '/svgs/photo_heart.svg' : '/svgs/photo_empty_heart.svg'"
+                 alt="좋아요" class="w-6 h-6" id="like-img">
+            <span th:text="${likeCount}">0</span>
+        </button>
+
+        <!-- 업로드 날짜 -->
+        <span class="text-gray-500 text-sm" th:text="${#temporals.format(photoData.created_at, 'yyyy-MM-dd HH:mm')}">
+            0000-00-00 00:00
+        </span>
+
+        <!-- 삭제 버튼 -->
+<!--        <button class="flex items-center text-gray-500" onclick="deletePhoto(${photoData.photo_id})"-->
+<!--                id="delete-btn" th:attr="data-id=${photoData.photo_id}">-->
+<!--            <img src="/svgs/photo_trash.svg" alt="삭제" class="w-6 h-6">-->
+<!--        </button>-->
+        <button class="flex items-center text-gray-500" id="delete-btn"
+                th:attr="data-id=${photoData.photo_id}">
+            <img src="/svgs/photo_trash.svg" alt="삭제" class="w-6 h-6">
+        </button>
+
+    </div>
+</main>
+
+<!-- 푸터 -->
+<div th:replace="fragments/footer :: BottomNav('album')"></div>
+
 </body>
 </html>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // 삭제 버튼
+        const deleteBtn = document.getElementById("delete-btn");
+            deleteBtn.addEventListener("click", async function () {
+                const photoId = this.dataset.id;
+                if (!confirm("이 사진을 정말 삭제하시겠습니까?")) return;
+
+                try {
+                    const response = await fetch(`/photo/delete/${photoId}`, {
+                        method: "DELETE",
+                    });
+                    if (response.ok) {
+                        alert("사진이 삭제되었습니다.");
+                        location.reload();
+                    } else {
+                        alert("삭제 중 오류가 발생했습니다.");
+                    }
+                } catch (error) {
+                    console.error(error);
+                    alert("네트워크 오류가 발생했습니다.");
+                }
+            });
+
+        // 좋아요 버튼
+        const likeBtn = document.getElementById("like-btn");
+        const likeImg = likeBtn.querySelector("#like-img");
+        const likeCountSpan = likeBtn.querySelector("span");
+        likeBtn.addEventListener("click", async function () {
+                const photoId = this.dataset.id;
+                try {
+                    const response = await fetch(`/photoLike/${photoId}`, {
+                        method: "POST"
+                    });
+
+                    if (response.ok) {
+                        const isLiked = (await response.text()).trim();
+                        if (isLiked === "liked") {
+                            //alert("좋아요 추가됨");
+                            //this.textContent = "좋아요 취소";
+                            likeImg.src = "/svgs/photo_heart.svg"; // 채워진 하트
+                            this.dataset.liked = "true";
+                            likeCountSpan.textContent = parseInt(likeCountSpan.textContent) + 1;
+                        } else {
+                            //alert("좋아요 취소됨!");
+                            //this.textContent = "좋아요";
+                            likeImg.src = "/svgs/photo_empty_heart.svg"; // 빈 하트
+                            this.dataset.liked = "false";
+                            likeCountSpan.textContent = parseInt(likeCountSpan.textContent) - 1;
+                        }
+                    } else {
+                        alert("좋아요 처리 중 오류가 발생했습니다.");
+                    }
+                } catch (error) {
+                    console.error(error);
+                    alert("네트워크 오류가 발생했습니다.");
+                }
+        });
+    });
+</script>

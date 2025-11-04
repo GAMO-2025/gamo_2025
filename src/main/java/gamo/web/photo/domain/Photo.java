@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity @Setter @Getter
 public class Photo {
@@ -24,8 +26,13 @@ public class Photo {
     @JoinColumn(name = "album_id", nullable = false)
     private Album album;
 
-    // Photo : Member = N : 1
+    // Photo:Member = N:1
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
+
+    //Photo:Like N:1
+    @OneToMany(mappedBy = "photo", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Like> likes = new ArrayList<>();
+
 }

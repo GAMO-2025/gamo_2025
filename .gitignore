@@ -12,3 +12,5 @@ src/main/resources/google-service-account.json
 # Build outputs
 build/
 out/
+
+node_modules/

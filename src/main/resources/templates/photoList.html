@@ -1,42 +1,89 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>앨범 사진</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>가모 – 앨범</title>
+    <link rel="stylesheet" th:href="@{/main.css}" />
     <style>
-        .photo-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 20px;
-        }
-        .photo-item {
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            transition: transform 0.2s ease;
-        }
-        .photo-item:hover {
-            transform: scale(1.05);
-        }
-        .photo-item img {
-            width: 200px;
-            height: 200px;
-            object-fit: cover;
-            display: block;
-        }
+        /* iOS notch 안전 여백용 (Tailwind로 못하는 부분만 보강) */
+        :root { --safe-top: env(safe-area-inset-top); --safe-bottom: env(safe-area-inset-bottom); }
     </style>
 </head>
-<body>
-<h2>사진 목록</h2>
+<body class="bg-neutral-100 flex items-center justify-center min-h-screen">
 
-<div class="photo-container">
-    <div class="photo-item" th:each="photo : ${photoList}">
-        <a th:href="@{'/photo/' + ${photo.photo_id}}">
-            <img th:src="@{'https://storage.cloud.google.com/gamo_bucket/photo/' + ${photo.url}}" alt="앨범 사진">
-        </a>
+<!-- 헤더 -->
+<div th:replace="fragments/header :: header"></div>
+<main
+        class="relative w-screen min-h-screen overflow-auto shadow-xl"
+        style="padding-top: 90px; padding-bottom: var(--safe-bottom);"
+>
+    <section class="grid grid-cols-4 gap-1">
+        <div class="photo-item relative w-full aspect-square overflow-hidden" th:each="photo : ${photoList}">
+            <a th:href="@{'/photo/' + ${photo.photo_id}}" class="block w-full h-full">
+                <img th:src="@{'https://storage.cloud.google.com/gamo_bucket/photo/' + ${photo.url}}"
+                     alt="앨범 사진"
+                     class="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
+            </a>
+        </div>
+        <div class="bg-green-500 flex items-center justify-center text-white font-bold cursor-pointer text-6xl aspect-square"
+             id="uploadDiv">
+            <form th:action="@{/photo/new/}" method="post" enctype="multipart/form-data"
+                  id="photoForm" style="display:none;">
+                <input type="file" id="fileInput" name="image" accept="image/*" required/>
+            </form>
+            +
+        </div>
+    </section>
+    <!-- 모달 배경 -->
+    <div id="albumModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <!-- 모달 박스 -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 w-96">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">새 앨범 만들기</h2>
+            <form th:action="@{/album/new}" method="post" id="albumForm">
+                <input type="text" name="albumTitle"
+                       placeholder="앨범 이름을 입력하세요"
+                       class="w-full border border-gray-300 rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-green-400"
+                       required />
+
+                <div class="flex justify-end gap-3">
+                    <button type="button" id="cancelModalBtn"
+                            class="px-4 py-2 rounded-lg bg-gray-300 text-gray-800 hover:bg-gray-400">
+                        취소
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600">
+                        앨범 만들기
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
+</main>
+
+<!-- 푸터 -->
+<div th:replace="fragments/footer :: BottomNav('album')"></div>
+
 </body>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const uploadDiv = document.getElementById('uploadDiv');
+        const fileInput = document.getElementById('fileInput');
+        const photoForm = document.getElementById('photoForm');
+
+        const pathParts = window.location.pathname.split('/');
+        const albumId = pathParts[pathParts.length - 1];
+        photoForm.action = `/photo/new/${albumId}`;
+
+        uploadDiv.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', () => {
+            if(fileInput.files.length > 0){
+                photoForm.submit();
+            }
+        });
+    });
+</script>
 </html>

@@ -6,6 +6,7 @@ import jakarta.persistence.EntityGraph;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -24,9 +25,32 @@ public class PhotoRepository {
                 .getResultList();
     }
 
+    //앨범 썸네일
+    public Photo findLastestByAlbumId(Long albumId) {
+        List<Photo> result = em.createQuery(
+                        "SELECT p FROM Photo p WHERE p.album.id = :albumId ORDER BY p.created_at DESC",
+                        Photo.class)
+                .setParameter("albumId", albumId)
+                .setMaxResults(1)
+                .getResultList();
+
+        return result.isEmpty() ? null : result.get(0);
+    }
+
     public Photo findById(Long photoId) {
         return em.createQuery("SELECT p FROM Photo p WHERE p.photo_id = :photoId", Photo.class)
                 .setParameter("photoId", photoId)
                 .getSingleResult();
+    }
+
+    //사진 삭제
+    @Transactional
+    public void deleteById(Long photoId) {
+        Photo photo = findById(photoId);
+        if (photo != null) {
+            em.remove(photo);
+        } else {
+            throw new IllegalArgumentException("Photo not found");
+        }
     }
 }
