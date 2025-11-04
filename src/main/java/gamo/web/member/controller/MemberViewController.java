@@ -8,6 +8,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
@@ -17,11 +18,20 @@ public class MemberViewController {
 
     private final MemberService memberService;
 
-    @GetMapping("/mypage")
-    public String mypage(@AuthenticationPrincipal UserPrincipal user, Model model) {
+    @ModelAttribute("member")
+    public LoginResponseDTO currentMember(@AuthenticationPrincipal UserPrincipal user) {
+        if (user == null) return null;               // 비로그인 대비
         Long memberId = memberService.getMemberId(user);
-        LoginResponseDTO member = memberService.getMyInfo(memberId);
-        model.addAttribute("member", member); // 타임리프에서 ${member.*}로 접근
+        return memberService.getMyInfo(memberId);
+    }
+
+    @GetMapping("/family")
+    public String family() {
+        return "pages/member/family";
+    }
+
+    @GetMapping("/mypage")
+    public String mypage() {
         return "pages/member/mypage";
     }
 }

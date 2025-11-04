@@ -29,7 +29,6 @@ public class AuthController {
     // 한국 시간대
     ZoneId KST = ZoneId.of("Asia/Seoul");
 
-
     @PostMapping("/reissue")
     public ResponseEntity<Void> reissue(HttpServletRequest request, HttpServletResponse response) {
         String refreshToken = Arrays.stream(request.getCookies() != null ? request.getCookies() : new jakarta.servlet.http.Cookie[0])

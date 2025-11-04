@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="fragments/layout :: AppLayout('home', ~{::content}, null)">
+
+<th:block th:fragment="content">
+    <!-- 로그인 사용자 전용 -->
+    <div class="flex flex-col px-5 pt-6 w-full" th:if="${member != null}">
+
+        <!-- 프로필 영역 -->
+        <div class="flex items-center gap-4">
+            <img class="h-14 w-14 rounded-full object-cover"
+                 th:src="${member.picture}"
+                 alt="profile"/>
+
+            <div class="flex flex-col">
+                <p class="text-[18px] font-bold text-gray-900"
+                   th:text="${member.name + '님'}" />
+                <p class="text-[13px] text-gray-500"
+                   th:text="${member.email}" />
+            </div>
+        </div>
+
+        <!-- 구분선 -->
+        <div class="my-8 h-px w-full bg-gray-100"></div>
+
+        <!-- 가족 목록 헤더 -->
+        <div class="flex items-center justify-between px-5">
+            <p class="text-[20px] font-extrabold text-gray-900">가족목록</p>
+
+        <!--      실제 가족 초대 api 대로 해야함!!! 지금은 임시      -->
+            <a th:href="@{/member/family/invite}"
+               class="flex items-center gap-1 rounded-full bg-white px-3 py-1 text-[13px] font-semibold text-amber-800 shadow-sm">
+                <span>가족 초대</span>
+                <img src="/svgs/ic_plus_btn.svg" alt="plus btn" />
+            </a>
+        </div>
+
+        <!-- 가족 카드 리스트 -->
+        <div class="mt-4 flex flex-col gap-3 px-4 pb-36">
+            <!--    지금은 그냥 테스트용... 나중에는 map 으로 하기        -->
+           <div class="flex flex-row gap-3">
+               <img class ="h-16 w-16 rounded-full object-cover"
+                    src="/svgs/logo.svg" alt="default" />
+               <p class="text-[16px] font-bold text-gray-900">홍길동</p>
+               <img src="/svgs/ic_pencil.svg" alt="pencil btn" />
+           </div>
+        </div>
+    </div>
+
+    <!-- 비로그인 사용자 -->
+    <section class="px-5 py-10 text-center" th:if="${member == null}">
+        <p class="text-sm text-gray-600">로그인이 필요합니다.</p>
+        <a th:href="@{/oauth2/authorization/kakao}"
+           class="mx-auto mt-4 inline-block rounded-full bg-amber-300 px-6 py-3 text-[14px] font-semibold text-gray-900 shadow-md">
+            카카오로 로그인
+        </a>
+    </section>
+</th:block>
+</html>
