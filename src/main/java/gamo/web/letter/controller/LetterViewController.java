@@ -2,11 +2,14 @@ package gamo.web.letter.controller;
 
 import gamo.web.auth.UserPrincipal;
 import gamo.web.letter.domain.Letter;
-import gamo.web.letter.dto.LetterCountDto;
+import gamo.web.letter.dto.LetterCountDTO;
+import gamo.web.letter.dto.LetterListDTO;
 import gamo.web.letter.dto.LetterRequestDTO;
+import gamo.web.letter.dto.PersonDTO;
 import gamo.web.letter.service.LetterService;
 import gamo.web.member.domain.Member;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -19,6 +22,43 @@ import java.util.List;
 public class LetterViewController {
 
     private final LetterService letterService;
+
+    private static final int PAGE_SIZE = 4; // 페이지당 편지 개수
+
+    // 편지 보관함
+    @GetMapping("/letter/list")
+    public String showLetterList(
+            @RequestParam(defaultValue = "received") String type,
+            @RequestParam(required = false) Long personId,
+            @RequestParam(defaultValue = "desc") String sort,
+            @RequestParam(defaultValue = "0") int page,
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            Model model) {
+
+        Member loginMember = userPrincipal.getMember();
+        Long loginMemberId = loginMember.getId();
+
+        Page<LetterListDTO> letterPage;
+        List<PersonDTO> personList;
+
+        if ("received".equals(type)) {
+            letterPage = letterService.getReceivedLetters(loginMemberId, personId, sort, page, PAGE_SIZE);
+            personList = letterService.getReceivedLetterSenders(loginMemberId);
+        } else {
+            letterPage = letterService.getSentLetters(loginMemberId, personId, sort, page, PAGE_SIZE);
+            personList = letterService.getSentLetterReceivers(loginMemberId);
+        }
+
+        model.addAttribute("letters", letterPage.getContent());
+        model.addAttribute("personList", personList);
+        model.addAttribute("type", type);
+        model.addAttribute("personId", personId);
+        model.addAttribute("sort", sort);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", letterPage.getTotalPages());
+
+        return "/pages/letter/letterList";
+    }
 
     // 편지 작성
     @GetMapping("/letter/new")
@@ -56,6 +96,21 @@ public class LetterViewController {
         return "redirect:/letter/new";
     }
 
+    // 편지 삭제
+    @PostMapping("/letter/delete/{letterId}")
+    @ResponseBody
+    public String deleteLetter(
+            @PathVariable Long letterId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        try {
+            Long userId = userPrincipal.getMember().getId();
+            letterService.deleteLetter(letterId, userId);
+            return "success";
+        } catch (Exception e) {
+            return "error";
+        }
+    }
+
     // 편지 홈
     @GetMapping("/letter")
     public String showLetterHome(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
@@ -63,7 +118,7 @@ public class LetterViewController {
         Long loginMemberId = loginMember.getId();
 
         // 편지 개수 조회
-        LetterCountDto letterCounts = letterService.getLetterCounts(loginMemberId);
+        LetterCountDTO letterCounts = letterService.getLetterCounts(loginMemberId);
         model.addAttribute("letterCounts", letterCounts);
 
         return "/pages/letter/letterHome";

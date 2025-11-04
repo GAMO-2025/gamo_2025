@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: AppLayout('letter', ~{::content}, null)}">
+<th:block th:fragment="content">
+
+    <div class="px-4 pt-8 pb-24">
+        <!-- Title Section -->
+        <div class="mb-6">
+            <h2 class="text-2xl font-bold text-[#AB8D66]">편지 보관함</h2>
+            <p class="text-gray-500 text-sm mt-1">주고받은 편지를 확인하세요.</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex border-b border-gray-200 mb-4">
+            <button onclick="changeTab('received')" id="receivedTab"
+                    th:classappend="${type == 'received' ? 'text-[#F5BF76] border-b-2 border-[#F5BF76] font-semibold' : 'text-gray-400 font-medium'}"
+                    class="flex-1 py-3 text-center">
+                받은 편지
+            </button>
+            <button onclick="changeTab('sent')" id="sentTab"
+                    th:classappend="${type == 'sent' ? 'text-[#F5BF76] border-b-2 border-[#F5BF76] font-semibold' : 'text-gray-400 font-medium'}"
+                    class="flex-1 py-3 text-center">
+                보낸 편지
+            </button>
+        </div>
+
+        <!-- Filter and Sort Controls -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4">
+            <div class="grid grid-cols-2 gap-3">
+                <!-- Person Filter -->
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-2">
+                        <span th:if="${type == 'received'}">보낸 사람</span>
+                        <span th:if="${type == 'sent'}">받은 사람</span>
+                    </label>
+                    <select id="personFilter" onchange="applyFilters()"
+                            class="w-full border border-gray-200 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5BF76]">
+                        <option value="">전체</option>
+                        <option th:each="person : ${personList}"
+                                th:value="${person.id}"
+                                th:text="${person.name}"
+                                th:selected="${personId != null && personId == person.id}">
+                        </option>
+                    </select>
+                </div>
+
+                <!-- Sort Order -->
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-2">정렬</label>
+                    <select id="sortOrder" onchange="applyFilters()"
+                            class="w-full border border-gray-200 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5BF76]">
+                        <option value="desc" th:selected="${sort == 'desc'}">최신순</option>
+                        <option value="asc" th:selected="${sort == 'asc'}">오래된순</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Letter List -->
+        <div class="space-y-3 mb-4">
+            <!-- No Letters Message -->
+            <div th:if="${#lists.isEmpty(letters)}"
+                 class="text-center py-12 text-gray-400">
+                <span th:if="${type == 'received'}">받은 편지가 없습니다</span>
+                <span th:if="${type == 'sent'}">보낸 편지가 없습니다</span>
+            </div>
+
+            <!-- Letter Cards -->
+            <div th:each="letter : ${letters}">
+                <!-- Letter Card -->
+                <div th:classappend="${type == 'received' && !letter.isRead ? 'border-2 border-[#F5BF76]' : 'border border-gray-200'}"
+                     class="bg-white rounded-2xl p-4 shadow-sm relative cursor-pointer hover:shadow-md transition"
+                     th:onclick="|location.href='/letter/detail/${letter.id}'|">
+
+                    <!-- Status Badge -->
+                    <div class="absolute top-3 right-3">
+                        <!-- Received - Unread -->
+                        <span th:if="${type == 'received' && !letter.isRead}"
+                              class="text-xs font-semibold text-red-500 bg-red-50 px-2 py-1 rounded-full">안읽음</span>
+                        <!-- Received - Read -->
+                        <span th:if="${type == 'received' && letter.isRead}"
+                              class="text-xs font-medium text-gray-400 bg-gray-100 px-2 py-1 rounded-full">읽음</span>
+                        <!-- Sent - Cancelled -->
+                        <span th:if="${type == 'sent' && letter.isCancelled}"
+                              class="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">전송취소</span>
+                        <!-- Sent - Completed -->
+                        <span th:if="${type == 'sent' && !letter.isCancelled}"
+                              class="text-xs font-medium text-blue-500 bg-blue-50 px-2 py-1 rounded-full">전송완료</span>
+                    </div>
+
+                    <!-- Letter Content -->
+                    <div class="pr-20 mb-10">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-sm font-bold text-gray-900" th:text="${letter.otherPersonName}">이름</span>
+                            <span class="text-xs text-gray-400" th:text="${letter.date}">2024.10.12</span>
+                        </div>
+                        <h3 class="font-semibold mb-1"
+                            th:classappend="${type == 'received' && !letter.isRead ? 'text-gray-900' : 'text-gray-700'}"
+                            th:text="${letter.title}">편지 제목</h3>
+                        <p class="text-sm line-clamp-2"
+                           th:classappend="${type == 'received' && !letter.isRead ? 'text-gray-500' : 'text-gray-400'}"
+                           th:text="${letter.contentPreview}">편지 내용 미리보기</p>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="absolute bottom-3 right-3 flex gap-2">
+                        <!-- Cancel Button (5분 이내 보낸 편지만) -->
+                        <form th:if="${type == 'sent' && letter.canCancel}"
+                              th:action="@{/letter/cancel}" method="post"
+                              style="display: inline;"
+                              onsubmit="event.stopPropagation(); return showCancelModal(event, this);">
+                            <input type="hidden" name="letterId" th:value="${letter.id}"/>
+                            <button type="submit"
+                                    class="text-orange-500 text-sm font-medium border border-orange-500 rounded-lg px-3 py-1.5 hover:bg-orange-50 transition">
+                                취소
+                            </button>
+                        </form>
+
+                        <!-- Delete Button -->
+                        <button th:onclick="|event.stopPropagation(); showDeleteModal(${letter.id})|"
+                                class="text-red-500 text-sm font-medium border border-red-500 rounded-lg px-4 py-1.5 hover:bg-red-50 transition">
+                            삭제
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div th:if="${totalPages > 1}" class="flex justify-center items-center gap-2">
+            <!-- Previous Button -->
+            <button th:if="${currentPage > 0}"
+                    th:onclick="|changePage(${currentPage - 1})|"
+                    class="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                이전
+            </button>
+
+            <!-- Page Numbers -->
+            <div class="flex gap-1">
+                <button th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                        th:if="${i >= currentPage - 2 && i <= currentPage + 2}"
+                        th:onclick="|changePage(${i})|"
+                        th:classappend="${i == currentPage ? 'bg-[#F5BF76] text-white' : 'bg-white text-gray-700 border border-gray-200'}"
+                        class="w-10 h-10 rounded-lg text-sm font-medium hover:brightness-95 transition">
+                    <span th:text="${i + 1}">1</span>
+                </button>
+            </div>
+
+            <!-- Next Button -->
+            <button th:if="${currentPage < totalPages - 1}"
+                    th:onclick="|changePage(${currentPage + 1})|"
+                    class="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                다음
+            </button>
+        </div>
+    </div>
+
+    <!-- Delete Modal -->
+    <div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" onclick="closeDeleteModal(event)">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl" onclick="event.stopPropagation()">
+            <h3 class="text-lg font-bold text-gray-900 mb-2">편지 삭제</h3>
+            <p class="text-gray-600 text-sm mb-6">정말 이 편지를 삭제하시겠습니까?<br>삭제된 편지는 복구할 수 없습니다.</p>
+            <div class="flex gap-3">
+                <button onclick="closeDeleteModal()"
+                        class="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition">
+                    취소
+                </button>
+                <button onclick="confirmDelete()"
+                        class="flex-1 py-2.5 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition">
+                    삭제
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancel Modal -->
+    <div id="cancelModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50" onclick="closeCancelModal(event)">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-xl" onclick="event.stopPropagation()">
+            <h3 class="text-lg font-bold text-gray-900 mb-2">전송 취소</h3>
+            <p class="text-gray-600 text-sm mb-6">편지 전송을 취소하시겠습니까?<br>취소된 편지는 상대방이 볼 수 없습니다.</p>
+            <div class="flex gap-3">
+                <button onclick="closeCancelModal()"
+                        class="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition">
+                    닫기
+                </button>
+                <button onclick="confirmCancel()"
+                        class="flex-1 py-2.5 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600 transition">
+                    전송 취소
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script th:inline="javascript">
+        const currentType = /*[[${type}]]*/ 'received';
+        const currentSort = /*[[${sort}]]*/ 'desc';
+        const currentPersonId = /*[[${personId}]]*/ null;
+        const currentPage = /*[[${currentPage}]]*/ 0;
+
+        let deleteTargetId = null;
+        let cancelForm = null;
+
+        function changeTab(type) {
+            window.location.href = `/letter/list?type=${type}&sort=desc&page=0`;
+        }
+
+        function applyFilters() {
+            const personId = document.getElementById('personFilter').value;
+            const sort = document.getElementById('sortOrder').value;
+
+            let url = `/letter/list?type=${currentType}&sort=${sort}&page=0`;
+            if (personId) {
+                url += `&personId=${personId}`;
+            }
+            window.location.href = url;
+        }
+
+        function changePage(page) {
+            const personId = document.getElementById('personFilter').value;
+            const sort = document.getElementById('sortOrder').value;
+
+            let url = `/letter/list?type=${currentType}&sort=${sort}&page=${page}`;
+            if (personId) {
+                url += `&personId=${personId}`;
+            }
+            window.location.href = url;
+        }
+
+        // Delete Modal Functions
+        function showDeleteModal(letterId) {
+            deleteTargetId = letterId;
+            const modal = document.getElementById('deleteModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeDeleteModal(event) {
+            if (event && event.target.id !== 'deleteModal') return;
+            const modal = document.getElementById('deleteModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            deleteTargetId = null;
+        }
+
+        function confirmDelete() {
+            if (!deleteTargetId) return;
+
+            fetch(`/letter/delete/${deleteTargetId}`, {
+                method: 'POST'
+            })
+                .then(response => response.text())
+                .then(result => {
+                    if (result === 'success') {
+                        closeDeleteModal();
+                        location.reload();
+                    } else {
+                        alert('삭제 중 오류가 발생했습니다.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('삭제 중 오류가 발생했습니다.');
+                });
+        }
+
+        // Cancel Modal Functions
+        function showCancelModal(event, form) {
+            event.preventDefault();
+            cancelForm = form;
+            const modal = document.getElementById('cancelModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            return false;
+        }
+
+        function closeCancelModal(event) {
+            if (event && event.target.id !== 'cancelModal') return;
+            const modal = document.getElementById('cancelModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            cancelForm = null;
+        }
+
+        function confirmCancel() {
+            if (cancelForm) {
+                cancelForm.submit();
+            }
+        }
+
+        // Close modal on ESC key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeDeleteModal();
+                closeCancelModal();
+            }
+        });
+    </script>
+
+</th:block>
+</html>
