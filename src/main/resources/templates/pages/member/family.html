@@ -7,7 +7,7 @@
     <div class="flex flex-col px-5 pt-6 w-full" th:if="${member != null}">
 
         <!-- 프로필 영역 -->
-        <div class="flex items-center gap-4">
+        <a th:href="@{mypage}" class="flex items-center gap-4">
             <img class="h-14 w-14 rounded-full object-cover"
                  th:src="${member.picture}"
                  alt="profile"/>
@@ -18,33 +18,41 @@
                 <p class="text-[13px] text-gray-500"
                    th:text="${member.email}" />
             </div>
-        </div>
+        </a>
 
         <!-- 구분선 -->
         <div class="my-8 h-px w-full bg-gray-100"></div>
 
         <!-- 가족 목록 헤더 -->
-        <div class="flex items-center justify-between px-5">
+        <div class="flex items-center justify-between pl-5">
             <p class="text-[20px] font-extrabold text-gray-900">가족목록</p>
 
-        <!--      실제 가족 초대 api 대로 해야함!!! 지금은 임시      -->
+        <!--      가족 초대 페이지로 이동하는 controller 필요     -->
             <a th:href="@{/member/family/invite}"
-               class="flex items-center gap-1 rounded-full bg-white px-3 py-1 text-[13px] font-semibold text-amber-800 shadow-sm">
+               class="flex items-center gap-1 bg-white py-1 text-[13px] font-semibold text-amber-800">
                 <span>가족 초대</span>
                 <img src="/svgs/ic_plus_btn.svg" alt="plus btn" />
             </a>
         </div>
 
-        <!-- 가족 카드 리스트 -->
-        <div class="mt-4 flex flex-col gap-3 px-4 pb-36">
-            <!--    지금은 그냥 테스트용... 나중에는 map 으로 하기        -->
-           <div class="flex flex-row gap-3">
-               <img class ="h-16 w-16 rounded-full object-cover"
-                    src="/svgs/logo.svg" alt="default" />
-               <p class="text-[16px] font-bold text-gray-900">홍길동</p>
-               <img src="/svgs/ic_pencil.svg" alt="pencil btn" />
-           </div>
+        <!--  가족 목록  -->
+        <div class="mt-4 flex flex-col gap-4 pb-36">
+            <div th:each="f : ${familyList}"
+                 class="flex flex-row w-full items-center justify-between rounded-2xl shadow-[0_0_10px_rgba(0,0,0,0.08)] p-3">
+                <div class="flex items-center gap-5">
+                    <img class="h-14 w-14 rounded-full object-cover"
+                         th:src="${f.profileImage()}"
+                         alt="profile"/>
+                    <p class="flex items-center text-[16px] font-bold text-gray-900"
+                       th:text="${f.nickname()}" />
+                </div>
+                <img src="/svgs/ic_pencil.svg"
+                     class="edit-nickname"
+                     th:attr="data-alias-id=${f.id()}, data-current-name=${f.nickname()}"
+                     alt="edit nickname"/>
+            </div>
         </div>
+
     </div>
 
     <!-- 비로그인 사용자 -->

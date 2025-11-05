@@ -1,6 +1,7 @@
 package gamo.web.member.controller;
 
 import gamo.web.auth.UserPrincipal;
+import gamo.web.member.dto.FamilyListDTO;
 import gamo.web.member.dto.LoginResponseDTO;
 import gamo.web.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +11,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("/member")
@@ -26,7 +29,16 @@ public class MemberViewController {
     }
 
     @GetMapping("/family")
-    public String family() {
+    public String family(@AuthenticationPrincipal UserPrincipal user, Model model) {
+        if(user == null) {
+            return "redirect:/login";
+        }
+        Long memberId = memberService.getMemberId(user);
+
+        List<FamilyListDTO> familyList = memberService.getFamilyList(memberId);
+
+        model.addAttribute("familyList", familyList);
+
         return "pages/member/family";
     }
 
