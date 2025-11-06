@@ -48,7 +48,7 @@
                 </div>
                 <img src="/svgs/ic_pencil.svg"
                      class="edit-nickname"
-                     th:attr="data-alias-id=${f.id()}, data-current-name=${f.nickname()}"
+                     th:attr="data-alias-member-id=${f.id()}, data-current-name=${f.nickname()}"
                      alt="edit nickname"/>
             </div>
         </div>
@@ -63,5 +63,90 @@
             카카오로 로그인
         </a>
     </section>
+
+
+    <!-- 닉네임 변경 모달 (프래그먼트로 불러오기) -->
+    <th:block th:replace="~{fragments/inputModal :: NicknameModal('이름을 입력하세요', '변경하기', '돌아가기')}"/>
+
+    <script>
+        (function () {
+            const modal = document.getElementById('nicknameModal');
+            const form = document.getElementById('nicknameForm');
+            const input = document.getElementById('nicknameInput');
+
+            const aliasMemberIdInput = document.createElement('input');
+            aliasMemberIdInput.type = 'hidden';
+            aliasMemberIdInput.id = 'aliasMemberId';
+            form.appendChild(aliasMemberIdInput);
+
+            const closeButtons = modal.querySelectorAll('[data-modal-close]');
+
+            function openModal() {
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+            function closeModal() {
+                modal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+
+            document.addEventListener('click', (e) => {
+                const btn = e.target.closest('.edit-nickname');
+                if (!btn) return;
+
+                const currentName = btn.getAttribute('data-current-name') || '';
+                const aliasMemberId = btn.getAttribute('data-alias-member-id') || '';
+
+                input.placeholder = currentName;
+                input.value = '';
+                aliasMemberIdInput.value = aliasMemberId;
+
+                openModal();
+            });
+
+            closeButtons.forEach(b => b.addEventListener('click', closeModal));
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+            });
+
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const aliasMemberId = aliasMemberIdInput.value;
+                const nickname = input.value.trim();
+                if (!nickname) {
+                    alert('새 이름을 입력해주세요.');
+                    return;
+                }
+
+                const token = document.querySelector('meta[name="_csrf"]')?.content
+                    || document.querySelector('input[name="_csrf"]')?.value;
+
+                try {
+                    const res = await fetch(`/api/member/${aliasMemberId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...(token ? { 'X-CSRF-TOKEN': token } : {}),
+                        },
+                        body: JSON.stringify({ alias: nickname }),
+                    });
+
+                    if (res.ok) {
+                        closeModal();
+                        location.reload();
+                    } else {
+                        alert('닉네임 변경에 실패했습니다.');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('서버 오류가 발생했습니다.');
+                }
+            });
+        })();
+    </script>
+
 </th:block>
 </html>
