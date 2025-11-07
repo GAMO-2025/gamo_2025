@@ -42,6 +42,11 @@ public class MemberViewController {
         return "pages/member/family";
     }
 
+    @GetMapping("/invite")
+    public String invite() {
+        return "pages/member/invite";
+    }
+
     @GetMapping("/mypage")
     public String mypage() {
         return "pages/member/mypage";
