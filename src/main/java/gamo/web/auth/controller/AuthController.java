@@ -3,9 +3,9 @@ package gamo.web.auth.controller;
 import gamo.web.auth.jwt.JwtTokenProvider;
 import gamo.web.auth.refresh.RefreshToken;
 import gamo.web.auth.refresh.RefreshTokenRepository;
-import gamo.web.member.domain.Member;
+import gamo.web.auth.service.LogoutService;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.Response;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,10 +24,10 @@ public class AuthController {
 
     private final JwtTokenProvider tokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final LogoutService logoutService;
 
     // 한국 시간대
     ZoneId KST = ZoneId.of("Asia/Seoul");
-
 
     @PostMapping("/reissue")
     public ResponseEntity<Void> reissue(HttpServletRequest request, HttpServletResponse response) {
@@ -49,14 +49,15 @@ public class AuthController {
             return ResponseEntity.status(401).build();
         }
 
+        refreshTokenRepository.deleteByToken(refreshToken);
+//        refreshTokenRepository.save(stored);
+
         Long memberId = tokenProvider.getMemberIdFromToken(refreshToken);
 
         // Access 재발급
         String newAccess = tokenProvider.generateAccessToken(memberId);
-
-        refreshTokenRepository.save(stored);
-
         String newRefresh = tokenProvider.generateRefreshToken(memberId);
+
         refreshTokenRepository.save(RefreshToken.builder()
                 .memberId(memberId)
                 .token(newRefresh)
@@ -79,5 +80,28 @@ public class AuthController {
         response.addHeader("Set-Cookie", refreshCookie.toString());
 
         return ResponseEntity.ok().build();
+    }
+
+
+    @PostMapping("/logout")
+    @Transactional
+    public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
+
+        String refreshToken = Arrays.stream(request.getCookies() != null ? request.getCookies() : new jakarta.servlet.http.Cookie[0])
+                .filter(c -> "refreshToken".equals(c.getName()))
+                .map(jakarta.servlet.http.Cookie::getValue)
+                .findFirst()
+                .orElse(null);
+
+        if (refreshToken != null) {
+            refreshTokenRepository.deleteByToken(refreshToken);
+        }
+
+        logoutService.performLogout(request, response);
+
+        return ResponseEntity.status(303)
+                .header("Location", "/login")
+                .build();
+
     }
 }
