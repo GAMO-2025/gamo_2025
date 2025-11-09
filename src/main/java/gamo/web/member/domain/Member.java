@@ -1,16 +1,13 @@
 package gamo.web.member.domain;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Getter
+@Getter @Setter
 public class Member {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -64,5 +61,10 @@ public class Member {
         // 이름이랑 프로필 이미지도 null 처리
         this.name = "탈퇴회원";
         this.profileImage = null;
+    }
+
+    public Member setFamily(Family family) {
+        this.family = family;
+        return this;
     }
 }

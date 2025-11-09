@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>가모 – 앨범</title>
+    <link rel="stylesheet" th:href="@{/main.css}" />
+    <style>
+        /* iOS notch 안전 여백용 (Tailwind로 못하는 부분만 보강) */
+        :root { --safe-top: env(safe-area-inset-top); --safe-bottom: env(safe-area-inset-bottom); }
+    </style>
+</head>
+<body class="bg-neutral-100 flex items-center justify-center min-h-screen">
+
+<main class="relative w-screen min-h-screen overflow-auto shadow-xl"
+        style="padding-top: 90px; padding-bottom: var(--safe-bottom);">
+
+    <form action="/family/create" method="post">
+        <button type="submit"
+                class="bg-green-500 text-white font-semibold py-3 px-6 rounded-lg shadow hover:bg-orange-500 transition m-10">
+            가족 모임 만들기
+        </button>
+    </form>
+    <button id="openModal" type="button"
+            class="bg-green-500 text-white font-semibold py-3 px-6 rounded-lg shadow hover:bg-orange-500 transition m-10">
+        초대 코드 입력하기
+    </button>
+
+    <!-- 팝업 -->
+    <div id="inviteModal"
+         class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-xl p-8 w-80 text-center">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">초대 코드 입력</h2>
+            <form id="inviteForm" action="/family/join" method="post">
+                <input id="inviteCode" name="inviteCode" type="text" placeholder="초대 코드를 입력하세요"
+                       class="w-full border border-gray-300 rounded-md p-2 mb-4 focus:ring-2 focus:ring-[#FFB755] focus:outline-none" />
+
+                <div class="flex gap-3">
+                    <button id="cancelModal" type="button"
+                            class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-md hover:bg-gray-300 transition">
+                        취소
+                    </button>
+
+                    <button id="confirmCode"
+                            class="w-1/2 bg-gray-300 text-gray-700 py-2 rounded-md hover:bg-gray-400 transition ml-2">
+                        확인
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</main>
+
+</body>
+</html>
+
+<script>
+    const openModal = document.getElementById('openModal');
+    const inviteModal = document.getElementById('inviteModal');
+    const cancelModal = document.getElementById('cancelModal');
+
+    openModal.addEventListener('click', () => {
+        inviteModal.classList.remove('hidden');
+    });
+
+    cancelModal.addEventListener('click', () => {
+        inviteModal.classList.add('hidden');
+    });
+</script>

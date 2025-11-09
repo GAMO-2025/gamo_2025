@@ -1,3 +1,5 @@
+.gitignore
+
 # IDE
 .idea/
 .gradle/
@@ -12,6 +14,12 @@ data.sql
 # Google Cloud service account key
 src/main/resources/google-service-account.json
 
+# Google Cloud service account key
+src/main/resources/google-service-account.json
+
 # Build outputs
 build/
+
 out/
+
+node_modules/

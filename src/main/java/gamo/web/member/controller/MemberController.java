@@ -1,8 +1,6 @@
 package gamo.web.member.controller;
 
 import gamo.web.auth.UserPrincipal;
-import gamo.web.auth.jwt.JwtTokenProvider;
-import gamo.web.auth.service.LogoutService;
 import gamo.web.member.domain.Member;
 import gamo.web.member.dto.LoginResponseDTO;
 import gamo.web.member.dto.NicknameRequestDTO;
