@@ -1,12 +1,17 @@
 package gamo.web.member.repository;
 
+import gamo.web.member.domain.Family;
 import gamo.web.member.domain.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
-
-import javax.swing.text.html.Option;
 import java.util.Optional;
+import java.util.List;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
-    Optional<Member> findBySocialIdAndProvider(String socialId, String provider);
+    Optional<Member> findBySocialIdAndProviderAndStatus(String socialId, String provider, Member.MemberStatus status);
+    List<Member> findByFamily(Family family);
+
+    //나는 제외하고 ACTIVE 상태인 가족들 찾는 함수
+    List<Member> findAllByFamilyAndIdNotAndStatus(Family family, Long excludeId, Member.MemberStatus status);
+  
     Optional<Member> findById(Long id);
 }

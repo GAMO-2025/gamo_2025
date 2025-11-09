@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: AppLayout('letter', ~{::content}, null)}">
+<th:block th:fragment="content">
+
+    <div class="px-4 pt-8 pb-4">
+        <!-- Title Section -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-[#AB8D66] mb-2">
+                읽지 않은 편지가<br>n개 있습니다.
+            </h2>
+            <p class="text-gray-500 text-sm">편지를 확인해보세요!</p>
+        </div>
+
+        <!-- Letter Cards -->
+        <div class="grid grid-cols-2 gap-4 mb-10">
+            <!-- 받은 편지 Card -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+                <div class="flex flex-col mb-2">
+                    <h3 class="text-base font-bold text-gray-900 mb-2">받은 편지</h3>
+                    <span class="px-3 py-1 bg-orange-100 text-orange-400 rounded-full text-xs font-medium text-center w-fit">
+                1개
+            </span>
+                </div>
+                <p class="text-gray-500 text-xs leading-relaxed">
+                    편지의 내용 편지의 내용 편지의 내용
+                </p>
+            </div>
+
+            <!-- 보낸 편지 Card -->
+            <div class="bg-[#F5BF76] rounded-2xl p-4 shadow-sm">
+                <div class="flex flex-col mb-2">
+                    <h3 class="text-base font-bold text-white mb-2">보낸 편지</h3>
+                    <span class="px-3 py-1 bg-white text-[#F5BF76] rounded-full text-xs font-medium text-center w-fit">
+                1개
+            </span>
+                </div>
+                <p class="text-orange-50 text-xs leading-relaxed">
+                    편지의 내용 편지의 내용 편지의 내용
+                </p>
+            </div>
+        </div>
+
+        <!-- View Button -->
+        <a href="/letter/new" class="block w-full bg-white text-gray-900 text-center py-4 rounded-2xl font-medium shadow-sm border border-gray-100 mb-4">
+            편지 보내기
+        </a>
+
+        <!-- Send Button -->
+        <a href="/letter/list" class="block w-full bg-[#FFB755] text-black text-center py-4 rounded-2xl font-medium shadow-sm">
+            편지 보관함
+        </a>
+    </div>
+
+</th:block>
+</html>

@@ -30,21 +30,21 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         OAuthDTO oAuthDTO = OAuthDTO.of(registrationId, userNameAttributeName, oAuth2User.getAttributes());
 
-        Member member = saveOrUpdate(oAuthDTO);
+        Member member = saveOrUpdateActiveOnly(oAuthDTO);
 
         return new UserPrincipal(member, oAuthDTO.getAttributes());
     }
 
-    private Member saveOrUpdate(OAuthDTO attributes) {
-        Optional<Member> memberOptional = memberRepository.findBySocialIdAndProvider(
-                attributes.getSocialId(),
-                attributes.getProvider()
-        );
+    private Member saveOrUpdateActiveOnly(OAuthDTO attrs) {
+        // ACTIVE 상태인 회원만 가지고 옴
+        Optional<Member> activeBySocial = memberRepository
+                .findBySocialIdAndProviderAndStatus(attrs.getSocialId(), attrs.getProvider(), Member.MemberStatus.ACTIVE);
 
-        Member member = memberOptional
-                .map(entity -> entity.update(attributes.getName(), attributes.getPicture()))
-                .orElse(attributes.toEntity());
+        if (activeBySocial.isPresent()) {
+            return activeBySocial.get().update(attrs.getName(), attrs.getPicture());
+        }
 
-        return memberRepository.save(member);
+        Member newMember = attrs.toEntity();
+        return memberRepository.save(newMember);
     }
 }

@@ -1,5 +1,6 @@
 jwt:
-  access-token-validity-in-seconds: 86400 # 하루를 accessToken 유효시간으로 설정
+  access-token-validity-in-seconds: 3600 # 하루를 accessToken 유효시간으로 설정
+  refresh-token-validity-in-seconds: 2592000
 
 spring:
   config:
@@ -13,6 +14,7 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -20,7 +22,16 @@ spring:
       hibernate:
         format_sql: true
     show-sql: true
+    defer-datasource-initialization: true
+  sql:
+    init:
+      mode: always
+      continue-on-error: true
+      encoding: UTF-8
   mvc:
+    hiddenmethod:
+      filter:
+        enabled: true
     static-path-pattern: /**
 
 
@@ -42,6 +53,13 @@ spring:
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
 
-  redis:
-    host: localhost
-    port: 6379
+  servlet:
+    multipart:
+      max-file-size: 50MB       # 파일 하나당 최대 크기
+      max-request-size: 50MB    # 요청 전체 최대 크기 (여러 파일 포함)
+
+
+gcp:
+  project-id: ${gcp.project-id}
+  credentials:
+    location: ${gcp.credentials.location}
