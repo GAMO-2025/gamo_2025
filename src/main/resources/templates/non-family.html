@@ -1,13 +1,25 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
-    <meta charset="utf-8" />
-    <title>가족 없을때</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>가모 – 앨범</title>
+    <link rel="stylesheet" th:href="@{/main.css}" />
+    <style>
+        /* iOS notch 안전 여백용 (Tailwind로 못하는 부분만 보강) */
+        :root { --safe-top: env(safe-area-inset-top); --safe-bottom: env(safe-area-inset-bottom); }
+    </style>
 </head>
-<body>
-    <form action="/family/new" method="get">
+<body class="bg-neutral-100 flex items-center justify-center min-h-screen">
+
+<main class="relative w-screen min-h-screen overflow-auto shadow-xl"
+        style="padding-top: 90px; padding-bottom: var(--safe-bottom);">
+
+    <form action="/family/create" method="post">
         <button type="submit">가족 모임 만들기</button>
     </form>
     <button>초대 코드 입력하기</button>
+</main>
+
 </body>
 </html>

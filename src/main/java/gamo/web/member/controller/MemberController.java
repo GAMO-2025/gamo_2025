@@ -1,6 +1,7 @@
 package gamo.web.member.controller;
 
 import gamo.web.auth.UserPrincipal;
+import gamo.web.member.domain.Member;
 import gamo.web.member.dto.LoginResponseDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
