@@ -7,6 +7,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -42,14 +43,14 @@ public class FamilyController {
         model.addAttribute("familyCode", familyCode);
         return "family-code";
     }
-//
-//    // 초대 코드 입력
-//    @PostMapping("/join")
-//    public ResponseEntity<String> joinFamily(
-//            @AuthenticationPrincipal UserPrincipal user,
-//            @RequestBody Map<String, String> body) {
-//        String inputCode = body.get("familyCode");
-//        String code = familyService.joinFamily(user.getId(), inputCode);
-//        return ResponseEntity.ok(code);
-//    }
+
+    @PostMapping("/family/join")
+    public String joinFamily(@RequestParam("inviteCode") String inviteCode) {
+        boolean success = familyService.joinFamily(inviteCode, 2L); //임시 memberid
+
+        if(!success) {
+            return "redirect:/family/error";
+        }
+        return "redirect:/family";
+    }
 }

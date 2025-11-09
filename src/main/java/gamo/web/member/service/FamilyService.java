@@ -42,16 +42,21 @@ public class FamilyService {
         return member.getFamily().getFamilyCode();
     }
 
-//
-//    public String joinFamily(Long memberId, String inputCode) {
-//        Family family = familyRepository.findByFamilyCode(inputCode)
-//                .orElseThrow(() -> new IllegalArgumentException("Invalid family code"));
-//
-//        Member member = memberRepository.findById(memberId)
-//                .orElseThrow(() -> new IllegalArgumentException("Member not found"));
-//        member.setFamily(family);
-//        memberRepository.save(member);
-//
-//        return inputCode;
-//    }
+    public boolean joinFamily(String inviteCode, Long memberId) {
+        Family family = familyRepository.findByFamilyCode(inviteCode)
+                .orElse(null);
+        if(family == null) {
+            return false;
+        }
+
+        Member member = memberRepository.findById(memberId) //member가 존재하는지 확인
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        if(member.getFamily() != null) { //이미 가족그룹에 가입한 경우
+            return false;
+        }
+        member.setFamily(family);
+        memberRepository.save(member);
+
+        return true;
+    }
 }
