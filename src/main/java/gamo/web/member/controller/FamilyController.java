@@ -22,8 +22,8 @@ public class FamilyController {
 //        member.setFamily(family);
 
         if(member.getFamily() == null)
-            return "non-family";
-        return "has-family";
+            return "/pages/family/non-family";
+        return "/pages/family/has-family";
     }
 
     @PostMapping("/family/create")
@@ -41,7 +41,7 @@ public class FamilyController {
     public String showFamilyCode(Model model) {
         String familyCode = familyService.getFamilyCode(1L); //임시
         model.addAttribute("familyCode", familyCode);
-        return "family-code";
+        return "/pages/family/family-code";
     }
 
     @PostMapping("/family/join")
