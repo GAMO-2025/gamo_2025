@@ -1,7 +1,8 @@
 package gamo.web.member.controller;
 
 import gamo.web.auth.UserPrincipal;
-import gamo.web.member.dto.FamilyListDTO;
+import gamo.web.family.dto.FamilyListDTO;
+import gamo.web.family.service.FamilyService;
 import gamo.web.member.dto.LoginResponseDTO;
 import gamo.web.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import java.util.List;
 public class MemberViewController {
 
     private final MemberService memberService;
+    private final FamilyService familyService;
 
     @ModelAttribute("member")
     public LoginResponseDTO currentMember(@AuthenticationPrincipal UserPrincipal user) {
@@ -42,10 +44,26 @@ public class MemberViewController {
         return "pages/member/family";
     }
 
+    //초대코드 입력할지, 초대코드 만들기 있는지 그 화면
     @GetMapping("/invite")
     public String invite() {
         return "pages/member/invite";
     }
+
+    //초대코드 화면
+    @GetMapping("/code")
+    public String code(@AuthenticationPrincipal UserPrincipal user, Model model) {
+        if (user == null) {
+            return "redirect:/login";
+        }
+
+        Long memberId = memberService.getMemberId(user);
+        LoginResponseDTO member = memberService.getMyInfo(memberId);
+        model.addAttribute("member", member); // ✅ 모델에 명시적으로 넣기
+
+        return "pages/member/code";
+    }
+
 
     @GetMapping("/mypage")
     public String mypage() {

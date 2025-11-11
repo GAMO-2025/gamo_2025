@@ -7,7 +7,7 @@ import gamo.web.common.response.ErrorCode;
 import gamo.web.member.domain.DeletedMember;
 import gamo.web.member.domain.Member;
 import gamo.web.member.domain.Nickname;
-import gamo.web.member.dto.FamilyListDTO;
+import gamo.web.family.dto.FamilyListDTO;
 import gamo.web.member.dto.LoginResponseDTO;
 import gamo.web.member.repository.DeletedMemberRepository;
 import gamo.web.member.repository.MemberRepository;
@@ -37,7 +37,7 @@ public class MemberService {
 
     public LoginResponseDTO getMyInfo(Long memberId) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new EntityNotFoundException("Member not found"));
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
         return new LoginResponseDTO(member);
     }
 
