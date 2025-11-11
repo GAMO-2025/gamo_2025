@@ -1,5 +1,6 @@
-package gamo.web.member.domain;
+package gamo.web.family.domain;
 
+import gamo.web.member.domain.Member;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

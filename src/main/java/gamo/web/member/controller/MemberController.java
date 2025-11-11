@@ -31,7 +31,7 @@ public class MemberController {
     private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/dev/login")
-    public ResponseEntity<String> devLogin(Long memberId) {
+    public ResponseEntity<String> devLogin(@RequestParam("memberId") Long memberId) {
         Member m = memberRepository.findById(memberId).orElseThrow(() -> new IllegalArgumentException("Member not found"));
 
         String token = jwtTokenProvider.generateAccessToken(m.getId());

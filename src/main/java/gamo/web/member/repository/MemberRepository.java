@@ -1,6 +1,6 @@
 package gamo.web.member.repository;
 
-import gamo.web.member.domain.Family;
+import gamo.web.family.domain.Family;
 import gamo.web.member.domain.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;

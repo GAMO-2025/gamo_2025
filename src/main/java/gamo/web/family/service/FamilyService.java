@@ -1,8 +1,8 @@
-package gamo.web.member.service;
+package gamo.web.family.service;
 
-import gamo.web.member.domain.Family;
+import gamo.web.family.domain.Family;
 import gamo.web.member.domain.Member;
-import gamo.web.member.repository.FamilyRepository;
+import gamo.web.family.repository.FamilyRepository;
 import gamo.web.member.repository.MemberRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
