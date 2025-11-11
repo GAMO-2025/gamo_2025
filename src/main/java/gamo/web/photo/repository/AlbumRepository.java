@@ -23,4 +23,11 @@ public class AlbumRepository {
                 .setParameter("familyId", familyId)
                 .getResultList();
     }
+
+    public void deleteByAlbumId(Long albumId) {
+        Album album = em.find(Album.class, albumId);
+        if (album != null) {
+            em.remove(album);
+        }
+    }
 }

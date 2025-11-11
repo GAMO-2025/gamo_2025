@@ -22,9 +22,6 @@
         <div th:each="album : ${albums}"
              class="relative rounded-2xl shadow-md h-40 overflow-hidden cursor-pointer">
 
-            <!-- 배경 이미지 -->
-<!--            <img th:src="@{'https://storage.cloud.google.com/gamo_bucket/photo/' + ${album.thumbnailUrl}}"-->
-<!--                 class="absolute inset-0 w-full h-full object-cover" alt="앨범 사진">-->
             <div th:if="${album.thumbnailUrl != null}">
                 <img th:src="@{'https://storage.cloud.google.com/gamo_bucket/photo/' + ${album.thumbnailUrl}}"
                      class="absolute inset-0 w-full h-full object-cover" alt="앨범 사진">
@@ -38,6 +35,26 @@
                class="absolute inset-0 flex items-center justify-center bg-black/30 text-white text-lg font-bold">
                 <span th:text="${album.title}">앨범 제목</span>
             </a>
+
+            <!-- 옵션 버튼 -->
+            <button type="button"
+                    class="absolute bottom-0 right-0 bg-black/50 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-black/70"
+                    style="margin:3px; font-size:32px;"
+                    th:onclick="'toggleMenu(\'menu-' + ${album.albumId} + '\')'">
+                ···
+            </button>
+
+            <!-- 삭제 메뉴 (버튼 바로 위) -->
+            <div th:id="'menu-' + ${album.albumId}"
+                 class="hidden absolute bottom-12 right-0 bg-white shadow-md rounded p-2 z-50">
+                <form th:action="@{/album/delete}" method="post">
+                    <!-- albumId 전달 -->
+                    <input type="hidden" name="albumId" th:value="${album.albumId}" />
+                    <button type="submit" class="text-red-600 hover:text-red-800 font-bold">
+                        삭제하기
+                    </button>
+                </form>
+            </div>
         </div>
         <!--앨범 만들기-->
         <div class="bg-green-500 rounded-2xl shadow-md h-40 flex items-center justify-center text-white font-bold cursor-pointer text-6xl"
@@ -50,7 +67,7 @@
         <div class="bg-white rounded-2xl shadow-lg p-8 w-96">
             <h2 class="text-xl font-bold mb-4 text-gray-800">앨범 만들기</h2>
             <form th:action="@{/album/new}" method="post" id="albumForm">
-                <input type="text" name="albumTitle"
+                <input type="text" name="newTitle"
                        placeholder="앨범 이름을 입력하세요"
                        class="w-full border border-gray-300 rounded-lg p-2 mb-4 focus:outline-none focus:ring-2 focus:ring-green-400"
                        required />
@@ -76,6 +93,24 @@
 </body>
 <!--<script src="https://cdn.tailwindcss.com"></script>-->
 <script>
+    function toggleMenu(id) {
+        const menu = document.getElementById(id);
+        if (menu.classList.contains('hidden')) {
+            menu.classList.remove('hidden');
+        } else {
+            menu.classList.add('hidden');
+        }
+    }
+
+    // 화면 클릭 시 메뉴 닫기
+    document.addEventListener('click', function(event) {
+        document.querySelectorAll('[id^="menu-"]').forEach(menu => {
+            if (!menu.contains(event.target) && !menu.previousElementSibling.contains(event.target)) {
+                menu.classList.add('hidden');
+            }
+        });
+    });
+
     <!-- 모달 스크립트 -->
     document.addEventListener("DOMContentLoaded", () => {
         const modal = document.getElementById("albumModal");

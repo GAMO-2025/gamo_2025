@@ -19,13 +19,6 @@
         style="padding-top: 90px; padding-bottom: var(--safe-bottom);"
 >
     <section class="grid grid-cols-4 gap-1">
-        <div class="photo-item relative w-full aspect-square overflow-hidden" th:each="photo : ${photoList}">
-            <a th:href="@{'/photo/' + ${photo.photo_id}}" class="block w-full h-full">
-                <img th:src="@{'https://storage.cloud.google.com/gamo_bucket/photo/' + ${photo.url}}"
-                     alt="앨범 사진"
-                     class="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
-            </a>
-        </div>
         <div class="bg-green-500 flex items-center justify-center text-white font-bold cursor-pointer text-6xl aspect-square"
              id="uploadDiv">
             <form th:action="@{/photo/new/}" method="post" enctype="multipart/form-data"
@@ -33,6 +26,13 @@
                 <input type="file" id="fileInput" name="image" accept="image/*" required/>
             </form>
             +
+        </div>
+        <div class="photo-item relative w-full aspect-square overflow-hidden" th:each="photo : ${photoList}">
+            <a th:href="@{'/photo/' + ${photo.photo_id}}" class="block w-full h-full">
+                <img th:src="@{'https://storage.cloud.google.com/gamo_bucket/photo/' + ${photo.url}}"
+                     alt="앨범 사진"
+                     class="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
+            </a>
         </div>
     </section>
     <!-- 모달 배경 -->

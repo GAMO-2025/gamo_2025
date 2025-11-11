@@ -12,6 +12,7 @@ import gamo.web.photo.service.PhotoService;
 import gamo.web.photo.service.GcpStorageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -30,22 +31,8 @@ import java.util.Optional;
 public class PhotoController {
     private final GcpStorageService gcpStorageService;
     private final PhotoService photoService;
-    private final FamilyRepository familyRepository;
+//    private final FamilyRepository familyRepository;
     private final LikeService likeService;
-    // 생성자 주입
-//    public PhotoController(GcpStorageService gcpStorageService, AlbumService albumService) {
-//        this.gcpStorageService = gcpStorageService;
-//        this.albumService = albumService;
-//    }
-
-//    @GetMapping(value = "/album")
-//    public String getAlbums(Model model) {
-//        Long testFamilyId = 1L; //임시
-//        List<Album> albums = photoService.getAlbumsByFamilyId(testFamilyId);
-//
-//        model.addAttribute("albums", albums);
-//        return "album";
-//    }
 
     //앨범 리스트
     @GetMapping(value = "/album") //앨범 리스트
@@ -64,15 +51,18 @@ public class PhotoController {
     }
 
     @PostMapping(value = "/album/new") //앨범 생성
-    public String createAlbum(@RequestParam("title") String title) {
-        Album album = new Album();
-        album.setTitle(title);
+    public String createAlbum(@RequestParam("newTitle") String title) {
+        Long memberId = 2L; //임시
 
-        Family family = familyRepository.findById(1L) //임시로 넣어둠
-                .orElseThrow(() -> new IllegalArgumentException("Family not found"));
-        album.setFamily(family);
+        photoService.createAlbum(title, memberId);
+        return "redirect:/album";
+    }
 
-        photoService.createAlbum(album);
+    //앨범 삭제
+    @PostMapping(value = "/album/delete")
+    public String deleteAlbum(@RequestParam("albumId") Long albumId) {
+        photoService.deleteAlbum(albumId);
+
         return "redirect:/album";
     }
 

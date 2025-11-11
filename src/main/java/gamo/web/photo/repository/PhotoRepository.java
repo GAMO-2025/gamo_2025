@@ -19,12 +19,6 @@ public class PhotoRepository {
         em.persist(photo);
     }
 
-    public List<Photo> findByAlbumId(Long albumId) {
-        return em.createQuery("SELECT p FROM Photo p WHERE p.album.id = :albumId", Photo.class)
-                .setParameter("albumId", albumId)
-                .getResultList();
-    }
-
     //앨범 썸네일
     public Photo findLastestByAlbumId(Long albumId) {
         List<Photo> result = em.createQuery(
@@ -41,6 +35,14 @@ public class PhotoRepository {
         return em.createQuery("SELECT p FROM Photo p WHERE p.photo_id = :photoId", Photo.class)
                 .setParameter("photoId", photoId)
                 .getSingleResult();
+    }
+
+    public List<Photo> findByAlbumIdOrderByCreatedAtDesc(Long albumId) {
+        return em.createQuery(
+                        "SELECT p FROM Photo p WHERE p.album.album_id = :albumId ORDER BY p.created_at DESC",
+                        Photo.class)
+                .setParameter("albumId", albumId)
+                .getResultList();
     }
 
     //사진 삭제
