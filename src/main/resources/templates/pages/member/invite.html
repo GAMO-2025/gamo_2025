@@ -66,7 +66,8 @@
         </a>
     </section>
 
-    <th:block th:replace="~{fragments/inputModal :: inputModal('초대 코드를 입력하세요', '확인', '취소')}" />
+    <th:block th:replace="~{fragments/input-modal :: inputModal('초대 코드를 입력하세요', '확인', '취소')}" />
+    <th:block th:replace="~{fragments/alert-modal :: alertModal('commonAlert', '알림 메시지')}" />
 
     <script>
         (function () {
@@ -75,7 +76,7 @@
             const input = document.getElementById('input');        // 프래그먼트 input
             const openBtn = document.getElementById('openInviteModal');
 
-            // 모달 열기/닫기 (닉네임 모달과 동일 스타일)
+            // 모달 열기,닫기 (닉네임 모달과 동일 스타일)
             function openModal() {
                 modal.classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
@@ -108,8 +109,7 @@
 
                 const code = input.value.trim();
                 if (!code) {
-                    alert('초대 코드를 입력해주세요.');
-                    input.focus();
+                    openAlertModal('commonAlert', '초대 코드를 입력해주세요.');
                     return;
                 }
 
@@ -138,14 +138,15 @@
                         const data = await res.json();
                         if (data?.message) msg = data.message;
                     } catch (_) {}
-                    alert(msg);
+                    openAlertModal('commonAlert', msg);
                 } catch (err) {
                     console.error(err);
-                    alert('서버 오류가 발생했습니다.');
+                    openAlertModal('commonAlert', '서버 오류가 발생했습니다.');
                 }
             });
         })();
     </script>
+
 
 
 </th:block>

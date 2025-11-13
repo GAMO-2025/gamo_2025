@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<th:block th:fragment="alertModal(modalId, alertMessage)">
+
+    <!-- 오버레이 + 모달 -->
+    <div th:id="${modalId}"
+         data-alert-modal
+         class="fixed inset-0 z-[1100] hidden px-5
+                flex items-center justify-center
+                bg-black/40 backdrop-blur-sm">
+        <div class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg">
+
+            <p class="mt-3 text-sm text-gray-600"
+               data-alert-message
+               th:text="${alertMessage}">
+                알림 메시지가 들어갑니다.
+            </p>
+
+            <button type="button"
+                    class="mt-6 w-full rounded-xl bg-amber-400 px-4 py-2
+                           text-sm font-semibold text-white
+                           transition-colors"
+                    data-modal-close>
+                닫기
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 전역으로 다른 페이지에서 이 스크립트 부를 수 있게
+        window.openAlertModal = function (id, message) {
+            const modal = document.getElementById(id);
+            if (!modal) return;
+
+            if (message) {
+                const msgEl = modal.querySelector('[data-alert-message]');
+                if (msgEl) msgEl.textContent = message;
+            }
+
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeAlertModal(modal) {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        document.addEventListener('click', function (e) {
+            if (e.target.matches('[data-modal-close]')) {
+                const modal = e.target.closest('[data-alert-modal]');
+                if (modal) closeAlertModal(modal);
+            }
+
+            if (e.target.matches('[data-alert-modal]')) {
+                closeAlertModal(e.target);
+            }
+        });
+    </script>
+
+</th:block>
+</html>

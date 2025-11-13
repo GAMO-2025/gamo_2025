@@ -66,7 +66,8 @@
 
 
     <!-- 닉네임 변경 모달 (프래그먼트로 불러오기) -->
-    <th:block th:replace="~{fragments/inputModal :: inputModal('이름을 입력하세요', '변경하기', '돌아가기')}"/>
+    <th:block th:replace="~{fragments/input-modal :: inputModal('이름을 입력하세요', '변경하기', '돌아가기')}"/>
+    <th:block th:replace="~{fragments/alert-modal :: alertModal('commonAlert', '알림 메시지')}" />
 
     <script>
         (function () {
@@ -117,7 +118,7 @@
                 const aliasMemberId = aliasMemberIdInput.value;
                 const nickname = input.value.trim();
                 if (!nickname) {
-                    alert('새 이름을 입력해주세요.');
+                    openAlertModal('commonAlert', '이름을 입력해주세요.');
                     return;
                 }
 
@@ -138,11 +139,11 @@
                         closeModal();
                         location.reload();
                     } else {
-                        alert('닉네임 변경에 실패했습니다.');
+                        openAlertModal('commonAlert', '닉네임 변경에 실패했습니다.');
                     }
                 } catch (err) {
                     console.error(err);
-                    alert('서버 오류가 발생했습니다.');
+                    openAlertModal('commonAlert', '닉네임 변경에 실패했습니다.');
                 }
             });
         })();
