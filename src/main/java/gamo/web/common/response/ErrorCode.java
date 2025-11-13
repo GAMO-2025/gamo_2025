@@ -18,6 +18,8 @@ public enum ErrorCode implements BaseCode {
     // Member 관련한 에러들
     NOT_SAME_FAMILY(HttpStatus.FORBIDDEN, "FAMILY-403", "같은 가족에게만 수행할 수 있는 요청입니다."),
     FAMILY_NOT_FOUND(HttpStatus.NOT_FOUND,  "FAMILY-404","가족 정보를 찾을 수 없습니다."),
+    FAMILY_EXISTS(HttpStatus.CONFLICT, "FAMILY-409", "이미 가족에 가입되어 있습니다."),
+    FAMILY_CODE_DUPLICATED(HttpStatus.CONFLICT, "FAMILY-CODE-409", "가족 코드가 중복되었습니다."),
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER-404","회원 정보를 찾을 수 없습니다.");
 
     private final HttpStatus httpStatus;

@@ -1,5 +1,6 @@
 package gamo.web.member.domain;
 
+import gamo.web.family.domain.Family;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -50,6 +51,14 @@ public class Member {
         this.name = name;
         this.profileImage = picture;
         return this;
+    }
+
+    public void setFamily(Family family) {
+        this.family = family;
+
+        if (family != null && !family.getMembers().contains(this)) {
+            family.getMembers().add(this);
+        }
     }
 
     public void markDeleted() {

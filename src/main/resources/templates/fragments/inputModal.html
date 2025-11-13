@@ -1,6 +1,6 @@
-<th:block th:fragment="NicknameModal(nickname, submitText, cancelText)">
+<th:block th:fragment="inputModal(placeholder, submitText, cancelText)">
     <!-- 모달 -->
-    <div id="nicknameModal"
+    <div id="inputModal"
          class="fixed inset-0 z-[1000] hidden bg-black/60 backdrop-blur-[2px]" role="dialog" aria-modal="true">
 
     <!-- 실제 모달 박스 -->
@@ -11,20 +11,22 @@
            rounded-2xl bg-white p-5
            shadow-[0_12px_30px_rgba(0,0,0,0.18)]
            transition-transform duration-200 ease-out">
-        <form id="nicknameForm" onsubmit="return false;">
+        <form id="submitForm" onsubmit="return false;">
             <div class="mb-4">
-                <label for="nicknameInput" class="block text-gray-500 text-sm mb-1" ></label>
-                <input id="nicknameInput"
+                <label for="input" class="block text-gray-500 text-sm mb-1" ></label>
+                <input id="input"
                        class="w-full border-b border-amber-400 px-1 py-2 outline-none text-gray-900"
-                       th:placeholder="${nickname}" />
+                       th:placeholder="${placeholder}" />
             </div>
 
             <div class="flex gap-3 justify-center">
                 <button type="submit"
+                        th:text="${submitText}"
                         class="flex-1 rounded-2xl bg-amber-400 text-white py-3 font-semibold">
                     변경하기
                 </button>
                 <button type="button" data-modal-close
+                        th:text="${cancelText}"
                         class="flex-1 rounded-2xl border border-gray-300 py-3 font-semibold text-gray-700 bg-white">
                     돌아가기
                 </button>
