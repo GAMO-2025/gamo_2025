@@ -17,6 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/member")
 @RequiredArgsConstructor
@@ -63,16 +65,14 @@ public class MemberController {
 
     //회원 탈퇴
     @DeleteMapping
-    public ResponseEntity<Void> deleteMember(@AuthenticationPrincipal UserPrincipal user,
-                                             HttpServletRequest request,
-                                             HttpServletResponse response) {
+    public ResponseEntity<Map<String, String>> deleteMember(@AuthenticationPrincipal UserPrincipal user,
+                                                            HttpServletRequest request,
+                                                            HttpServletResponse response) {
         Long memberId = memberService.getMemberId(user);
         memberService.deleteMember(memberId);
 
         logoutService.performLogout(request, response);
 
-        return ResponseEntity.status(303)
-                .header("Location", "/login")
-                .build();
+        return ResponseEntity.ok(Map.of("message", "회원 탈퇴 완료"));
     }
 }

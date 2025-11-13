@@ -41,14 +41,22 @@
             </a>
 
             <!-- 회원탈퇴 -->
-            <form th:action="@{/api/member}" method="post"
-                  onsubmit="return confirm('정말 탈퇴하시겠어요?');">
-                <input type="hidden" name="_method" value="delete" />
+<!--            <form th:action="@{/api/member}" method="post"-->
+<!--                  onsubmit="return confirm('정말 탈퇴하시겠어요?');">-->
+<!--                <input type="hidden" name="_method" value="delete" />-->
+<!--                <button type="submit"-->
+<!--                        class="mx-auto block w-[200px] rounded-full bg-white px-6 py-3 text-center text-[14px] font-semibold text-gray-400 shadow-md">-->
+<!--                    회원탈퇴-->
+<!--                </button>-->
+<!--            </form>-->
+            <!-- 회원탈퇴 -->
+            <form id="deleteMemberForm" class="w-full">
                 <button type="submit"
                         class="mx-auto block w-[200px] rounded-full bg-white px-6 py-3 text-center text-[14px] font-semibold text-gray-400 shadow-md">
                     회원탈퇴
                 </button>
             </form>
+
         </div>
     </div>
 
@@ -60,6 +68,76 @@
             카카오로 로그인
         </a>
     </section>
+
+    <th:block th:replace="~{fragments/alert-modal :: alertModal('commonAlert', '알림 메시지')}" />
+    <th:block th:replace="~{fragments/action-modal :: actionModal('deleteConfirm', '정말 탈퇴하시겠어요?', '확인', '닫기')}" />
+
+    <script>
+        (function () {
+            const deleteForm = document.getElementById('deleteMemberForm');
+            if (!deleteForm) return;
+
+            deleteForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+
+                openActionModal('deleteConfirm', '정말 탈퇴하시겠어요?', async () => {
+
+                    const token =
+                        document.querySelector('meta[name="_csrf"]')?.content ||
+                        document.querySelector('input[name="_csrf"]')?.value;
+
+                    try {
+                        const res = await fetch('/api/member', {
+                            method: 'DELETE',
+                            headers: {
+                                ...(token ? { 'X-CSRF-TOKEN': token } : {}),
+                            },
+                        });
+
+                        let msg = '회원 탈퇴가 완료되었습니다.';
+
+                        if (res.ok) {
+                            try {
+                                const data = await res.json();
+                                if (data?.message) msg = data.message;
+                            } catch (_) {}
+                        } else {
+                            msg = '회원 탈퇴 처리에 실패했습니다.';
+                            try {
+                                const data = await res.json();
+                                if (data?.message) msg = data.message;
+                            } catch (_) {}
+                        }
+
+                        // 탈퇴 결과 알람 모달
+                        openAlertModal('commonAlert', msg);
+
+                        const alertModal = document.getElementById('commonAlert');
+                        if (!alertModal) return;
+
+                        const closeBtn = alertModal.querySelector('[data-modal-close]');
+                        if (!closeBtn) return;
+
+                        const handler = () => {
+                            closeBtn.removeEventListener('click', handler);
+
+                            if (res.ok) {
+                                // 성공했을 때만 로그인 페이지로 이동
+                                window.location.href = '/login';
+                            }
+                        };
+
+                        closeBtn.addEventListener('click', handler);
+
+                    } catch (err) {
+                        console.error(err);
+                        openAlertModal('commonAlert', '서버 오류가 발생했습니다.');
+                    }
+                });
+            });
+        })();
+    </script>
+
 
 </th:block>
 

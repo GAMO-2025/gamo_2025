@@ -54,4 +54,18 @@ public class FamilyController {
         familyService.joinFamily(memberId, inviteCode.getInviteCode());
         return ResponseEntity.ok(Map.of("message", "가족 참여 완료!"));
     }
+
+    @PostMapping("/leave")
+    public ResponseEntity<Map<String, String>> leaveFamily(@AuthenticationPrincipal UserPrincipal user) {
+        Long memberId = memberService.getMemberId(user);
+
+        if(!familyService.hasFamily(memberId)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "가입된 가족이 없습니다"));
+        }
+
+        familyService.leaveFamily(memberId);
+        return ResponseEntity.ok(Map.of("message", "가족 탈퇴 완료"));
+    }
+
 }

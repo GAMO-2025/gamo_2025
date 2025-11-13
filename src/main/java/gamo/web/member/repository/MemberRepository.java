@@ -13,4 +13,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     //나는 제외하고 ACTIVE 상태인 가족들 찾는 함수
     List<Member> findAllByFamilyAndIdNotAndStatus(Family family, Long excludeId, Member.MemberStatus status);
+
+    boolean existsByFamily(Family family);
 }
