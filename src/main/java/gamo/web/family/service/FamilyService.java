@@ -9,6 +9,7 @@ import gamo.web.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -38,6 +39,7 @@ public class FamilyService {
     }
 
     // 초대코드화면...
+    @Transactional
     public void inviteFamily(Long memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
@@ -70,6 +72,19 @@ public class FamilyService {
         }
 
         // member 와 family 연결
+        member.setFamily(family);
+        memberRepository.save(member);
+    }
+
+    // 초대코드 입력하면 그 가족에 가입
+    @Transactional
+    public void joinFamily(Long memberId, String inviteCode) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        Family family = familyRepository.findByFamilyCode(inviteCode)
+                .orElseThrow(() -> new CustomException(ErrorCode.FAMILY_NOT_FOUND));
+
         member.setFamily(family);
         memberRepository.save(member);
     }

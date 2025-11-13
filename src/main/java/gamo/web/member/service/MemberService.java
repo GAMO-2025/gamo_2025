@@ -12,7 +12,6 @@ import gamo.web.member.dto.LoginResponseDTO;
 import gamo.web.member.repository.DeletedMemberRepository;
 import gamo.web.member.repository.MemberRepository;
 import gamo.web.member.repository.NicknameRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -43,16 +43,19 @@
                     rounded-2xl shadow-[0_0_10px_rgba(0,0,0,0.08)] p-3">
                     가족 모임 만들기
                 </a>
-                <div class="flex flex-row w-full items-center justify-center
-                font-bold
-                rounded-2xl shadow-[0_0_10px_rgba(0,0,0,0.08)] p-3 bg-[#FFB755]">
+                <button id="openInviteModal" type="button"
+                        class="flex flex-row w-full items-center justify-center
+                       font-bold
+                       rounded-2xl shadow-[0_0_10px_rgba(0,0,0,0.08)] p-3 bg-[#FFB755]">
                     초대 코드 입력하기
-                </div>
+                </button>
             </div>
         </div>
 
 
     </div>
+
+
 
     <!-- 비로그인 사용자 -->
     <section class="px-5 py-10 text-center" th:if="${member == null}">
@@ -63,24 +66,85 @@
         </a>
     </section>
 
+    <th:block th:replace="~{fragments/inputModal :: inputModal('초대 코드를 입력하세요', '확인', '취소')}" />
+
     <script>
-        const btn = document.getElementById('copy-btn');
-        const codeEl = document.getElementById('invite-code');
-        const toast = document.getElementById('copy-toast');
+        (function () {
+            const modal = document.getElementById('inputModal');   // 프래그먼트 모달
+            const form  = document.getElementById('submitForm');   // 프래그먼트 form
+            const input = document.getElementById('input');        // 프래그먼트 input
+            const openBtn = document.getElementById('openInviteModal');
 
-        btn.addEventListener('click', async () => {
-            const text = codeEl?.textContent?.trim();
-            if (!text) return;
-
-            try {
-                await navigator.clipboard.writeText(text);
-                toast.style.opacity = '1';
-                setTimeout(() => toast.style.opacity = '0', 1200);
-            } catch (err) {
-                console.error('복사 실패:', err);
-                alert('복사에 실패했습니다. 브라우저 설정을 확인해주세요.');
+            // 모달 열기/닫기 (닉네임 모달과 동일 스타일)
+            function openModal() {
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+                input.value = '';
+                input.placeholder = '초대 코드를 입력하세요';
+                setTimeout(() => input.focus(), 0);
             }
-        });
+            function closeModal() {
+                modal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+
+            // 트리거
+            openBtn.addEventListener('click', openModal);
+
+            const closeButtons = modal.querySelectorAll('[data-modal-close]');
+            closeButtons.forEach(b => b.addEventListener('click', closeModal));
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+            });
+
+            // 초대 코드로 가족 참가 (닉네임 모달과 동일한 패턴)
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const code = input.value.trim();
+                if (!code) {
+                    alert('초대 코드를 입력해주세요.');
+                    input.focus();
+                    return;
+                }
+
+                const token =
+                    document.querySelector('meta[name="_csrf"]')?.content ||
+                    document.querySelector('input[name="_csrf"]')?.value;
+
+                try {
+                    const res = await fetch('/api/family/join', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...(token ? { 'X-CSRF-TOKEN': token } : {}),
+                        },
+                        body: JSON.stringify({ inviteCode: code })
+                    });
+
+                    if (res.ok) {
+                        closeModal();
+                        window.location.href = '/member/family';
+                        return;
+                    }
+
+                    let msg = '초대 코드 확인에 실패했습니다.';
+                    try {
+                        const data = await res.json();
+                        if (data?.message) msg = data.message;
+                    } catch (_) {}
+                    alert(msg);
+                } catch (err) {
+                    console.error(err);
+                    alert('서버 오류가 발생했습니다.');
+                }
+            });
+        })();
     </script>
 
 

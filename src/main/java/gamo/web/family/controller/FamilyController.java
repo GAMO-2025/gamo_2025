@@ -3,13 +3,12 @@ package gamo.web.family.controller;
 import gamo.web.auth.UserPrincipal;
 import gamo.web.family.service.FamilyService;
 import gamo.web.member.service.MemberService;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -31,5 +30,19 @@ public class FamilyController {
        familyService.inviteFamily(memberId);
        String code =  familyService.getFamilyCode(memberId);
        return ResponseEntity.ok().body(Map.of("familyCode", code));
+    }
+
+    @Getter
+    @Setter
+    public static class InviteCode {
+        private String inviteCode;
+    }
+
+    @PostMapping("/join")
+    public ResponseEntity<Void> joinFamily(@AuthenticationPrincipal UserPrincipal user,
+                                           @RequestBody InviteCode inviteCode) {
+        Long memberId = memberService.getMemberId(user);
+        familyService.joinFamily(memberId, inviteCode.getInviteCode());
+        return ResponseEntity.ok().build();
     }
 }

@@ -66,13 +66,13 @@
 
 
     <!-- 닉네임 변경 모달 (프래그먼트로 불러오기) -->
-    <th:block th:replace="~{fragments/inputModal :: NicknameModal('이름을 입력하세요', '변경하기', '돌아가기')}"/>
+    <th:block th:replace="~{fragments/inputModal :: inputModal('이름을 입력하세요', '변경하기', '돌아가기')}"/>
 
     <script>
         (function () {
-            const modal = document.getElementById('nicknameModal');
-            const form = document.getElementById('nicknameForm');
-            const input = document.getElementById('nicknameInput');
+            const modal = document.getElementById('inputModal');
+            const form = document.getElementById('submitForm');
+            const input = document.getElementById('input');
 
             const aliasMemberIdInput = document.createElement('input');
             aliasMemberIdInput.type = 'hidden';

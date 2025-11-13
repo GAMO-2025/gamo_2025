@@ -29,7 +29,7 @@ spring:
       continue-on-error: true
       encoding: UTF-8
   mvc:
-    hiddenmethod:
+    hidden method:
       filter:
         enabled: true
     static-path-pattern: /**
