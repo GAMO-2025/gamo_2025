@@ -59,6 +59,8 @@
         </a>
     </section>
 
+    <th:block th:replace="~{fragments/alert-modal :: alertModal('commonAlert', '알림 메시지')}" />
+
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const codeEl = document.getElementById('invite-code');
@@ -83,7 +85,7 @@
                     setTimeout(() => toast.style.opacity = '0', 1200);
                 } catch (err) {
                     console.error('복사 실패:', err);
-                    alert('복사에 실패했습니다. 브라우저 설정을 확인해주세요.');
+                    openAlertModal('commonAlert', '복사에 실패했습니다.');
                 }
             });
         });
