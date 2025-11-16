@@ -26,49 +26,7 @@ import java.util.stream.Collectors;
 public class PhotoController {
     private final GcpStorageService gcpStorageService;
     private final PhotoService photoService;
-//    private final FamilyRepository familyRepository;
     private final LikeService likeService;
-
-    //앨범 리스트
-    @GetMapping(value = "/album") //앨범 리스트
-    public String getAlbums(Model model) {
-        Long testFamilyId = 1L; // 임시
-        List<Album> albums = photoService.getAlbumsByFamilyId(testFamilyId);
-
-        List<AlbumDto> albumDtos = albums.stream().map(album -> {
-            Photo latestPhoto = photoService.getLatestPhotoByAlbumId(album.getAlbum_id());
-            String thumbnailUrl = (latestPhoto != null) ? latestPhoto.getUrl() : null;
-            return new AlbumDto(album.getAlbum_id(), album.getTitle(), thumbnailUrl);
-        }).collect(Collectors.toList());
-
-        model.addAttribute("albums", albumDtos);
-        return "album";
-    }
-
-    @PostMapping(value = "/album/new") //앨범 생성
-    public String createAlbum(@RequestParam("newTitle") String title) {
-        Long memberId = 2L; //임시
-
-        photoService.createAlbum(title, memberId);
-        return "redirect:/album";
-    }
-
-    //앨범 삭제
-    @PostMapping(value = "/album/delete")
-    public String deleteAlbum(@RequestParam("albumId") Long albumId) {
-        photoService.deleteAlbum(albumId);
-
-        return "redirect:/album";
-    }
-
-    //사진 리스트
-    @GetMapping(value = "/album/{albumId}")
-    public String getPhotosInAlbum(@PathVariable("albumId") Long albumId, Model model) {
-        List<Photo> photoList = photoService.getPhotoListByAlbumId(albumId);
-
-        model.addAttribute("photoList", photoList);
-        return "photoList";
-    }
 
     @PostMapping(value = "/photo/new/{albumId}")
     public String uploadPhoto(@PathVariable("albumId") Long albumId, @Valid PhotoForm form, BindingResult result) throws IOException {
@@ -96,7 +54,7 @@ public class PhotoController {
 //        https://storage.googleapis.com/photo/gamo_bucket/33bd1600-8cee-4071-847c-5dd28de9409d
     }
 
-    //사진 하나
+    //사진 조회
     @GetMapping(value = "/photo/{photoId}")
     public String getPhoto(@PathVariable("photoId") Long photoId, Model model) {
         Photo photoData = photoService.getPhotoById(photoId);
@@ -109,7 +67,7 @@ public class PhotoController {
         return "photo";
     }
 
-    //사진 삭제하기
+    //사진 삭제
     @DeleteMapping("photo/delete/{photoId}")
     public ResponseEntity<String> deletePhoto(@PathVariable("photoId") Long photoId) {
         try {

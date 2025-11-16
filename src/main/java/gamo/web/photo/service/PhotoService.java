@@ -46,6 +46,7 @@ public class PhotoService {
         return photoRepository.findByAlbumIdOrderByCreatedAtDesc(albumId);
     }
 
+    //앨범 썸네일
     public Photo getLatestPhotoByAlbumId(Long albumId) {
         return photoRepository.findLatestByAlbumId(albumId);
     }
@@ -53,7 +54,7 @@ public class PhotoService {
     @Transactional
     public void deleteAlbum(Long albumId) {
         albumRepository.deleteById(albumId);
-        System.out.println("[Service] 앨범 삭제 완료 - ID: " + albumId);
+//        System.out.println("[Service] 앨범 삭제 완료 - ID: " + albumId);
     }
 
     //사진 업로드
