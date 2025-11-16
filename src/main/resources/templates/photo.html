@@ -70,8 +70,9 @@
                         method: "DELETE",
                     });
                     if (response.ok) {
+                        const redirectUrl = await response.text();
                         alert("사진이 삭제되었습니다.");
-                        location.reload();
+                        window.location.href = redirectUrl;
                     } else {
                         alert("삭제 중 오류가 발생했습니다.");
                     }

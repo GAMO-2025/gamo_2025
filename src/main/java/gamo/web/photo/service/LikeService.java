@@ -1,13 +1,11 @@
 package gamo.web.photo.service;
 
 import gamo.web.member.domain.Member;
-import gamo.web.member.repository.MemberRepository;
 import gamo.web.photo.domain.Like;
 import gamo.web.photo.domain.Photo;
 import gamo.web.photo.repository.LikeRepository;
 import gamo.web.photo.repository.PhotoRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class LikeService {
     private final LikeRepository likeRepository;
-    private final MemberRepository memberRepository;
     private final PhotoRepository photoRepository;
 
     public boolean clickLike(Long memberId, Long photoId) {
@@ -29,7 +26,8 @@ public class LikeService {
             //member부분 수정하기
             Member member = new Member();
             member.setId(1L);
-            Photo photo = photoRepository.findById(photoId);
+            Photo photo = photoRepository.findById(photoId)
+                    .orElseThrow(() -> new RuntimeException("사진을 찾을 수 없습니다."));
 
             Like newLike = new Like();
             newLike.setMember(member);

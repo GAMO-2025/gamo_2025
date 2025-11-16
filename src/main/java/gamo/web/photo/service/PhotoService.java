@@ -1,7 +1,5 @@
 package gamo.web.photo.service;
 
-import com.google.cloud.storage.BlobId;
-import gamo.web.member.domain.Family;
 import gamo.web.member.domain.Member;
 import gamo.web.member.repository.MemberRepository;
 import gamo.web.photo.domain.Album;
@@ -9,8 +7,6 @@ import gamo.web.photo.domain.Photo;
 import gamo.web.photo.repository.AlbumRepository;
 import gamo.web.photo.repository.PhotoRepository;
 import lombok.RequiredArgsConstructor;
-import org.checkerframework.checker.units.qual.A;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,12 +47,12 @@ public class PhotoService {
     }
 
     public Photo getLatestPhotoByAlbumId(Long albumId) {
-        return photoRepository.findLastestByAlbumId(albumId);
+        return photoRepository.findLatestByAlbumId(albumId);
     }
 
     @Transactional
     public void deleteAlbum(Long albumId) {
-        albumRepository.deleteByAlbumId(albumId);
+        albumRepository.deleteById(albumId);
         System.out.println("[Service] 앨범 삭제 완료 - ID: " + albumId);
     }
 
@@ -68,10 +64,17 @@ public class PhotoService {
 
     //사진 상세
     public Photo getPhotoById(Long photoId) {
-        return photoRepository.findById(photoId);
+        return photoRepository.findById(photoId)
+                .orElseThrow(() -> new RuntimeException("사진을 찾을 수 없습니다."));
     }
 
-    public void deletePhoto(Long id) {
+    //사진 삭제
+    @Transactional
+    public Long deletePhoto(Long id) {
+        Photo photo = photoRepository.findById(id)
+                        .orElseThrow(() -> new RuntimeException("사진을 찾을 수 없습니다."));
+        Long albumId = photo.getAlbum().getAlbum_id();
         photoRepository.deleteById(id);
+        return albumId;
     }
 }

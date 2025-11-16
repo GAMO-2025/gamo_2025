@@ -1,18 +1,14 @@
 package gamo.web.photo.Controller;
 
-import gamo.web.member.domain.Family;
 import gamo.web.member.domain.Member;
-import gamo.web.member.repository.FamilyRepository;
 import gamo.web.photo.domain.Album;
 import gamo.web.photo.domain.Photo;
 import gamo.web.photo.dto.AlbumDto;
-import gamo.web.photo.repository.AlbumRepository;
 import gamo.web.photo.service.LikeService;
 import gamo.web.photo.service.PhotoService;
 import gamo.web.photo.service.GcpStorageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -24,7 +20,6 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.Optional;
 
 @Controller
 @RequiredArgsConstructor
@@ -114,21 +109,21 @@ public class PhotoController {
         return "photo";
     }
 
+    //사진 삭제하기
     @DeleteMapping("photo/delete/{photoId}")
     public ResponseEntity<String> deletePhoto(@PathVariable("photoId") Long photoId) {
         try {
             Photo photo = photoService.getPhotoById(photoId);
             boolean deletedFromGCS = gcpStorageService.delete(photo.getUrl());
-            photoService.deletePhoto(photoId);
+            Long album_id = photoService.deletePhoto(photoId);
 
-            return ResponseEntity.ok("deleted");
+//            return ResponseEntity.ok("deleted");
+            return ResponseEntity.ok("/album/" + album_id);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("error");
         }
     }
 
-
-//    --------------------
 
     @GetMapping(value = "/photo")
     public String photoForm(Model model) {

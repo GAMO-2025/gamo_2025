@@ -1,43 +1,20 @@
 package gamo.web.photo.repository;
 
 import gamo.web.photo.domain.Like;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-@Repository
-public class LikeRepository {
-    @PersistenceContext
-    private EntityManager em;
-
-    //좋아요
-    public void save(Like like) {
-        em.persist(like);
-    }
-
-    //좋아요 취소: 영속성
-    public void deleteByMemberAndPhoto(Long memberId, Long photoId) {
-        em.createQuery("DELETE FROM Like l WHERE l.member.id = :memberId AND l.photo.photo_id = :photoId")
-                .setParameter("memberId", memberId)
-                .setParameter("photoId", photoId)
-                .executeUpdate();
-    }
+public interface LikeRepository extends JpaRepository<Like, Long> {
+    //좋아요 취소:
+    @Query("DELETE FROM Like l WHERE l.member.id = :memberId AND l.photo.photo_id = :photoId")
+    void deleteByMemberAndPhoto(@Param("memberId") Long memberId, @Param("photoId") Long photoId);
 
     //이미 좋아요를 눌렀는지 확인
-    public boolean findByMemberAndPhoto(Long memberId, Long photoId) {
-        String jpql = "SELECT COUNT(l) FROM Like l WHERE l.member.id = :memberId AND l.photo.photo_id = :photoId";
-        Long count = em.createQuery(jpql, Long.class)
-                .setParameter("memberId", memberId)
-                .setParameter("photoId", photoId)
-                .getSingleResult();
-        return count > 0;
-    }
+    @Query("SELECT COUNT(l) > 0 FROM Like l WHERE l.member.id = :memberId AND l.photo.photo_id = :photoId")
+    boolean findByMemberAndPhoto(@Param("memberId") Long memberId, @Param("photoId") Long photoId);
 
     // 사진의 좋아요 개수
-    public Long countByPhoto(Long photoId) {
-        String jpql = "SELECT COUNT(l) FROM Like l WHERE l.photo.photo_id = :photoId";
-        return em.createQuery(jpql, Long.class)
-                .setParameter("photoId", photoId)
-                .getSingleResult();
-    }
+    @Query("SELECT COUNT(l) FROM Like l WHERE l.photo.photo_id = :photoId")
+    Long countByPhoto(@Param("photoId") Long photoId);
 }
