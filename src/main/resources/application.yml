@@ -17,7 +17,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     properties:
       hibernate:
         format_sql: true
@@ -29,6 +29,9 @@ spring:
       continue-on-error: true
       encoding: UTF-8
   mvc:
+    hidden method:
+      filter:
+        enabled: true
     static-path-pattern: /**
 
 

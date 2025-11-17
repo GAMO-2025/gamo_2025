@@ -2,12 +2,15 @@ package gamo.web.member.controller;
 
 import gamo.web.auth.UserPrincipal;
 import gamo.web.auth.jwt.JwtTokenProvider;
+import gamo.web.auth.service.LogoutService;
 import gamo.web.member.domain.Member;
 import gamo.web.member.dto.LoginResponseDTO;
 import gamo.web.member.dto.NicknameRequestDTO;
 import gamo.web.member.repository.MemberRepository;
 import gamo.web.member.service.MemberService;
 import gamo.web.member.service.NicknameService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +24,7 @@ public class MemberController {
 
     private final MemberService memberService;
     private final NicknameService nicknameService;
+    private final LogoutService logoutService;
 
     //dev login 용 나중에 삭제
     private final MemberRepository memberRepository;
@@ -45,6 +49,7 @@ public class MemberController {
         return ResponseEntity.ok(response);
     }
 
+    //가족 간 닉네임 설정
     @PostMapping("/{aliasMemberId}")
     public ResponseEntity<Void> upsertNickname(
             @PathVariable Long aliasMemberId,
@@ -54,5 +59,20 @@ public class MemberController {
         Long memberId = memberService.getMemberId(user);
         nicknameService.upsertNickname(memberId, aliasMemberId, nicknameRequestDTO.getAlias());
         return ResponseEntity.ok().build();
+    }
+
+    //회원 탈퇴
+    @DeleteMapping
+    public ResponseEntity<Void> deleteMember(@AuthenticationPrincipal UserPrincipal user,
+                                             HttpServletRequest request,
+                                             HttpServletResponse response) {
+        Long memberId = memberService.getMemberId(user);
+        memberService.deleteMember(memberId);
+
+        logoutService.performLogout(request, response);
+
+        return ResponseEntity.status(303)
+                .header("Location", "/login")
+                .build();
     }
 }

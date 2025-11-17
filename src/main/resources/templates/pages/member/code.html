@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="fragments/layout :: AppLayout('home', ~{::content}, null)">
+
+<th:block th:fragment="content">
+
+    <!-- 로그인 사용자 전용 -->
+    <div class="flex flex-col px-5 pt-6 w-full" th:if="${member != null}">
+        <!-- 프로필 영역 -->
+        <a th:href="@{/member/mypage}" class="flex items-center gap-4">
+            <img class="h-20 w-20 rounded-full object-cover"
+                 th:src="${member.picture}"
+                 alt="profile" />
+            <div class="flex flex-col">
+                <p class="text-[18px] font-bold text-gray-900"
+                   th:text="${member.name + '님'}"></p>
+                <p class="text-[13px] text-gray-500"
+                   th:text="${member.email}"></p>
+            </div>
+        </a>
+
+        <!-- 구분선 -->
+        <div class="my-8 h-[2px] w-full bg-gray-100"></div>
+
+        <div class="text-left mb-6">
+            <p class="text-[24px] font-bold text-gray-900">우리 가족!</p>
+            <p class="text-[24px] font-bold text-gray-900">다같이 모여보자</p>
+        </div>
+
+        <!-- 가족 초대 코드 -->
+        <div class="flex flex-col items-center gap-2 mt-4">
+            <div>
+                <img src="/svgs/family.svg" alt="family drawing" />
+            </div>
+
+            <div class="rounded-2xl bg-white shadow-sm px-6 py-4 text-center border border-gray-100">
+                <p class="text-[16px] text-gray-800 mb-1 font-bold">가족 초대 코드</p>
+                <div class="flex items-center justify-center gap-2">
+                    <p id="invite-code" class="text-[20px] font-bold text-[#C8A97E]">불러오는 중...</p>
+                    <button id="copy-btn" type="button" class="flex items-center">
+                        <img src="/svgs/ic_copy.svg" alt="copy" />
+                    </button>
+                </div>
+            </div>
+
+            <span id="copy-toast"
+                  class="mt-2 inline-block rounded-full bg-emerald-500/10 text-emerald-700 text-xs px-2 py-1 opacity-0 transition-opacity">
+        복사됨!
+      </span>
+        </div>
+    </div>
+
+    <!-- 비로그인 사용자 -->
+    <section class="px-5 py-10 text-center" th:if="${member == null}">
+        <p class="text-sm text-gray-600">로그인이 필요합니다.</p>
+        <a th:href="@{/oauth2/authorization/kakao}"
+           class="mx-auto mt-4 inline-block rounded-full bg-amber-300 px-6 py-3 text-[14px] font-semibold text-gray-900 shadow-md">
+            카카오로 로그인
+        </a>
+    </section>
+
+    <th:block th:replace="~{fragments/alert-modal :: alertModal('commonAlert', '알림 메시지')}" />
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const codeEl = document.getElementById('invite-code');
+            const btn = document.getElementById('copy-btn');
+            const toast = document.getElementById('copy-toast');
+
+            try {
+                const res = await fetch('/api/family/invite', { method: 'POST' });
+                const data = await res.json();
+                codeEl.textContent = data.familyCode ?? '가족 코드 없음';
+            } catch (e) {
+                console.error('가족 코드 불러오기 실패:', e);
+                codeEl.textContent = '가족 코드 없음';
+            }
+
+            btn?.addEventListener('click', async () => {
+                const text = codeEl?.textContent?.trim();
+                if (!text) return;
+                try {
+                    await navigator.clipboard.writeText(text);
+                    toast.style.opacity = '1';
+                    setTimeout(() => toast.style.opacity = '0', 1200);
+                } catch (err) {
+                    console.error('복사 실패:', err);
+                    openAlertModal('commonAlert', '복사에 실패했습니다.');
+                }
+            });
+        });
+    </script>
+
+</th:block>
+</html>

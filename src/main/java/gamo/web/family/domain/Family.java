@@ -1,5 +1,6 @@
-package gamo.web.member.domain;
+package gamo.web.family.domain;
 
+import gamo.web.member.domain.Member;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,6 +20,9 @@ public class Family {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "family_id")
     private Long id;
+
+    @Column(name = "family_code", nullable = false, unique = true)
+    private String familyCode;
 
     @OneToMany(mappedBy = "family", cascade = CascadeType.ALL)
     @Builder.Default

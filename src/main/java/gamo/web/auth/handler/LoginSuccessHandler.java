@@ -37,7 +37,7 @@ public class LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
         refreshTokenRepository.save(RefreshToken.builder()
                 .memberId(memberId)
                 .token(refreshToken)
-                .expiresAt(LocalDateTime.now().plusDays(30)) // 프로퍼티로 치환 가능
+                .expiresAt(LocalDateTime.now().plusDays(30))
                 .build());
 
         // 쿠키 생성 및 설정

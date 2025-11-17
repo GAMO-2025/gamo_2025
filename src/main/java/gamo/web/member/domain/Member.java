@@ -1,5 +1,6 @@
 package gamo.web.member.domain;
 
+import gamo.web.family.domain.Family;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,14 +24,23 @@ public class Member {
     @Column(nullable = false)
     private String email;
 
-    @Column(nullable = false, name = "social_id")
+    @Column(name = "social_id")
     private String socialId;
 
-    @Column(nullable = false, length = 20)
+    @Column(length = 20)
     private String provider;
 
     @Column(name = "profile_image")
     private String profileImage;
+
+    public enum MemberStatus {
+        ACTIVE,
+        DELETED
+    }
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private MemberStatus status = MemberStatus.ACTIVE;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "family_id",
@@ -41,5 +51,27 @@ public class Member {
         this.name = name;
         this.profileImage = picture;
         return this;
+    }
+
+    public void setFamily(Family family) {
+        this.family = family;
+
+        if (family != null && !family.getMembers().contains(this)) {
+            family.getMembers().add(this);
+        }
+    }
+
+    public void markDeleted() {
+        this.status = MemberStatus.DELETED;
+
+        // 재가입 시 이메일 충돌 막기 위해 무효 처리 해주기
+        this.email = this.email + ".deleted." + System.currentTimeMillis();
+
+        // 카카오 링크 끊기
+        this.socialId = null;
+        this.provider = null;
+        // 이름이랑 프로필 이미지도 null 처리
+        this.name = "탈퇴회원";
+        this.profileImage = null;
     }
 }

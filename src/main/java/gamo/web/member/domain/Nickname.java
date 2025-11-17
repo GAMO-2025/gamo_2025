@@ -1,6 +1,5 @@
 package gamo.web.member.domain;
 
-import gamo.web.member.domain.Member;
 import jakarta.persistence.*;
 import lombok.*;
 
