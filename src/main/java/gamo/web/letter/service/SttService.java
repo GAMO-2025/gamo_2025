@@ -7,10 +7,12 @@ import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.api.gax.longrunning.OperationFuture;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.FileInputStream;
+import java.io.InputStream;
 
 @Service
 public class SttService {
@@ -19,7 +21,7 @@ public class SttService {
     private String projectId;
 
     @Value("${gcp.credentials.location}")
-    private String credentialsPath;
+    private Resource credentialsResource;
 
     @Value("${gcs.bucket-name}")
     private String bucketName;
@@ -30,17 +32,19 @@ public class SttService {
      * - 업로드 후 "gs://bucketName/파일경로" 형태 URI 반환
      */
     private String uploadToGcs(MultipartFile file) throws Exception {
-        Storage storage = StorageOptions.newBuilder()
-                .setProjectId(projectId)
-                .setCredentials(GoogleCredentials.fromStream(new FileInputStream(credentialsPath)))
-                .build()
-                .getService();
+        try (InputStream credentialsStream = credentialsResource.getInputStream()) {
+            Storage storage = StorageOptions.newBuilder()
+                    .setProjectId(projectId)
+                    .setCredentials(GoogleCredentials.fromStream(credentialsStream))
+                    .build()
+                    .getService();
 
-        String objectName = "stt/" + System.currentTimeMillis() + "-" + file.getOriginalFilename();
-        BlobInfo blobInfo = BlobInfo.newBuilder(bucketName, objectName).build();
-        storage.create(blobInfo, file.getBytes());
+            String objectName = "stt/" + System.currentTimeMillis() + "-" + file.getOriginalFilename();
+            BlobInfo blobInfo = BlobInfo.newBuilder(bucketName, objectName).build();
+            storage.create(blobInfo, file.getBytes());
 
-        return "gs://" + bucketName + "/" + objectName;
+            return "gs://" + bucketName + "/" + objectName;
+        }
     }
 
     /**
@@ -51,11 +55,12 @@ public class SttService {
      * - 결과를 문자열로 합쳐서 반환
      */
     private String longRunningTranscribe(String gcsUri) throws Exception {
-        try (SpeechClient speechClient = SpeechClient.create(
-                SpeechSettings.newBuilder()
-                        .setCredentialsProvider(() -> GoogleCredentials.fromStream(new FileInputStream(credentialsPath)))
-                        .build()
-        )) {
+        try (InputStream credentialsStream = credentialsResource.getInputStream();
+             SpeechClient speechClient = SpeechClient.create(
+                     SpeechSettings.newBuilder()
+                             .setCredentialsProvider(() -> GoogleCredentials.fromStream(credentialsStream))
+                             .build()
+             )) {
             RecognitionConfig config = RecognitionConfig.newBuilder()
                     .setEncoding(RecognitionConfig.AudioEncoding.WEBM_OPUS)
                     .setSampleRateHertz(48000)
@@ -67,13 +72,11 @@ public class SttService {
                     .setUri(gcsUri)
                     .build();
 
-            // 장시간 음성 인식 요청
             OperationFuture<LongRunningRecognizeResponse, LongRunningRecognizeMetadata> response =
                     speechClient.longRunningRecognizeAsync(config, audio);
 
             LongRunningRecognizeResponse longResponse = response.get();
 
-            // 인식된 텍스트 합치기
             StringBuilder transcript = new StringBuilder();
             for (SpeechRecognitionResult result : longResponse.getResultsList()) {
                 transcript.append(result.getAlternatives(0).getTranscript());

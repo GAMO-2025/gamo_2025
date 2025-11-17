@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/stt")
+@RequestMapping("/letter/api")
 public class SttController {
 
     private final SttService sttService;
@@ -18,7 +18,7 @@ public class SttController {
         this.sttService = sttService;
     }
 
-    @PostMapping
+    @PostMapping("/stt")
     public Map<String, String> stt(@RequestParam("voiceFile") MultipartFile voiceFile) {
         try {
             // 1. 요청 들어왔는지 확인

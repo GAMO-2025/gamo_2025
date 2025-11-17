@@ -204,7 +204,7 @@
                 status.classList.add('text-[#F5BF76]');
 
                 try {
-                    const response = await fetch('/api/stt', { method:'POST', body: fd });
+                    const response = await fetch('/letter/api/stt', { method:'POST', body: fd });
                     if(!response.ok) throw new Error(response.statusText);
 
                     const data = await response.json();
@@ -239,7 +239,7 @@
                 status.classList.add('text-[#F5BF76]');
 
                 try {
-                    const resp = await fetch('/api/ai-correct', {
+                    const resp = await fetch('/letter/api/ai-correct', {
                         method:"POST",
                         headers:{ "Content-Type":"application/json" },
                         body: JSON.stringify({ text: originalText })

@@ -67,6 +67,17 @@
             <!-- Title -->
             <h2 class="text-xl font-bold text-gray-900 mb-4" th:text="${letter.title}">편지 제목</h2>
 
+            <!-- TTS Listen Button -->
+            <button id="ttsButton" onclick="playTts()"
+                    class="mb-4 w-full flex items-center justify-center gap-2 px-4 py-3
+               bg-white text-gray-700 rounded-xl font-medium border border-gray-200 shadow-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                </svg>
+                <span id="ttsButtonText">편지 음성으로 듣기</span>
+            </button>
+
             <!-- Content -->
             <div class="text-gray-700 leading-relaxed whitespace-pre-wrap mb-4" th:text="${letter.content}">
                 편지 내용이 여기에 표시됩니다.
@@ -236,6 +247,49 @@
                 closeCancelModal();
             }
         });
+
+        async function playTts() {
+            const button = document.getElementById("ttsButton");
+            const buttonText = document.getElementById("ttsButtonText");
+
+            // 재생 중 상태
+            buttonText.innerText = "재생 중...";
+            button.disabled = true; // 재생 중 클릭 방지
+
+            try {
+                const res = await fetch(`/letter/api/tts/${letterId}`);
+                const data = await res.json();
+
+                const audioBase64 = data.audioBase64;
+
+                if (!audioBase64) {
+                    alert("음성 생성 실패!");
+                    buttonText.innerText = "편지 음성으로 듣기";
+                    button.disabled = false;
+                    return;
+                }
+
+                const audio = new Audio("data:audio/mp3;base64," + audioBase64);
+                audio.play();
+
+                audio.onended = () => {
+                    buttonText.innerText = "편지 음성으로 듣기";
+                    button.disabled = false;
+                };
+
+                audio.onerror = () => {
+                    alert("음성 재생 오류 발생!");
+                    buttonText.innerText = "편지 음성으로 듣기";
+                    button.disabled = false;
+                };
+
+            } catch (err) {
+                console.error(err);
+                alert("음성 생성 중 오류 발생!");
+                buttonText.innerText = "편지 음성으로 듣기";
+                button.disabled = false;
+            }
+        }
 
     </script>
 
