@@ -1,11 +1,10 @@
 package gamo.web.letter.service;
 
+import gamo.web.common.exception.CustomException;
+import gamo.web.common.response.ErrorCode;
 import gamo.web.letter.domain.InputType;
 import gamo.web.letter.domain.Letter;
-import gamo.web.letter.dto.LetterCountDTO;
-import gamo.web.letter.dto.LetterListDTO;
-import gamo.web.letter.dto.LetterRequestDTO;
-import gamo.web.letter.dto.PersonDTO;
+import gamo.web.letter.dto.*;
 import gamo.web.letter.repository.LetterRepository;
 import gamo.web.member.domain.Member;
 import gamo.web.member.domain.Nickname;
@@ -19,6 +18,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.URL;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,15 +30,13 @@ public class LetterService {
     private final LetterRepository letterRepository;
     private final MemberRepository memberRepository;
     private final NicknameRepository nicknameRepository;
-    private final SttService sttService;
     private final GcsService gcsService;
-    private final AiCorrectService aiCorrectService;
 
     // 편지 개수 조회
     public LetterCountDTO getLetterCounts(Long userId) {
-        Long receivedCount = letterRepository.countByReceiverId(userId);
-        Long sentCount = letterRepository.countBySenderId(userId);
-        Long unreadCount = letterRepository.countByReceiverIdAndIsReadFalse(userId);
+        Long receivedCount = letterRepository.countByReceiverIdAndIsReceiverDeletedFalseAndIsCancelledFalse(userId);
+        Long sentCount = letterRepository.countBySenderIdAndIsSenderDeletedFalseAndIsCancelledFalse(userId);
+        Long unreadCount = letterRepository.countByReceiverIdAndIsReceiverDeletedFalseAndIsCancelledFalseAndIsReadFalse(userId);
 
         return new LetterCountDTO(receivedCount, sentCount, unreadCount);
     }
@@ -49,9 +48,9 @@ public class LetterService {
 
         Page<Letter> letterPage;
         if (senderId != null) {
-            letterPage = letterRepository.findByReceiverIdAndSenderId(userId, senderId, pageable);
+            letterPage = letterRepository.findByReceiverIdAndSenderIdAndIsCancelledFalseAndIsReceiverDeletedFalse(userId, senderId, pageable);
         } else {
-            letterPage = letterRepository.findByReceiverId(userId, pageable);
+            letterPage = letterRepository.findByReceiverIdAndIsCancelledFalseAndIsReceiverDeletedFalse(userId, pageable);
         }
 
         return letterPage.map(letter -> {
@@ -67,9 +66,9 @@ public class LetterService {
 
         Page<Letter> letterPage;
         if (receiverId != null) {
-            letterPage = letterRepository.findBySenderIdAndReceiverId(userId, receiverId, pageable);
+            letterPage = letterRepository.findBySenderIdAndReceiverIdAndIsSenderDeletedFalse(userId, receiverId, pageable);
         } else {
-            letterPage = letterRepository.findBySenderId(userId, pageable);
+            letterPage = letterRepository.findBySenderIdAndIsSenderDeletedFalse(userId, pageable);
         }
 
         return letterPage.map(letter -> {
@@ -80,7 +79,7 @@ public class LetterService {
 
     // 받은 편지의 발신자 목록
     public List<PersonDTO> getReceivedLetterSenders(Long userId) {
-        List<Long> senderIds = letterRepository.findDistinctSenderIdsByReceiverId(userId);
+        List<Long> senderIds = letterRepository.findDistinctSenderIdsByReceiverIdAndIsCancelledFalse(userId);
         return senderIds.stream()
                 .map(senderId -> {
                     String name = getDisplayName(userId, senderId);
@@ -115,19 +114,79 @@ public class LetterService {
     @Transactional
     public void deleteLetter(Long letterId, Long userId) {
         Letter letter = letterRepository.findById(letterId)
-                .orElseThrow(() -> new IllegalArgumentException("편지를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.LETTER_NOT_FOUND));
 
-        if (!letter.getSenderId().equals(userId) && !letter.getReceiverId().equals(userId)) {
-            throw new IllegalArgumentException("삭제 권한이 없습니다.");
+        boolean isSender = letter.getSenderId().equals(userId);
+        boolean isReceiver = letter.getReceiverId().equals(userId);
+
+        if (!isSender && !isReceiver) {
+            throw new CustomException(ErrorCode.LETTER_DELETE_FORBIDDEN);
         }
 
-        letterRepository.delete(letter);
+        // 보낸 사람 삭제
+        if (isSender) {
+            if (letter.getIsSenderDeleted()) {
+                throw new CustomException(ErrorCode.LETTER_ALREADY_DELETED);
+            }
+            letter.setIsSenderDeleted(true);
+        }
+
+        // 받은 사람 삭제
+        if (isReceiver) {
+            if (letter.getIsReceiverDeleted()) {
+                throw new CustomException(ErrorCode.LETTER_ALREADY_DELETED);
+            }
+            letter.setIsReceiverDeleted(true);
+        }
+
+        // 둘 다 삭제한 경우 DB에서 완전 삭제 (Hard Delete)
+        if (letter.getIsSenderDeleted() && letter.getIsReceiverDeleted()) {
+            letterRepository.delete(letter);
+        } else {
+            // 둘 중 한 명만 삭제했을 경우 soft delete 유지
+            letterRepository.save(letter);
+        }
+    }
+
+    // 편지 상세 조회
+    @Transactional
+    public LetterDetailDTO getLetterDetail(Long letterId, Long currentUserId) {
+        Letter letter = letterRepository.findById(letterId)
+                .orElseThrow(() -> new CustomException(ErrorCode.LETTER_NOT_FOUND));
+
+        // 권한 확인 (발신자 또는 수신자만 조회 가능)
+        if (!letter.getSenderId().equals(currentUserId) && !letter.getReceiverId().equals(currentUserId)) {
+            throw new CustomException(ErrorCode.LETTER_ACCESS_FORBIDDEN);
+        }
+
+        // 수신자가 조회하고 아직 읽지 않았다면 읽음 처리
+        if (letter.getReceiverId().equals(currentUserId) && !letter.isRead()) {
+            letter.setRead(true);
+            letter.setReadAt(LocalDateTime.now());
+            letterRepository.save(letter);
+        }
+
+        // signedUrl 생성
+        String signedUrl = null;
+        if (letter.getLetterImg() != null && letter.getLetterImg().startsWith("gs://")) {
+            try {
+                signedUrl = gcsService.generateSignedUrl(letter.getLetterImg(), 30).toString();
+            } catch (Exception e) {
+                throw new CustomException(ErrorCode.FILE_SIGNED_URL_ERROR);
+            }
+        }
+
+        // 발신자와 수신자 이름 가져오기 (별명 우선)
+        String senderName = getDisplayName(currentUserId, letter.getSenderId());
+        String receiverName = getDisplayName(currentUserId, letter.getReceiverId());
+
+        return LetterDetailDTO.fromEntityWithSignedUrl(letter, senderName, receiverName, currentUserId, signedUrl);
     }
 
     // 편지 작성 화면용 가족 목록
     public List<FamilyDisplay> getFamilyDisplayList(Long loginMemberId) {
         Member me = memberRepository.findById(loginMemberId)
-                .orElseThrow(() -> new IllegalArgumentException("로그인 회원이 존재하지 않습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         return memberRepository.findByFamily(me.getFamily())
                 .stream()
@@ -145,7 +204,7 @@ public class LetterService {
     // 수신자 표시 이름
     public String getReceiverDisplayName(Long senderId, Long receiverId) {
         Member receiver = memberRepository.findById(receiverId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 수신자입니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
         return nicknameRepository.findByMemberIdAndAliasMemberId(senderId, receiver.getId())
                 .map(Nickname::getAlias)
                 .orElse(receiver.getName());
@@ -154,12 +213,12 @@ public class LetterService {
     // 편지 전송
     public Letter sendLetter(Long senderId, LetterRequestDTO request) {
         Member sender = memberRepository.findById(senderId)
-                .orElseThrow(() -> new IllegalArgumentException("잘못된 발신자 ID"));
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
         Member receiver = memberRepository.findById(request.getReceiverId())
-                .orElseThrow(() -> new IllegalArgumentException("잘못된 수신자 ID"));
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         if (!sender.getFamily().getId().equals(receiver.getFamily().getId())) {
-            throw new IllegalArgumentException("같은 가족이 아닙니다.");
+            throw new CustomException(ErrorCode.NOT_SAME_FAMILY);
         }
 
         // 기본 content
@@ -179,6 +238,8 @@ public class LetterService {
                 .content(content)
                 .letterImg(letterImgPath)
                 .inputType(InputType.valueOf(request.getInputType()))
+                .isSenderDeleted(false)
+                .isReceiverDeleted(false)
                 .build();
 
         return letterRepository.save(letter);
@@ -188,11 +249,10 @@ public class LetterService {
     @Transactional
     public void cancelLetter(Long letterId) {
         Letter letter = letterRepository.findById(letterId)
-                .orElseThrow(() -> new IllegalArgumentException("편지가 존재하지 않습니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.LETTER_NOT_FOUND));
         letter.setCancelled(true);
     }
 
-    // 화면에 뿌릴 DTO
     public record FamilyDisplay(Long id, String displayName) {}
 
 }

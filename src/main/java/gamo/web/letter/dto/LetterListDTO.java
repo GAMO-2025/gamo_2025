@@ -1,10 +1,7 @@
 package gamo.web.letter.dto;
 
 import gamo.web.letter.domain.Letter;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -14,6 +11,7 @@ import java.time.temporal.ChronoUnit;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class LetterListDTO {
     private Long id;
     private String otherPersonName;  // 상대방 이름
@@ -24,32 +22,32 @@ public class LetterListDTO {
     private Boolean isCancelled;
     private Boolean canCancel;       // 전송 취소 가능 여부 (5분 이내)
 
-    // Entity를 DTO로 변환 (받은 편지용)
+    // Entity → DTO 변환 (받은 편지용)
     public static LetterListDTO fromReceivedLetter(Letter letter, String senderName) {
-        LetterListDTO dto = new LetterListDTO();
-        dto.setId(letter.getId());
-        dto.setOtherPersonName(senderName);
-        dto.setTitle(letter.getTitle());
-        dto.setContentPreview(getPreview(letter.getContent()));
-        dto.setDate(formatDate(letter.getCreatedAt()));
-        dto.setIsRead(letter.isRead());
-        dto.setIsCancelled(letter.isCancelled());
-        dto.setCanCancel(false); // 받은 편지는 취소 불가
-        return dto;
+        return LetterListDTO.builder()
+                .id(letter.getId())
+                .otherPersonName(senderName)
+                .title(letter.getTitle())
+                .contentPreview(getPreview(letter.getContent()))
+                .date(formatDate(letter.getCreatedAt()))
+                .isRead(letter.isRead())
+                .isCancelled(letter.isCancelled())
+                .canCancel(false) // 받은 편지는 취소 불가
+                .build();
     }
 
-    // Entity를 DTO로 변환 (보낸 편지용)
+    // Entity → DTO 변환 (보낸 편지용)
     public static LetterListDTO fromSentLetter(Letter letter, String receiverName) {
-        LetterListDTO dto = new LetterListDTO();
-        dto.setId(letter.getId());
-        dto.setOtherPersonName(receiverName + "에게");
-        dto.setTitle(letter.getTitle());
-        dto.setContentPreview(getPreview(letter.getContent()));
-        dto.setDate(formatDate(letter.getCreatedAt()));
-        dto.setIsRead(letter.isRead());
-        dto.setIsCancelled(letter.isCancelled());
-        dto.setCanCancel(canCancelLetter(letter.getCreatedAt(), letter.isCancelled()));
-        return dto;
+        return LetterListDTO.builder()
+                .id(letter.getId())
+                .otherPersonName(receiverName + "에게")
+                .title(letter.getTitle())
+                .contentPreview(getPreview(letter.getContent()))
+                .date(formatDate(letter.getCreatedAt()))
+                .isRead(letter.isRead())
+                .isCancelled(letter.isCancelled())
+                .canCancel(canCancelLetter(letter.getCreatedAt(), letter.isCancelled()))
+                .build();
     }
 
     // 내용 미리보기 (50자 제한)

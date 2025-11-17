@@ -2,10 +2,7 @@ package gamo.web.letter.controller;
 
 import gamo.web.auth.UserPrincipal;
 import gamo.web.letter.domain.Letter;
-import gamo.web.letter.dto.LetterCountDTO;
-import gamo.web.letter.dto.LetterListDTO;
-import gamo.web.letter.dto.LetterRequestDTO;
-import gamo.web.letter.dto.PersonDTO;
+import gamo.web.letter.dto.*;
 import gamo.web.letter.service.LetterService;
 import gamo.web.member.domain.Member;
 import lombok.RequiredArgsConstructor;
@@ -23,9 +20,9 @@ public class LetterViewController {
 
     private final LetterService letterService;
 
-    private static final int PAGE_SIZE = 4; // 페이지당 편지 개수
+    private static final int PAGE_SIZE = 3; // 페이지당 편지 개수
 
-    // 편지 보관함
+    // 편지 보관함(목록)
     @GetMapping("/letter/list")
     public String showLetterList(
             @RequestParam(defaultValue = "received") String type,
@@ -62,12 +59,29 @@ public class LetterViewController {
 
     // 편지 작성
     @GetMapping("/letter/new")
-    public String showLetterForm(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+    public String showLetterForm(
+            @RequestParam(required = false) Long receiverId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            Model model) {
+
         Member loginMember = userPrincipal.getMember();
         Long loginMemberId = loginMember.getId();
 
+        // 로그인한 사용자의 가족 목록 조회
         List<LetterService.FamilyDisplay> familyDisplayList = letterService.getFamilyDisplayList(loginMemberId);
         model.addAttribute("familyList", familyDisplayList);
+
+        // 답장하기 시 수신자 미리 선택
+        LetterService.FamilyDisplay preSelectedReceiver = null;
+        if (receiverId != null) {
+            preSelectedReceiver = familyDisplayList.stream()
+                    .filter(f -> f.id().equals(receiverId))
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        model.addAttribute("preSelectedReceiver", preSelectedReceiver);
+
         return "/pages/letter/letterForm";
     }
 
@@ -93,7 +107,7 @@ public class LetterViewController {
     @PostMapping("/letter/cancel")
     public String cancelLetter(@RequestParam Long letterId) {
         letterService.cancelLetter(letterId);
-        return "redirect:/letter/new";
+        return "redirect:/letter/list?type=sent";
     }
 
     // 편지 삭제
@@ -122,5 +136,25 @@ public class LetterViewController {
         model.addAttribute("letterCounts", letterCounts);
 
         return "/pages/letter/letterHome";
+    }
+
+    // 편지 상세 조회
+    @GetMapping("/letter/detail/{letterId}")
+    public String showLetterDetail(
+            @PathVariable Long letterId,
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            Model model) {
+
+        Member loginMember = userPrincipal.getMember();
+        Long loginMemberId = loginMember.getId();
+
+        try {
+            LetterDetailDTO letterDetail = letterService.getLetterDetail(letterId, loginMemberId);
+            model.addAttribute("letter", letterDetail);
+            return "/pages/letter/letterDetail";
+        } catch (IllegalArgumentException e) {
+            // 권한 없거나 편지가 없는 경우
+            return "redirect:/letter/list";
+        }
     }
 }

@@ -40,5 +40,14 @@ public class Letter extends BaseEntity {
 
     @Column(name = "is_read")
     private boolean isRead = false;
+
+    @Column(name = "read_at")
+    private LocalDateTime readAt;
+
+    @Column(name = "is_sender_deleted", nullable = false)
+    private Boolean isSenderDeleted = false;
+
+    @Column(name = "is_receiver_deleted", nullable = false)
+    private Boolean isReceiverDeleted = false;
 }
 
