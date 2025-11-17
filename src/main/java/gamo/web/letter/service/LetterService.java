@@ -1,5 +1,7 @@
 package gamo.web.letter.service;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import gamo.web.common.exception.CustomException;
 import gamo.web.common.response.ErrorCode;
 import gamo.web.letter.domain.InputType;
@@ -18,9 +20,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.net.URL;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -148,6 +151,12 @@ public class LetterService {
         }
     }
 
+    // letterId → signedUrl 캐시
+    private final Cache<Long, String> signedUrlCache = Caffeine.newBuilder()
+            .expireAfterWrite(Duration.ofMinutes(25))
+            .maximumSize(1000)
+            .build();
+
     // 편지 상세 조회
     @Transactional
     public LetterDetailDTO getLetterDetail(Long letterId, Long currentUserId) {
@@ -166,14 +175,16 @@ public class LetterService {
             letterRepository.save(letter);
         }
 
-        // signedUrl 생성
+        // 이미지 signedUrl 캐싱/생성
         String signedUrl = null;
         if (letter.getLetterImg() != null && letter.getLetterImg().startsWith("gs://")) {
-            try {
-                signedUrl = gcsService.generateSignedUrl(letter.getLetterImg(), 30).toString();
-            } catch (Exception e) {
-                throw new CustomException(ErrorCode.FILE_SIGNED_URL_ERROR);
-            }
+            signedUrl = signedUrlCache.get(letterId, k -> {
+                try {
+                    return gcsService.generateSignedUrl(letter.getLetterImg(), 30).toString();
+                } catch (Exception e) {
+                    throw new RuntimeException("Signed URL 생성 실패", e);
+                }
+            });
         }
 
         // 발신자와 수신자 이름 가져오기 (별명 우선)
