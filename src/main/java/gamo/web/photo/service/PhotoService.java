@@ -7,6 +7,10 @@ import gamo.web.photo.domain.Photo;
 import gamo.web.photo.repository.AlbumRepository;
 import gamo.web.photo.repository.PhotoRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,8 +46,12 @@ public class PhotoService {
     }
 
     // Photo 리스트 조회 (최신순)
-    public List<Photo> getPhotoListByAlbumId(Long albumId) {
-        return photoRepository.findByAlbumIdOrderByCreatedAtDesc(albumId);
+//    public List<Photo> getPhotoListByAlbumId(Long albumId) {
+//        return photoRepository.findByAlbumIdOrderByCreatedAtDesc(albumId);
+//    }
+    public Page<Photo> getPhotoListByAlbumId(Long albumId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("created_at").descending());
+        return photoRepository.findPhotosByAlbumId(albumId, pageable);
     }
 
     //앨범 썸네일

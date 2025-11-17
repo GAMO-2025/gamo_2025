@@ -18,7 +18,7 @@
         class="relative w-screen min-h-screen overflow-auto shadow-xl"
         style="padding-top: 90px; padding-bottom: var(--safe-bottom);"
 >
-    <section class="grid grid-cols-4 gap-1">
+    <section class="grid grid-cols-4 gap-1" id="pic-grid">
         <div class="bg-green-500 flex items-center justify-center text-white font-bold cursor-pointer text-6xl aspect-square"
              id="uploadDiv">
             <form th:action="@{/photo/new/}" method="post" enctype="multipart/form-data"
@@ -82,6 +82,64 @@
         fileInput.addEventListener('change', () => {
             if(fileInput.files.length > 0){
                 photoForm.submit();
+            }
+        });
+
+
+
+        let page = 1;
+        const size = 20; //20개씩
+        let isLoading = false; // 중복 요청 방지
+        let isLast = false; //마지막 페이지 도달 여부
+        const grid = document.getElementById("pic-grid");
+
+        async function loadMorePhotos() {
+                if (isLoading || isLast) return;
+                isLoading = true;
+
+                try {
+                    const response = await fetch(`/album/${albumId}/paged?page=${page}&size=${size}`);
+                    const pageData = await response.json();
+
+                    // 마지막 페이지 체크
+                    if (!pageData.content || pageData.content.length === 0 || pageData.last === true) {
+                        isLast = true;
+                        return;
+                    }
+
+                    // 받아온 사진 띄우기
+                    pageData.content.forEach(photo => {
+                        const div = document.createElement("div");
+                        div.className = "photo-item relative w-full aspect-square overflow-hidden";
+
+                        div.innerHTML = `
+                            <a href="/photo/${photo.photo_id}" class="block w-full h-full">
+                                <img src="https://storage.cloud.google.com/gamo_bucket/photo/${photo.url}"
+                                     alt="앨범 사진"
+                                     class="w-full h-full object-cover transition-transform duration-300 hover:scale-105"/>
+                            </a>
+                        `;
+
+                        grid.appendChild(div);
+                    });
+
+                    page++; // 다음 페이지 준비
+
+                } catch (err) {
+                    console.error("무한 스크롤 요청 중 오류:", err);
+                } finally {
+                    isLoading = false;
+                }
+            }
+
+        // 스크롤 이벤트 감지
+        window.addEventListener("scroll", () => {
+            const scrollPosition = window.innerHeight + window.scrollY;
+            const documentHeight = document.body.offsetHeight;
+
+            // 페이지 끝에서 300px 남았을 때 로딩
+            if (scrollPosition >= documentHeight - 300) {
+                loadMorePhotos();
             }
         });
     });

@@ -7,12 +7,10 @@ import gamo.web.photo.service.GcpStorageService;
 import gamo.web.photo.service.LikeService;
 import gamo.web.photo.service.PhotoService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -60,9 +58,20 @@ public class AlbumController {
     //앨범에 있는 사진들
     @GetMapping(value = "/album/{albumId}")
     public String getPhotosInAlbum(@PathVariable("albumId") Long albumId, Model model) {
-        List<Photo> photoList = photoService.getPhotoListByAlbumId(albumId);
+        Page<Photo> photoList = photoService.getPhotoListByAlbumId(albumId, 0, 20);
 
         model.addAttribute("photoList", photoList);
         return "photoList";
+    }
+
+    //앨범의 사진 : 무한 스크롤
+    @GetMapping(value = "/album/{albumId}/paged")
+    @ResponseBody
+    public Page<Photo> getPhotosInAlbumPaged(
+            @PathVariable("albumId") Long albumId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return photoService.getPhotoListByAlbumId(albumId, page, size);
     }
 }

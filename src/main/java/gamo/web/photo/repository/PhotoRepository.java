@@ -1,6 +1,8 @@
 package gamo.web.photo.repository;
 
 import gamo.web.photo.domain.Photo;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,7 +19,10 @@ public interface PhotoRepository extends JpaRepository<Photo, Long> {
     Optional<Photo> findById(Long id);
 
     // 특정 앨범의 사진 목록 — createdAt 내림차순
-    @Query("SELECT p FROM Photo p WHERE p.album.album_id = :albumId ORDER BY p.created_at DESC")
-    List<Photo> findByAlbumIdOrderByCreatedAtDesc(@Param("albumId") Long albumId);
+    //@Query("SELECT p FROM Photo p WHERE p.album.album_id = :albumId ORDER BY p.created_at DESC")
+    //List<Photo> findByAlbumIdOrderByCreatedAtDesc(@Param("albumId") Long albumId);
 
+    // 앨범의 사진 목록 + 페이징
+    @Query("SELECT p FROM Photo p WHERE p.album.album_id = :albumId")
+    Page<Photo> findPhotosByAlbumId(@Param("albumId") Long albumId, Pageable pageable);
 }
