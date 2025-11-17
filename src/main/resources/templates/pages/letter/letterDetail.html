@@ -88,9 +88,11 @@
             </div>
 
             <!-- Image -->
-            <div th:if="${letter.signedImageUrl}" class="mb-4">
-                <img th:src="${letter.signedImageUrl}" alt="편지 이미지"
-                     class="w-full rounded-xl object-cover max-h-96">
+            <div th:if="${letter.signedImageUrl}" class="mb-4 w-full max-h-96 rounded-xl overflow-hidden bg-gray-100">
+                <img th:src="${letter.signedImageUrl}"
+                     alt="편지 이미지"
+                     class="w-full max-h-96 object-contain rounded-xl"
+                     loading="lazy">
             </div>
 
             <!-- Input Type Badge -->

@@ -24,8 +24,12 @@ public enum ErrorCode implements BaseCode {
     LETTER_NOT_FOUND(HttpStatus.NOT_FOUND, "LETTER-404", "편지를 찾을 수 없습니다."),
     LETTER_DELETE_FORBIDDEN(HttpStatus.FORBIDDEN, "LETTER-403", "편지를 삭제할 권한이 없습니다."),
     LETTER_ACCESS_FORBIDDEN(HttpStatus.FORBIDDEN, "LETTER-403", "편지를 조회할 권한이 없습니다."),
-    LETTER_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "LETTER-4001", "이미 삭제된 편지입니다."),
-    FILE_SIGNED_URL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "FILE-500", "Signed URL 생성 중 오류가 발생했습니다.");
+    LETTER_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "LETTER-400", "이미 삭제된 편지입니다."),
+    // Letter 이미지 관련
+    LETTER_IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "LETTER-500", "편지 이미지 업로드에 실패했습니다."),
+    LETTER_IMAGE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "LETTER-500", "편지 이미지 삭제에 실패했습니다."),
+    LETTER_IMAGE_SIGNED_URL_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "LETTER-500", "편지 이미지 Signed URL 생성에 실패했습니다.");
+
 
     private final HttpStatus httpStatus;
     private final String code;

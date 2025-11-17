@@ -13,6 +13,7 @@ import gamo.web.member.domain.Nickname;
 import gamo.web.member.repository.MemberRepository;
 import gamo.web.member.repository.NicknameRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,9 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class LetterService {
@@ -144,6 +145,15 @@ public class LetterService {
 
         // 둘 다 삭제한 경우 DB에서 완전 삭제 (Hard Delete)
         if (letter.getIsSenderDeleted() && letter.getIsReceiverDeleted()) {
+            // GCS 이미지 삭제
+            if (letter.getLetterImg() != null && letter.getLetterImg().startsWith("gs://")) {
+                try {
+                    gcsService.deleteFile(letter.getLetterImg());
+                } catch (Exception e) {
+                    log.warn("GCS 이미지 삭제 실패: {}", letter.getLetterImg(), e);
+                }
+            }
+            // DB에서 편지 삭제
             letterRepository.delete(letter);
         } else {
             // 둘 중 한 명만 삭제했을 경우 soft delete 유지
@@ -182,7 +192,8 @@ public class LetterService {
                 try {
                     return gcsService.generateSignedUrl(letter.getLetterImg(), 30).toString();
                 } catch (Exception e) {
-                    throw new RuntimeException("Signed URL 생성 실패", e);
+                    log.error("Letter ID {}의 Signed URL 생성 실패: {}", letterId, letter.getLetterImg(), e);
+                    throw new CustomException(ErrorCode.LETTER_IMAGE_SIGNED_URL_FAILED);
                 }
             });
         }
@@ -192,24 +203,6 @@ public class LetterService {
         String receiverName = getDisplayName(currentUserId, letter.getReceiverId());
 
         return LetterDetailDTO.fromEntityWithSignedUrl(letter, senderName, receiverName, currentUserId, signedUrl);
-    }
-
-    // 편지 작성 화면용 가족 목록
-    public List<FamilyDisplay> getFamilyDisplayList(Long loginMemberId) {
-        Member me = memberRepository.findById(loginMemberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
-        return memberRepository.findByFamily(me.getFamily())
-                .stream()
-                .filter(m -> !m.getId().equals(loginMemberId))
-                .map(member -> {
-                    String displayName = nicknameRepository
-                            .findByMemberIdAndAliasMemberId(loginMemberId, member.getId())
-                            .map(Nickname::getAlias)
-                            .orElse(member.getName());
-                    return new FamilyDisplay(member.getId(), displayName);
-                })
-                .toList();
     }
 
     // 수신자 표시 이름
@@ -238,7 +231,13 @@ public class LetterService {
         // 이미지 업로드
         String letterImgPath = null;
         if (request.getLetterImg() != null && !request.getLetterImg().isEmpty()) {
-            letterImgPath = gcsService.uploadFile(request.getLetterImg());
+            try {
+                letterImgPath = gcsService.uploadFile(request.getLetterImg());
+                log.info("Letter {}: 이미지 업로드 성공 {}", senderId, letterImgPath);
+            } catch (Exception e) {
+                log.error("Letter {}: 이미지 업로드 실패", senderId, e);
+                throw new CustomException(ErrorCode.LETTER_IMAGE_UPLOAD_FAILED);
+            }
         }
 
         // DB 저장
@@ -262,6 +261,24 @@ public class LetterService {
         Letter letter = letterRepository.findById(letterId)
                 .orElseThrow(() -> new CustomException(ErrorCode.LETTER_NOT_FOUND));
         letter.setCancelled(true);
+    }
+
+    // 편지 작성 화면용 가족 목록
+    public List<FamilyDisplay> getFamilyDisplayList(Long loginMemberId) {
+        Member me = memberRepository.findById(loginMemberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        return memberRepository.findByFamily(me.getFamily())
+                .stream()
+                .filter(m -> !m.getId().equals(loginMemberId))
+                .map(member -> {
+                    String displayName = nicknameRepository
+                            .findByMemberIdAndAliasMemberId(loginMemberId, member.getId())
+                            .map(Nickname::getAlias)
+                            .orElse(member.getName());
+                    return new FamilyDisplay(member.getId(), displayName);
+                })
+                .toList();
     }
 
     public record FamilyDisplay(Long id, String displayName) {}
