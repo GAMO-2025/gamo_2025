@@ -50,7 +50,6 @@ public class AuthController {
         }
 
         refreshTokenRepository.deleteByToken(refreshToken);
-//        refreshTokenRepository.save(stored);
 
         Long memberId = tokenProvider.getMemberIdFromToken(refreshToken);
 
