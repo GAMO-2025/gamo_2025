@@ -61,13 +61,10 @@ public class MemberService {
 
     @Transactional(readOnly = true)
     public List<FamilyListDTO> getFamilyList(Long memberId) {
-        Member me = memberRepository.findById(memberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
-        if(me.getFamily() == null) return List.of();
 
         List<Member> members = memberRepository.findAllByFamilyAndIdNotAndStatus(
-                me.getFamily(), memberId, Member.MemberStatus.ACTIVE
+                memberId,
+                Member.MemberStatus.ACTIVE
         );
 
         List<Long> aliasIds = members.stream().map(Member::getId).toList();
