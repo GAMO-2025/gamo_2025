@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{fragments/layout :: AppLayout('videocall', ~{::content}, null)}">
+<th:block th:fragment="content">
+    <head>
+        <meta charset="UTF-8">
+        <title>영상 통화 메인</title>
+        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    </head>
+
+    <body class="bg-gray-50 min-h-screen">
+
+    <div class="max-w-md mx-auto px-5 py-6">
+
+        <!-- 가족 목록 섹션 -->
+        <section class="mb-10">
+            <h2 class="text-[20px] font-extrabold text-gray-900 mb-4">가족목록</h2>
+            <div class="flex flex-col gap-3">
+                <div th:each="f : ${familyList}"
+                     class="flex items-center justify-between bg-white rounded-2xl p-4"
+                     style="box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);">
+                    <div class="flex items-center gap-4">
+                        <img class="h-14 w-14 rounded-full object-cover"
+                             th:src="${f.profileImage()}"
+                             alt="profile"/>
+                        <p th:onclick="|viewTargetProfile(${f.id})|"
+                           class="text-[16px] font-bold text-gray-900 cursor-pointer"
+                           th:text="${f.nickname()}">엄마</p>
+                    </div>
+                    <button th:onclick="|startCall(${f.id})|" class="flex-shrink-0">
+                        <img th:src="@{/svgs/call_icon.svg}"
+                             alt="call-icon"
+                             class="h-10 w-10"/>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 최근 통화기록 섹션 -->
+        <section>
+            <h2 class="text-[20px] font-extrabold text-gray-900 mb-4">최근 통화기록</h2>
+
+            <div class="flex flex-col gap-3">
+                <div th:each="v : ${videoCallHistory}"
+                     class="flex items-center justify-between bg-white rounded-2xl p-4"
+                     style="box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);">
+                    <div class="flex items-center gap-4">
+                        <img class="h-14 w-14 rounded-full object-cover"
+                             th:src="${v.targetProfileImage}"
+                             alt="profile"/>
+                        <p class="text-[16px] font-bold text-gray-900"
+                           th:text="${v.targetNickName}">엄마</p>
+                    </div>
+                    <div class="flex flex-col items-end gap-1">
+                    <span class="text-sm font-medium"
+                          th:classappend="${v.callType == '부재중'} ? 'text-red-500' : 'text-gray-600'"
+                          th:text="${v.callType}">부재중</span>
+                        <span class="text-xs text-gray-400"
+                              th:text="${#temporals.format(v.createdDate, 'yyyy. MM. dd :HH: mm')}">
+                        2025. 05. 06 08: 12
+                    </span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script th:src="@{/js/global-call-handler.js}"></script>
+
+    <script th:inline="javascript">
+        // 영상 통화 시작 - 로딩 화면으로 이동
+        function startCall(partnerId) {
+            window.location.href = `/call/loading?mode=calling&targetId=${partnerId}`;
+        }
+
+        // 상대 프로필 보기
+        function viewTargetProfile(partnerId) {
+            window.location.href = `/call/video-call/profile?partnerId=${partnerId}`;
+        }
+    </script>
+
+    </body>
+</th:block>
+</html>
