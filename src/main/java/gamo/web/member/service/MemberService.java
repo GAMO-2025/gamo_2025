@@ -59,6 +59,29 @@ public class MemberService {
 
     }
 
+    // 가족 단일 조회
+    @Transactional(readOnly = true)
+    public FamilyListDTO getFamilyMember(Long memberId, Long familyMemberId) {
+        Member me = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        Member familyMember = memberRepository.findById(familyMemberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        if(!me.getFamily().equals(familyMember.getFamily()) || me.getId().equals(familyMember.getId())) {
+            throw new CustomException(ErrorCode.NOT_SAME_FAMILY);
+        }
+
+        Nickname nickname = nicknameRepository.findByMemberIdAndAliasMemberId(memberId, familyMemberId).orElse(null);
+        String displayName = (nickname != null) ? nickname.getAlias() : familyMember.getName();
+
+        return new FamilyListDTO(
+                familyMember.getId(),
+                displayName,
+                familyMember.getProfileImage()
+        );
+    }
+
     @Transactional(readOnly = true)
     public List<FamilyListDTO> getFamilyList(Long memberId) {
         Member me = memberRepository.findById(memberId)
@@ -88,4 +111,9 @@ public class MemberService {
                 ))
                 .toList();
     }
+    public Member findById(Long memberId) {
+        return memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+    }
+
 }

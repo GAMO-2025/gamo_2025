@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+
+<th:block th:fragment="CallLayout(active, contentFrag, scriptFrag)">
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>영상 통화</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" th:href="@{/main.css}" />
+    </head>
+
+    <body class="bg-neutral-100">
+    <div class="w-full min-h-screen bg-white flex flex-col">
+        <!-- 본문 -->
+        <main class="flex-1 px-4 pt-4 pb-[92px] mx-auto w-full">
+            <th:block th:replace="${contentFrag}"></th:block>
+        </main>
+
+        <!-- 푸터 -->
+        <div th:if="${active != null}" th:replace="~{fragments/footer :: BottomNav(${active})}"></div>
+
+        <!-- 전역 스크립트 -->
+        <script th:inline="javascript">
+            window.currentUserId = /*[[${#authentication?.principal?.member?.id}]]*/ null;
+            window.currentUserName = /*[[${#authentication?.principal?.member?.name}]]*/ null;
+        </script>
+
+        <script th:src="@{/js/global-call-handler.js}"></script>
+
+        <!-- 페이지별 스크립트 -->
+        <th:block th:if="${scriptFrag != null}" th:replace="${scriptFrag}"></th:block>
+    </div>
+    </body>
+    </html>
+</th:block>
+</html>
