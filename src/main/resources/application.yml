@@ -1,13 +1,10 @@
 jwt:
-  access-token-validity-in-seconds: 86400 # 하루를 accessToken 유효시간으로 설정
+  access-token-validity-in-seconds: 3600 # 하루를 accessToken 유효시간으로 설정
+  refresh-token-validity-in-seconds: 2592000
 
 spring:
   config:
     import: optional:application-secret.properties
-  servlet:
-    multipart:
-      max-file-size: 5MB
-      max-request-size: 5MB
 
   application:
     name: gamo
@@ -25,7 +22,16 @@ spring:
       hibernate:
         format_sql: true
     show-sql: true
+    defer-datasource-initialization: true
+  sql:
+    init:
+      mode: always
+      continue-on-error: true
+      encoding: UTF-8
   mvc:
+    hidden method:
+      filter:
+        enabled: true
     static-path-pattern: /**
 
 
@@ -46,6 +52,11 @@ spring:
             token-uri: https://kauth.kakao.com/oauth/token
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
+
+  servlet:
+    multipart:
+      max-file-size: 50MB       # 파일 하나당 최대 크기
+      max-request-size: 50MB    # 요청 전체 최대 크기 (여러 파일 포함)
 
 gcp:
   project-id: ${gcp.project-id}

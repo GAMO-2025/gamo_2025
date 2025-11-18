@@ -50,6 +50,7 @@ public class OAuthDTO {
                 .profileImage(picture)
                 .socialId(socialId)
                 .provider(provider)
+                .status(Member.MemberStatus.ACTIVE)
                 .build();
     }
 

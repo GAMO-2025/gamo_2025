@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="fragments/layout :: AppLayout('home', ~{::content}, null)">
+
+<th:block th:fragment="content">
+    <!-- 로그인 사용자 전용 -->
+    <div class="flex flex-col px-5 pt-6 w-full" th:if="${member != null}">
+
+        <!-- 프로필 영역 -->
+        <a th:href="@{mypage}" class="flex items-center gap-4">
+            <img class="h-14 w-14 rounded-full object-cover"
+                 th:src="${member.picture}"
+                 alt="profile"/>
+
+            <div class="flex flex-col">
+                <p class="text-[18px] font-bold text-gray-900"
+                   th:text="${member.name + '님'}" />
+                <p class="text-[13px] text-gray-500"
+                   th:text="${member.email}" />
+            </div>
+        </a>
+
+        <!-- 구분선 -->
+        <div class="my-8 h-[2px] w-full bg-gray-100"></div>
+
+        <!-- 가족 목록 헤더 -->
+        <div class="flex items-center justify-between pl-5">
+            <p class="text-[20px] font-extrabold text-gray-900">가족목록</p>
+
+        <!--      가족 초대 페이지로 이동하는 controller 필요     -->
+            <a th:href="@{/member/invite}"
+               class="flex items-center gap-1 bg-white py-1 text-[13px] font-semibold text-amber-800">
+                <span>가족 초대</span>
+                <img src="/svgs/ic_plus_btn.svg" alt="plus btn" />
+            </a>
+        </div>
+
+        <!--  가족 목록  -->
+        <div class="mt-4 flex flex-col gap-4 pb-36">
+            <div th:each="f : ${familyList}"
+                 class="flex flex-row w-full items-center justify-between rounded-2xl shadow-[0_0_10px_rgba(0,0,0,0.08)] p-3">
+                <div class="flex items-center gap-5">
+                    <img class="h-14 w-14 rounded-full object-cover"
+                         th:src="${f.profileImage()}"
+                         alt="profile"/>
+                    <p class="flex items-center text-[16px] font-bold text-gray-900"
+                       th:text="${f.nickname()}" />
+                </div>
+                <img src="/svgs/ic_pencil.svg"
+                     class="edit-nickname"
+                     th:attr="data-alias-member-id=${f.id()}, data-current-name=${f.nickname()}"
+                     alt="edit nickname"/>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 비로그인 사용자 -->
+    <section class="px-5 py-10 text-center" th:if="${member == null}">
+        <p class="text-sm text-gray-600">로그인이 필요합니다.</p>
+        <a th:href="@{/oauth2/authorization/kakao}"
+           class="mx-auto mt-4 inline-block rounded-full bg-amber-300 px-6 py-3 text-[14px] font-semibold text-gray-900 shadow-md">
+            카카오로 로그인
+        </a>
+    </section>
+
+
+    <!-- 닉네임 변경 모달 (프래그먼트로 불러오기) -->
+    <th:block th:replace="~{fragments/input-modal :: inputModal('이름을 입력하세요', '변경하기', '돌아가기')}"/>
+    <th:block th:replace="~{fragments/alert-modal :: alertModal('commonAlert', '알림 메시지')}" />
+
+    <script>
+        (function () {
+            const modal = document.getElementById('inputModal');
+            const form = document.getElementById('submitForm');
+            const input = document.getElementById('input');
+
+            const aliasMemberIdInput = document.createElement('input');
+            aliasMemberIdInput.type = 'hidden';
+            aliasMemberIdInput.id = 'aliasMemberId';
+            form.appendChild(aliasMemberIdInput);
+
+            const closeButtons = modal.querySelectorAll('[data-modal-close]');
+
+            function openModal() {
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+            function closeModal() {
+                modal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+
+            document.addEventListener('click', (e) => {
+                const btn = e.target.closest('.edit-nickname');
+                if (!btn) return;
+
+                const currentName = btn.getAttribute('data-current-name') || '';
+                const aliasMemberId = btn.getAttribute('data-alias-member-id') || '';
+
+                input.placeholder = currentName;
+                input.value = '';
+                aliasMemberIdInput.value = aliasMemberId;
+
+                openModal();
+            });
+
+            closeButtons.forEach(b => b.addEventListener('click', closeModal));
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+            });
+
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const aliasMemberId = aliasMemberIdInput.value;
+                const nickname = input.value.trim();
+                if (!nickname) {
+                    openAlertModal('commonAlert', '이름을 입력해주세요.');
+                    return;
+                }
+
+                const token = document.querySelector('meta[name="_csrf"]')?.content
+                    || document.querySelector('input[name="_csrf"]')?.value;
+
+                try {
+                    const res = await fetch(`/api/member/${aliasMemberId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...(token ? { 'X-CSRF-TOKEN': token } : {}),
+                        },
+                        body: JSON.stringify({ alias: nickname }),
+                    });
+
+                    if (res.ok) {
+                        closeModal();
+                        location.reload();
+                    } else {
+                        openAlertModal('commonAlert', '닉네임 변경에 실패했습니다.');
+                    }
+                } catch (err) {
+                    console.error(err);
+                    openAlertModal('commonAlert', '서버 오류가 발생했습니다.');
+                }
+            });
+        })();
+    </script>
+
+</th:block>
+</html>
