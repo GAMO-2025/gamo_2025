@@ -4,7 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.web.multipart.MultipartFile;
 
-@Getter @Setter
+@Getter
+@Setter
 public class LetterRequestDTO {
     private Long receiverId;
     private String title;
