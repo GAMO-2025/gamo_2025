@@ -59,15 +59,35 @@ public class MemberService {
 
     }
 
+    // 가족 단일 조회
     @Transactional(readOnly = true)
-    public List<FamilyListDTO> getFamilyList(Long memberId) {
+    public FamilyListDTO getFamilyMember(Long memberId, Long familyMemberId) {
         Member me = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-        if(me.getFamily() == null) return List.of();
+        Member familyMember = memberRepository.findById(familyMemberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        if(!me.getFamily().equals(familyMember.getFamily()) || me.getId().equals(familyMember.getId())) {
+            throw new CustomException(ErrorCode.NOT_SAME_FAMILY);
+        }
+
+        Nickname nickname = nicknameRepository.findByMemberIdAndAliasMemberId(memberId, familyMemberId).orElse(null);
+        String displayName = (nickname != null) ? nickname.getAlias() : familyMember.getName();
+
+        return new FamilyListDTO(
+                familyMember.getId(),
+                displayName,
+                familyMember.getProfileImage()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<FamilyListDTO> getFamilyList(Long memberId) {
 
         List<Member> members = memberRepository.findAllByFamilyAndIdNotAndStatus(
-                me.getFamily(), memberId, Member.MemberStatus.ACTIVE
+                memberId,
+                Member.MemberStatus.ACTIVE
         );
 
         List<Long> aliasIds = members.stream().map(Member::getId).toList();
@@ -92,4 +112,10 @@ public class MemberService {
     public Long getFamilyId(Long memberId) {
         return memberRepository.findFamilyIdById(memberId);
     }
+
+    public Member findById(Long memberId) {
+        return memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+    }
+
 }
