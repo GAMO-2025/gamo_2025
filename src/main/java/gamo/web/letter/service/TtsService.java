@@ -4,6 +4,7 @@ import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.texttospeech.v1.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.io.InputStream;
 import java.util.Base64;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TtsService {
@@ -51,8 +53,7 @@ public class TtsService {
             }
 
         } catch (Exception e) {
-            System.out.println("[TTS ERROR] " + e.getMessage());
-            e.printStackTrace();
+            log.error("TTS 변환 중 오류 발생: {}", e.getMessage(), e);
             throw new RuntimeException("음성 생성 중 오류 발생");
         }
     }
