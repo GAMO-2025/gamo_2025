@@ -1,10 +1,12 @@
 package gamo.web.letter.controller;
 
 import gamo.web.auth.UserPrincipal;
+import gamo.web.family.dto.FamilyListDTO;
 import gamo.web.letter.domain.Letter;
 import gamo.web.letter.dto.*;
 import gamo.web.letter.service.LetterService;
 import gamo.web.member.domain.Member;
+import gamo.web.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,6 +21,7 @@ import java.util.List;
 public class LetterViewController {
 
     private final LetterService letterService;
+    private final MemberService memberService;
 
     private static final int PAGE_SIZE = 3; // 페이지당 편지 개수
 
@@ -65,16 +68,16 @@ public class LetterViewController {
             Model model) {
 
         Member loginMember = userPrincipal.getMember();
-        Long loginMemberId = loginMember.getId();
+        Long memberId = loginMember.getId();
 
         // 로그인한 사용자의 가족 목록 조회
-        List<LetterService.FamilyDisplay> familyDisplayList = letterService.getFamilyDisplayList(loginMemberId);
-        model.addAttribute("familyList", familyDisplayList);
+        List<FamilyListDTO> familyList = memberService.getFamilyList(memberId);
+        model.addAttribute("familyList", familyList);
 
         // 답장하기 시 수신자 미리 선택
-        LetterService.FamilyDisplay preSelectedReceiver = null;
+        FamilyListDTO preSelectedReceiver = null;
         if (receiverId != null) {
-            preSelectedReceiver = familyDisplayList.stream()
+            preSelectedReceiver = familyList.stream()
                     .filter(f -> f.id().equals(receiverId))
                     .findFirst()
                     .orElse(null);

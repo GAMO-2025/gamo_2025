@@ -262,25 +262,4 @@ public class LetterService {
                 .orElseThrow(() -> new CustomException(ErrorCode.LETTER_NOT_FOUND));
         letter.setCancelled(true);
     }
-
-    // 편지 작성 화면용 가족 목록
-    public List<FamilyDisplay> getFamilyDisplayList(Long loginMemberId) {
-        Member me = memberRepository.findById(loginMemberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
-        return memberRepository.findByFamily(me.getFamily())
-                .stream()
-                .filter(m -> !m.getId().equals(loginMemberId))
-                .map(member -> {
-                    String displayName = nicknameRepository
-                            .findByMemberIdAndAliasMemberId(loginMemberId, member.getId())
-                            .map(Nickname::getAlias)
-                            .orElse(member.getName());
-                    return new FamilyDisplay(member.getId(), displayName);
-                })
-                .toList();
-    }
-
-    public record FamilyDisplay(Long id, String displayName) {}
-
 }

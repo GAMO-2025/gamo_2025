@@ -2,7 +2,7 @@ package gamo.web.videocall.controller;
 
 import gamo.web.auth.UserPrincipal;
 import gamo.web.member.domain.Member;
-import gamo.web.member.dto.FamilyListDTO;
+import gamo.web.family.dto.FamilyListDTO;
 import gamo.web.member.service.MemberService;
 import gamo.web.videocall.dto.VideoCallHistoryListResponse;
 import gamo.web.videocall.dto.VideoCallListResponse;
