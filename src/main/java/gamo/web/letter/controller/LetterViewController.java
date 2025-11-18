@@ -22,10 +22,25 @@ public class LetterViewController {
 
     private final LetterService letterService;
     private final MemberService memberService;
-
     private static final int PAGE_SIZE = 3; // 페이지당 편지 개수
 
-    // 편지 보관함(목록)
+    // -------------------------------
+    // 편지 홈
+    // -------------------------------
+    @GetMapping("/letter")
+    public String showLetterHome(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
+        Member loginMember = userPrincipal.getMember();
+        Long loginMemberId = loginMember.getId();
+
+        LetterCountDTO letterCounts = letterService.getLetterCounts(loginMemberId);
+        model.addAttribute("letterCounts", letterCounts);
+
+        return "/pages/letter/letterHome";
+    }
+
+    // -------------------------------
+    // 편지 목록
+    // -------------------------------
     @GetMapping("/letter/list")
     public String showLetterList(
             @RequestParam(defaultValue = "received") String type,
@@ -38,16 +53,13 @@ public class LetterViewController {
         Member loginMember = userPrincipal.getMember();
         Long loginMemberId = loginMember.getId();
 
-        Page<LetterListDTO> letterPage;
-        List<PersonDTO> personList;
+        boolean received = "received".equals(type);
 
-        if ("received".equals(type)) {
-            letterPage = letterService.getReceivedLetters(loginMemberId, personId, sort, page, PAGE_SIZE);
-            personList = letterService.getReceivedLetterSenders(loginMemberId);
-        } else {
-            letterPage = letterService.getSentLetters(loginMemberId, personId, sort, page, PAGE_SIZE);
-            personList = letterService.getSentLetterReceivers(loginMemberId);
-        }
+        // 편지 목록 조회
+        Page<LetterListDTO> letterPage = letterService.getLetters(loginMemberId, personId, received, sort, page, PAGE_SIZE);
+
+        // 사람 목록 조회 (발신자/수신자)
+        List<PersonDTO> personList = letterService.getLetterPeople(loginMemberId, received);
 
         model.addAttribute("letters", letterPage.getContent());
         model.addAttribute("personList", personList);
@@ -60,7 +72,9 @@ public class LetterViewController {
         return "/pages/letter/letterList";
     }
 
-    // 편지 작성
+    // -------------------------------
+    // 편지 작성 폼
+    // -------------------------------
     @GetMapping("/letter/new")
     public String showLetterForm(
             @RequestParam(required = false) Long receiverId,
@@ -68,13 +82,13 @@ public class LetterViewController {
             Model model) {
 
         Member loginMember = userPrincipal.getMember();
-        Long memberId = loginMember.getId();
+        Long loginMemberId = loginMember.getId();
 
-        // 로그인한 사용자의 가족 목록 조회
-        List<FamilyListDTO> familyList = memberService.getFamilyList(memberId);
+        // 가족 목록 조회
+        List<FamilyListDTO> familyList = memberService.getFamilyList(loginMemberId);
         model.addAttribute("familyList", familyList);
 
-        // 답장하기 시 수신자 미리 선택
+        // 답장 대상 미리 선택
         FamilyListDTO preSelectedReceiver = null;
         if (receiverId != null) {
             preSelectedReceiver = familyList.stream()
@@ -82,45 +96,44 @@ public class LetterViewController {
                     .findFirst()
                     .orElse(null);
         }
-
         model.addAttribute("preSelectedReceiver", preSelectedReceiver);
 
         return "/pages/letter/letterForm";
     }
 
-    // 편지 전송(저장)
+    // -------------------------------
+    // 편지 전송
+    // -------------------------------
     @PostMapping("/letter/send")
-    public String submitLetter(@AuthenticationPrincipal UserPrincipal userPrincipal, @ModelAttribute LetterRequestDTO letterRequest, Model model) {
-        // 로그인 한 회원 정보 가져오기
+    public String submitLetter(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @ModelAttribute LetterRequestDTO letterRequest,
+            Model model) {
+
         Member loginMember = userPrincipal.getMember();
         Long senderId = loginMember.getId();
 
-        // 편지 전송
         Letter letter = letterService.sendLetter(senderId, letterRequest);
 
-        // 수신자 표시 이름 가져오기
-        String receiverName = letterService.getReceiverDisplayName(senderId, letterRequest.getReceiverId());
+        // displayName 활용
+        String receiverName = letterService.getDisplayName(senderId, letterRequest.getReceiverId());
         model.addAttribute("receiverName", receiverName);
         model.addAttribute("letterId", letter.getId());
 
         return "/pages/letter/letterSuccess";
     }
 
-    // 편지 전송 취소
-    @PostMapping("/letter/cancel")
-    public String cancelLetter(@RequestParam Long letterId) {
-        letterService.cancelLetter(letterId);
-        return "redirect:/letter/list?type=sent";
-    }
-
+    // -------------------------------
     // 편지 삭제
+    // -------------------------------
     @PostMapping("/letter/delete/{letterId}")
     @ResponseBody
     public String deleteLetter(
             @PathVariable Long letterId,
             @AuthenticationPrincipal UserPrincipal userPrincipal) {
+
+        Long userId = userPrincipal.getMember().getId();
         try {
-            Long userId = userPrincipal.getMember().getId();
             letterService.deleteLetter(letterId, userId);
             return "success";
         } catch (Exception e) {
@@ -128,20 +141,18 @@ public class LetterViewController {
         }
     }
 
-    // 편지 홈
-    @GetMapping("/letter")
-    public String showLetterHome(@AuthenticationPrincipal UserPrincipal userPrincipal, Model model) {
-        Member loginMember = userPrincipal.getMember();
-        Long loginMemberId = loginMember.getId();
-
-        // 편지 개수 조회
-        LetterCountDTO letterCounts = letterService.getLetterCounts(loginMemberId);
-        model.addAttribute("letterCounts", letterCounts);
-
-        return "/pages/letter/letterHome";
+    // -------------------------------
+    // 편지 전송 취소
+    // -------------------------------
+    @PostMapping("/letter/cancel")
+    public String cancelLetter(@RequestParam Long letterId) {
+        letterService.cancelLetter(letterId);
+        return "redirect:/letter/list?type=sent";
     }
 
+    // -------------------------------
     // 편지 상세 조회
+    // -------------------------------
     @GetMapping("/letter/detail/{letterId}")
     public String showLetterDetail(
             @PathVariable Long letterId,
@@ -155,7 +166,7 @@ public class LetterViewController {
             LetterDetailDTO letterDetail = letterService.getLetterDetail(letterId, loginMemberId);
             model.addAttribute("letter", letterDetail);
             return "/pages/letter/letterDetail";
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             // 권한 없거나 편지가 없는 경우
             return "redirect:/letter/list";
         }
