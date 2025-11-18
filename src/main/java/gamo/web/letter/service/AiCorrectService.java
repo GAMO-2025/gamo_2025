@@ -28,7 +28,7 @@ public class AiCorrectService {
 
         HttpEntity<Map<String, String>> entity = new HttpEntity<>(requestBody, headers);
 
-        long startTime = System.currentTimeMillis(); // 시작 시간
+        long startTime = System.currentTimeMillis();
 
         try {
             log.info("[Python 서버로 요청 전송] URL={}, 요청본문={}", PYTHON_SERVER_URL, requestBody);
@@ -40,18 +40,25 @@ public class AiCorrectService {
                     Map.class
             );
 
-            long endTime = System.currentTimeMillis(); // 끝 시간
+            long endTime = System.currentTimeMillis();
             long duration = endTime - startTime;
             log.info("[Python 서버 응답 수신] 상태={}, 응답본문={}", response.getStatusCode(), response.getBody());
-            log.info("[요청 처리 시간] {} ms", duration); // 처리 시간 로그 출력
+            log.info("[요청 처리 시간] {} ms", duration);
 
             Map<String, Object> body = response.getBody();
-            AiCorrectResponseDTO dto = new AiCorrectResponseDTO();
 
+            AiCorrectResponseDTO dto = null;
             if (body != null) {
-                dto.setStatus((Integer) body.getOrDefault("status", null));
-                dto.setCorrectedText((String) body.getOrDefault("corrected_text", null));
-                dto.setDetail((String) body.getOrDefault("detail", null));
+                dto = AiCorrectResponseDTO.builder()
+                        .status((Integer) body.getOrDefault("status", null))
+                        .correctedText((String) body.getOrDefault("corrected_text", null))
+                        .detail((String) body.getOrDefault("detail", null))
+                        .build();
+            } else {
+                dto = AiCorrectResponseDTO.builder()
+                        .status(500)
+                        .detail("응답 본문이 비어있습니다")
+                        .build();
             }
 
             return dto;
@@ -61,10 +68,10 @@ public class AiCorrectService {
             long duration = endTime - startTime;
             log.error("[AI 교정 요청 중 오류 발생]: {}, 소요 시간={} ms", e.getMessage(), duration, e);
 
-            AiCorrectResponseDTO errorResponse = new AiCorrectResponseDTO();
-            errorResponse.setStatus(500);
-            errorResponse.setDetail("AI 교정 중 오류 발생: " + e.getMessage());
-            return errorResponse;
+            return AiCorrectResponseDTO.builder()
+                    .status(500)
+                    .detail("AI 교정 중 오류 발생: " + e.getMessage())
+                    .build();
         }
     }
 }

@@ -20,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -59,23 +61,32 @@ public class LetterService {
         Sort.Direction direction = "asc".equalsIgnoreCase(sort) ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, "createdAt"));
 
-        Page<Letter> letterPage;
+        Page<Letter> letterPage = received ?
+                (otherUserId != null ?
+                        letterRepository.findByReceiverIdAndSenderIdAndIsCancelledFalseAndIsReceiverDeletedFalse(userId, otherUserId, pageable) :
+                        letterRepository.findByReceiverIdAndIsCancelledFalseAndIsReceiverDeletedFalse(userId, pageable))
+                :
+                (otherUserId != null ?
+                        letterRepository.findBySenderIdAndReceiverIdAndIsSenderDeletedFalse(userId, otherUserId, pageable) :
+                        letterRepository.findBySenderIdAndIsSenderDeletedFalse(userId, pageable));
 
-        if (received) { // 받은 편지
-            if (otherUserId != null) {
-                letterPage = letterRepository.findByReceiverIdAndSenderIdAndIsCancelledFalseAndIsReceiverDeletedFalse(userId, otherUserId, pageable);
-            } else {
-                letterPage = letterRepository.findByReceiverIdAndIsCancelledFalseAndIsReceiverDeletedFalse(userId, pageable);
-            }
-            return letterPage.map(letter -> LetterListDTO.fromReceivedLetter(letter, getDisplayName(userId, letter.getSenderId())));
-        } else { // 보낸 편지
-            if (otherUserId != null) {
-                letterPage = letterRepository.findBySenderIdAndReceiverIdAndIsSenderDeletedFalse(userId, otherUserId, pageable);
-            } else {
-                letterPage = letterRepository.findBySenderIdAndIsSenderDeletedFalse(userId, pageable);
-            }
-            return letterPage.map(letter -> LetterListDTO.fromSentLetter(letter, getDisplayName(userId, letter.getReceiverId())));
-        }
+        return letterPage.map(letter -> {
+            String name = received ? getDisplayName(userId, letter.getSenderId()) : getDisplayName(userId, letter.getReceiverId()) + "에게";
+            String preview = getPreview(letter.getContent());
+            String formattedDate = formatDate(letter.getCreatedAt());
+            Boolean canCancel = received ? false : canCancelLetter(letter.getCreatedAt(), letter.isCancelled());
+
+            return LetterListDTO.of(
+                    letter.getId(),
+                    name,
+                    letter.getTitle(),
+                    preview,
+                    formattedDate,
+                    letter.isRead(),
+                    letter.isCancelled(),
+                    canCancel
+            );
+        });
     }
 
     // -------------------------------
@@ -97,9 +108,9 @@ public class LetterService {
     }
 
     // -------------------------------
-    // 편지 상세 조회
+    // 편지 상세 조회 (읽음 처리 포함)
     // -------------------------------
-    @Transactional(readOnly = true)
+    @Transactional
     public LetterDetailDTO getLetterDetail(Long letterId, Long currentUserId) {
         Letter letter = letterRepository.findById(letterId)
                 .orElseThrow(() -> new CustomException(ErrorCode.LETTER_NOT_FOUND));
@@ -108,12 +119,14 @@ public class LetterService {
             throw new CustomException(ErrorCode.LETTER_ACCESS_FORBIDDEN);
         }
 
+        // 읽음 처리
         if (letter.getReceiverId().equals(currentUserId) && !letter.isRead()) {
             letter.setRead(true);
             letter.setReadAt(LocalDateTime.now());
             letterRepository.save(letter);
         }
 
+        // 이미지 서명 URL
         String signedUrl = null;
         if (letter.getLetterImg() != null && letter.getLetterImg().startsWith("gs://")) {
             signedUrl = signedUrlCache.get(letterId, k -> {
@@ -126,10 +139,33 @@ public class LetterService {
             });
         }
 
+        // 가공된 DTO 생성
         String senderName = getDisplayName(currentUserId, letter.getSenderId());
         String receiverName = getDisplayName(currentUserId, letter.getReceiverId());
+        String createdAt = formatDate(letter.getCreatedAt());
+        String readAt = letter.getReadAt() != null ? formatDate(letter.getReadAt()) : null;
+        Boolean isSender = letter.getSenderId().equals(currentUserId);
+        Boolean canCancel = !letter.isCancelled() && letter.getCreatedAt() != null &&
+                ChronoUnit.MINUTES.between(letter.getCreatedAt(), LocalDateTime.now()) < 5;
 
-        return LetterDetailDTO.fromEntityWithSignedUrl(letter, senderName, receiverName, currentUserId, signedUrl);
+        return LetterDetailDTO.of(
+                letter.getId(),
+                letter.getSenderId(),
+                letter.getReceiverId(),
+                senderName,
+                receiverName,
+                letter.getTitle(),
+                letter.getContent(),
+                letter.getLetterImg(),
+                signedUrl,
+                letter.getInputType(),
+                letter.isRead(),
+                letter.isCancelled(),
+                createdAt,
+                readAt,
+                isSender,
+                canCancel
+        );
     }
 
     // -------------------------------
@@ -137,15 +173,20 @@ public class LetterService {
     // -------------------------------
     @Transactional
     public Letter sendLetter(Long senderId, LetterRequestDTO request) {
+        // 발신자 확인
         Member sender = memberRepository.findById(senderId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        // 수신자 확인
         Member receiver = memberRepository.findById(request.getReceiverId())
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
+        // 가족 검증
         if (!sender.getFamily().getId().equals(receiver.getFamily().getId())) {
             throw new CustomException(ErrorCode.NOT_SAME_FAMILY);
         }
 
+        // 이미지 업로드
         String letterImgPath = null;
         if (request.getLetterImg() != null && !request.getLetterImg().isEmpty()) {
             try {
@@ -157,6 +198,7 @@ public class LetterService {
             }
         }
 
+        // 편지 저장
         Letter letter = Letter.builder()
                 .senderId(senderId)
                 .receiverId(receiver.getId())
@@ -168,7 +210,10 @@ public class LetterService {
                 .isReceiverDeleted(false)
                 .build();
 
-        return letterRepository.save(letter);
+        Letter savedLetter = letterRepository.save(letter);
+        log.info("Letter {}: 편지 전송 성공", senderId);
+
+        return savedLetter;
     }
 
     // -------------------------------
@@ -242,5 +287,24 @@ public class LetterService {
                 .orElseGet(() -> memberRepository.findById(targetUserId)
                         .map(Member::getName)
                         .orElse("알 수 없음"));
+    }
+
+    // 내용 미리보기 (50자 제한)
+    private static String getPreview(String content) {
+        if (content == null) return "";
+        return content.length() > 50 ? content.substring(0, 50) + "..." : content;
+    }
+
+    // 날짜 포맷팅
+    private static String formatDate(LocalDateTime dateTime) {
+        if (dateTime == null) return "";
+        return dateTime.format(DateTimeFormatter.ofPattern("yyyy.MM.dd"));
+    }
+
+    // 전송 취소 가능 여부 체크 (5분 이내 && 취소되지 않음)
+    private static Boolean canCancelLetter(LocalDateTime createdAt, boolean isCancelled) {
+        if (isCancelled || createdAt == null) return false;
+        long minutesPassed = ChronoUnit.MINUTES.between(createdAt, LocalDateTime.now());
+        return minutesPassed < 5;
     }
 }

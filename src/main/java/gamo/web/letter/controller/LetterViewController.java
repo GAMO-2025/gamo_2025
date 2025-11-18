@@ -115,7 +115,6 @@ public class LetterViewController {
 
         Letter letter = letterService.sendLetter(senderId, letterRequest);
 
-        // displayName 활용
         String receiverName = letterService.getDisplayName(senderId, letterRequest.getReceiverId());
         model.addAttribute("receiverName", receiverName);
         model.addAttribute("letterId", letter.getId());
