@@ -42,6 +42,7 @@ public class LetterService {
     // -------------------------------
     // 편지 개수 조회
     // -------------------------------
+    @Transactional(readOnly = true)
     public LetterCountDTO getLetterCounts(Long userId) {
         Long receivedCount = letterRepository.countByReceiverIdAndIsReceiverDeletedFalseAndIsCancelledFalse(userId);
         Long sentCount = letterRepository.countBySenderIdAndIsSenderDeletedFalseAndIsCancelledFalse(userId);
@@ -53,6 +54,7 @@ public class LetterService {
     // -------------------------------
     // 발신/수신 편지 목록 조회
     // -------------------------------
+    @Transactional(readOnly = true)
     public Page<LetterListDTO> getLetters(Long userId, Long otherUserId, boolean received, String sort, int page, int size) {
         Sort.Direction direction = "asc".equalsIgnoreCase(sort) ? Sort.Direction.ASC : Sort.Direction.DESC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, "createdAt"));
@@ -79,6 +81,7 @@ public class LetterService {
     // -------------------------------
     // 발신자/수신자 목록 조회
     // -------------------------------
+    @Transactional(readOnly = true)
     public List<PersonDTO> getLetterPeople(Long userId, boolean received) {
         if (received) {
             List<Long> senderIds = letterRepository.findDistinctSenderIdsByReceiverIdAndIsCancelledFalse(userId);
@@ -96,7 +99,7 @@ public class LetterService {
     // -------------------------------
     // 편지 상세 조회
     // -------------------------------
-    @Transactional
+    @Transactional(readOnly = true)
     public LetterDetailDTO getLetterDetail(Long letterId, Long currentUserId) {
         Letter letter = letterRepository.findById(letterId)
                 .orElseThrow(() -> new CustomException(ErrorCode.LETTER_NOT_FOUND));
@@ -132,6 +135,7 @@ public class LetterService {
     // -------------------------------
     // 편지 전송
     // -------------------------------
+    @Transactional
     public Letter sendLetter(Long senderId, LetterRequestDTO request) {
         Member sender = memberRepository.findById(senderId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
@@ -231,6 +235,7 @@ public class LetterService {
     // -------------------------------
     // 표시 이름 조회 (별명 우선)
     // -------------------------------
+    @Transactional(readOnly = true)
     public String getDisplayName(Long userId, Long targetUserId) {
         return nicknameRepository.findByMemberIdAndAliasMemberId(userId, targetUserId)
                 .map(Nickname::getAlias)
