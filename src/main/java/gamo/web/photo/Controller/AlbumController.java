@@ -1,16 +1,20 @@
 package gamo.web.photo.Controller;
 
+import gamo.web.family.service.FamilyService;
+import gamo.web.member.service.MemberService;
 import gamo.web.photo.domain.Album;
 import gamo.web.photo.domain.Photo;
 import gamo.web.photo.dto.AlbumDto;
-import gamo.web.photo.service.GcpStorageService;
-import gamo.web.photo.service.LikeService;
 import gamo.web.photo.service.PhotoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import gamo.web.auth.UserPrincipal;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,15 +22,16 @@ import java.util.stream.Collectors;
 @Controller
 @RequiredArgsConstructor
 public class AlbumController {
-    private final GcpStorageService gcpStorageService;
     private final PhotoService photoService;
-    private final LikeService likeService;
+    private final MemberService memberService;
+    private final FamilyService familyService;
 
     //앨범 리스트
     @GetMapping(value = "/album") //앨범 리스트
-    public String getAlbums(Model model) {
-        Long testFamilyId = 1L; // 임시
-        List<Album> albums = photoService.getAlbumsByFamilyId(testFamilyId);
+    public String getAlbums(@AuthenticationPrincipal UserPrincipal user, Model model) {
+        Long memberId = user.getMember().getId();
+        Long familyId = memberService.getFamilyId(memberId);
+        List<Album> albums = photoService.getAlbumsByFamilyId(familyId);
 
         List<AlbumDto> albumDtos = albums.stream().map(album -> {
             Photo latestPhoto = photoService.getLatestPhotoByAlbumId(album.getAlbum_id());
@@ -35,13 +40,14 @@ public class AlbumController {
         }).collect(Collectors.toList());
 
         model.addAttribute("albums", albumDtos);
-        return "album";
+        return "pages/photo/album";
     }
 
     //앨범 만들기
     @PostMapping(value = "/album/new")
-    public String createAlbum(@RequestParam("newTitle") String title) {
-        Long memberId = 2L; //임시
+    public String createAlbum(@RequestParam("newTitle") String title, @AuthenticationPrincipal UserPrincipal user) {
+//        Long memberId = 2L; //임시
+        Long memberId = memberService.getMemberId(user);
 
         photoService.createAlbum(title, memberId);
         return "redirect:/album";
@@ -57,11 +63,20 @@ public class AlbumController {
 
     //앨범에 있는 사진들
     @GetMapping(value = "/album/{albumId}")
-    public String getPhotosInAlbum(@PathVariable("albumId") Long albumId, Model model) {
+    public String getPhotosInAlbum(@AuthenticationPrincipal UserPrincipal user,
+                                   @PathVariable("albumId") Long albumId,
+                                   Model model) {
+        //권한 체크
+        Long familyId_user = user.getMember().getId();
+        Long familyId_album = photoService.getFamilyIdByAlbumId(albumId);
+        if(familyId_user != familyId_album) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "해당 앨범에 접근할 권한이 없습니다.");
+        }
+
         Page<Photo> photoList = photoService.getPhotoListByAlbumId(albumId, 0, 20);
 
         model.addAttribute("photoList", photoList);
-        return "photoList";
+        return "pages/photo/photoList";
     }
 
     //앨범의 사진 : 무한 스크롤

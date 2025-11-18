@@ -1,23 +1,8 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="ko">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>가모 – 앨범</title>
-    <link rel="stylesheet" th:href="@{/main.css}" />
-    <style>
-        /* iOS notch 안전 여백용 (Tailwind로 못하는 부분만 보강) */
-        :root { --safe-top: env(safe-area-inset-top); --safe-bottom: env(safe-area-inset-bottom); }
-    </style>
-</head>
-<body class="bg-neutral-100 flex items-center justify-center min-h-screen">
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="fragments/layout :: AppLayout('home', ~{::content}, null)">
 
-<!-- 헤더 -->
-<div th:replace="fragments/header :: header"></div>
-<main
-        class="relative w-screen min-h-screen overflow-auto shadow-xl"
-        style="padding-top: 90px; padding-bottom: var(--safe-bottom);"
->
+<th:block th:fragment="content">
     <section class="grid grid-cols-4 gap-1" id="pic-grid">
         <div class="bg-green-500 flex items-center justify-center text-white font-bold cursor-pointer text-6xl aspect-square"
              id="uploadDiv">
@@ -59,12 +44,9 @@
             </form>
         </div>
     </div>
-</main>
-
-<!-- 푸터 -->
-<div th:replace="fragments/footer :: BottomNav('album')"></div>
 
 </body>
+
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const uploadDiv = document.getElementById('uploadDiv');
@@ -144,4 +126,5 @@
         });
     });
 </script>
+</th:block>
 </html>

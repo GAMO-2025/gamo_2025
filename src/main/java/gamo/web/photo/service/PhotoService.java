@@ -50,6 +50,9 @@ public class PhotoService {
 //        return photoRepository.findByAlbumIdOrderByCreatedAtDesc(albumId);
 //    }
     public Page<Photo> getPhotoListByAlbumId(Long albumId, int page, int size) {
+        //가족이 맞는지 확인
+
+
         Pageable pageable = PageRequest.of(page, size, Sort.by("created_at").descending());
         return photoRepository.findPhotosByAlbumId(albumId, pageable);
     }
@@ -86,4 +89,13 @@ public class PhotoService {
         photoRepository.deleteById(id);
         return albumId;
     }
+
+    public Long getFamilyIdByAlbumId(Long albumId) {
+        return albumRepository.findFamilyIdById(albumId);
+    }
+
+    public Long getFamilyIdByPhotoId(Long photoId) {
+        return photoRepository.findFamilyIdByPhotoId(photoId);
+    }
+
 }

@@ -25,16 +25,4 @@ public class LikeController {
             return ResponseEntity.ok("unliked");
         }
     }
-
-    //사진의 좋아요 수
-//    @GetMapping(value = "/photoLike/{photoId}/count")
-//    public Long getLikeCount(Long photoId) {
-//        return likeService.getLikeCount(photoId);
-//    }
-//
-//    //좋아요 눌렀는지
-//    @GetMapping(value = "/photoLike/{photoId}/check")
-//    public ResponseEntity<Boolean> isLiked(Long memberId, Long photoId) {
-//        return likeService.isLikedByMemberId(memberId, photoId);
-//    }
 }

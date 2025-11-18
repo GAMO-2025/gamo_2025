@@ -1,29 +1,13 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="ko">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>가모 – 앨범</title>
-    <link rel="stylesheet" th:href="@{/main.css}" />
-    <style>
-        /* iOS notch 안전 여백용 (Tailwind로 못하는 부분만 보강) */
-        :root { --safe-top: env(safe-area-inset-top); --safe-bottom: env(safe-area-inset-bottom); }
-    </style>
-</head>
-<body class="bg-neutral-100 flex items-center justify-center min-h-screen">
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="fragments/layout :: AppLayout('home', ~{::content}, null)">
 
-<!-- 헤더 -->
-<div th:replace="fragments/header :: header"></div>
-<main
-        class="relative w-screen min-h-screen overflow-auto shadow-xl"
-        style="padding-top: 90px; padding-bottom: var(--safe-bottom);"
->
-    <div class="flex items-center justify-center"
-         style="height: calc(100vh - 90px - 60px - var(--safe-bottom));">
+<th:block th:fragment="content">
+    <div class="flex items-center justify-center">
         <img th:src="@{'https://storage.cloud.google.com/gamo_bucket/photo/' + ${photoData.url}}"
              class="w-full h-auto object-contain">
     </div>
-    <div class="flex items-center justify-between w-full px-4 mt-4 absolute" style="bottom: 90px;">
+    <div class="flex items-center justify-between w-full" style="bottom: 90px;">
 
         <!-- 좋아요 버튼 -->
         <button class="flex items-center gap-2 text-red-500"
@@ -49,14 +33,8 @@
         </button>
 
     </div>
-</main>
-
-<!-- 푸터 -->
-<div th:replace="fragments/footer :: BottomNav('album')"></div>
 
 </body>
-</html>
-
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         // 삭제 버튼
@@ -118,3 +96,5 @@
         });
     });
 </script>
+</th:block>
+</html>

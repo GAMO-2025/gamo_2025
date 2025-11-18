@@ -88,4 +88,8 @@ public class MemberService {
                 ))
                 .toList();
     }
+
+    public Long getFamilyId(Long memberId) {
+        return memberRepository.findFamilyIdById(memberId);
+    }
 }

@@ -25,4 +25,7 @@ public interface PhotoRepository extends JpaRepository<Photo, Long> {
     // 앨범의 사진 목록 + 페이징
     @Query("SELECT p FROM Photo p WHERE p.album.album_id = :albumId")
     Page<Photo> findPhotosByAlbumId(@Param("albumId") Long albumId, Pageable pageable);
+
+    @Query("SELECT p.album.family.id FROM Photo p WHERE p.photo_id = :photoId")
+    Long findFamilyIdByPhotoId(@Param("photoId") Long photoId);
 }

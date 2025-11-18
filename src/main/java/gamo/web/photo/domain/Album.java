@@ -1,6 +1,6 @@
 package gamo.web.photo.domain;
 
-import gamo.web.member.domain.Family;
+import gamo.web.family.domain.Family;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
