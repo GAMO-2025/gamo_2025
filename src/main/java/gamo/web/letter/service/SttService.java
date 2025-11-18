@@ -6,14 +6,15 @@ import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.api.gax.longrunning.OperationFuture;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.FileInputStream;
 import java.io.InputStream;
 
+@Slf4j
 @Service
 public class SttService {
 
@@ -50,8 +51,6 @@ public class SttService {
     /**
      * 2️⃣ Google STT 장시간 음성 처리
      * - GCS URI를 이용해 음성을 STT로 변환
-     * - WEBM/Opus 파일 지원
-     * - 자동 문장 부호 활성화
      * - 결과를 문자열로 합쳐서 반환
      */
     private String longRunningTranscribe(String gcsUri) throws Exception {
@@ -87,19 +86,69 @@ public class SttService {
     }
 
     /**
-     * 3️⃣ 외부에서 호출하는 메서드
-     * - MultipartFile을 받아서
-     *   1) GCS 업로드
-     *   2) STT 변환
-     * - 최종 텍스트 반환
+     * 3️⃣ 외부에서 호출되는 STT 처리 메서드
+     * - MultipartFile 음성 파일을 입력받아,
+     *   1) 음성 파일을 GCS에 업로드
+     *   2) 업로드된 GCS URI 기반으로 STT 장기 음성 변환 실행
+     *   3) 변환이 끝난 후 GCS 음성 파일 삭제
+     * - 최종적으로 변환된 텍스트를 반환
      */
     public String transcribe(MultipartFile voiceFile) {
+        String gcsUri = null;
+
         try {
-            String gcsUri = uploadToGcs(voiceFile);
-            return longRunningTranscribe(gcsUri);
+            // 1) GCS 업로드
+            gcsUri = uploadToGcs(voiceFile);
+            log.info("STT 업로드 성공: {}", gcsUri);
+
+            // 2) STT 변환
+            String text = longRunningTranscribe(gcsUri);
+            log.info("STT 변환 완료: {} chars", text.length());
+
+            // 3) GCS 음성 파일 삭제
+            deleteFromGcs(gcsUri);
+            log.info("STT 음성 파일 삭제 완료: {}", gcsUri);
+
+            return text;
+
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("STT 변환 실패: " + e.getMessage());
+            log.error("STT 변환 중 오류 발생", e);
+
+            // 실패 시에도 업로드된 파일 제거 시도
+            if (gcsUri != null) {
+                try {
+                    deleteFromGcs(gcsUri);
+                    log.warn("오류 발생으로 GCS 파일 삭제 완료: {}", gcsUri);
+                } catch (Exception inner) {
+                    log.error("GCS 파일 삭제 실패: {}", gcsUri, inner);
+                }
+            }
+
+            throw new RuntimeException("STT 변환 실패: " + e.getMessage(), e);
         }
     }
+
+    /**
+     * 4️⃣ STT 처리 후 GCS 음성 파일 삭제
+     * - "gs://bucket/path" 형태의 URI에서 objectName 추출 후 삭제
+     */
+    private void deleteFromGcs(String gcsUri) throws Exception {
+        try (InputStream credentialsStream = credentialsResource.getInputStream()) {
+
+            Storage storage = StorageOptions.newBuilder()
+                    .setProjectId(projectId)
+                    .setCredentials(GoogleCredentials.fromStream(credentialsStream))
+                    .build()
+                    .getService();
+
+            String objectName = gcsUri.replace("gs://" + bucketName + "/", "");
+
+            boolean deleted = storage.delete(bucketName, objectName);
+
+            if (!deleted) {
+                log.warn("GCS 파일 삭제 실패 또는 파일 없음: {}", objectName);
+            }
+        }
+    }
+
 }

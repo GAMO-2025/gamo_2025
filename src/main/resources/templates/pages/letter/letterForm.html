@@ -166,6 +166,8 @@
                         sttBtn.classList.remove('bg-gray-300','text-gray-600');
                         sttBtn.classList.add('bg-[#AB8D66]','text-white');
                         status.textContent = "✓ 녹음 완료, STT 변환 가능";
+                        status.classList.remove('text-[#F5BF76]');
+                        status.classList.add('text-gray-600');
                     });
 
                     startBtn.disabled = true;
@@ -175,6 +177,7 @@
                     stopBtn.classList.remove('bg-gray-300','text-gray-600');
                     stopBtn.classList.add('bg-[#F5BF76]','text-white');
                     status.textContent = "● 녹음 중...";
+                    status.classList.add('text-gray-600');
                 } catch(e) {
                     console.error(e);
                     status.textContent = "⚠ 마이크 접근 권한이 필요합니다.";
@@ -201,7 +204,7 @@
 
                 status.textContent = "⏳ STT 변환 중...";
                 status.classList.remove('text-red-500');
-                status.classList.add('text-[#F5BF76]');
+                status.classList.add('text-gray-600');
 
                 try {
                     const response = await fetch('/letter/api/stt', { method:'POST', body: fd });
@@ -236,7 +239,7 @@
                 spinner.classList.remove("hidden");
                 status.textContent = "⏳ AI 교정 중...";
                 status.classList.remove('text-red-500');
-                status.classList.add('text-[#F5BF76]');
+                status.classList.add('text-gray-600');
 
                 try {
                     const resp = await fetch('/letter/api/ai-correct', {
