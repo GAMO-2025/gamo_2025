@@ -2,6 +2,15 @@
         xmlns:sec="https://www.thymeleaf.org/extras/spring-security"
         th:fragment="Header"
         class="border-b bg-white">
+    <!-- 전역 변수 설정 -->
+    <script th:inline="javascript">
+        window.currentUserId = /*[[${#authentication?.principal?.member?.id}]]*/ null;
+        window.currentUserName = /*[[${#authentication?.principal?.member?.name}]]*/ null;
+    </script>
+
+    <!-- static/js/global-call-handler.js 파일 로드 -->
+    <script src="/js/global-call-handler.js"></script>
+
     <div class="fixed inset-0 top-0 z-40 mx-auto h-[90px] w-full
               relative grid grid-cols-[auto_1fr_auto] items-center px-5 py-5">
 

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="~{fragments/layout :: AppLayout('videocall', ~{::content}, null)}">
+    <th:block th:fragment="content">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>가족 프로필 상세</title>
+        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    </head>
+
+    <body class="bg-gray-50 min-h-screen">
+
+    <div class="max-w-md mx-auto bg-white min-h-screen px-5 py-6">
+
+        <!-- 가족 프로필 -->
+        <div class="flex items-center space-x-4 mb-8">
+            <img th:src="${partner.profileImage}"
+                 alt="profile"
+                 class="w-20 h-20 rounded-full object-cover">
+            <h2 class="text-2xl font-bold text-gray-900" th:text="${partner.nickname()}">엄마</h2>
+        </div>
+
+        <!-- 최근 통화기록 -->
+        <section class="mb-8">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-lg font-bold text-gray-900">최근 통화기록</h3>
+                <a href="/video/history" class="text-sm text-orange-300">더보기</a>
+            </div>
+
+            <div class="space-y-2 bg-gray-50 rounded-xl p-3">
+                <div th:each="call, iterStat : ${videoCallHistory}"
+                     class="flex justify-between items-center py-2.5"
+                     th:classappend="${!iterStat.last} ? 'border-b border-gray-200' : ''">
+                    <span class="text-sm text-gray-700"
+                          th:text="${#temporals.format(call.createdDate, 'yyyy. MM. dd')}">
+                        2025. 05. 06
+                    </span>
+                    <div class="flex flex-col items-end gap-0.5">
+                        <span class="text-sm font-medium"
+                              th:classappend="${call.callType == '부재중'} ? 'text-red-500' : 'text-gray-600'"
+                              th:text="${call.callType}">
+                            부재중
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 통화걸기 버튼 -->
+        <div class="mb-10">
+            <button onclick="startCall()"
+                    class="w-full text-gray-800 font-bold text-lg py-4 rounded-full shadow-md hover:shadow-lg transition-all"
+                    style="background: linear-gradient(90deg, #F5BF76 36%, #FFF9F2 100%);">
+                통화걸기
+            </button>
+        </div>
+
+        <!-- 추천 키워드 / 추후 api 연결-->
+        <section class="mb-8">
+            <h4 class="text-center text-sm font-bold text-gray-700 mb-4">추천 키워드</h4>
+            <div class="grid grid-cols-4 gap-3">
+                <button class="bg-gray-100 text-gray-600 text-xs py-2.5 rounded-lg hover:bg-gray-200 transition">
+                    교환학생
+                </button>
+                <button class="bg-gray-100 text-gray-600 text-xs py-2.5 rounded-lg hover:bg-gray-200 transition">
+                    친구
+                </button>
+                <button class="bg-gray-100 text-gray-600 text-xs py-2.5 rounded-lg hover:bg-gray-200 transition">
+                    학원
+                </button>
+                <button class="bg-gray-100 text-gray-600 text-xs py-2.5 rounded-lg hover:bg-gray-200 transition">
+                    시험
+                </button>
+            </div>
+            <div class="grid grid-cols-3 gap-3 mt-3">
+                <button class="bg-gray-100 text-gray-600 text-xs py-2.5 rounded-lg hover:bg-gray-200 transition">
+                    아빠
+                </button>
+                <button class="bg-gray-100 text-gray-600 text-xs py-2.5 rounded-lg hover:bg-gray-200 transition">
+                    용돈
+                </button>
+                <button class="bg-gray-100 text-gray-600 text-xs py-2.5 rounded-lg hover:bg-gray-200 transition">
+                    본가
+                </button>
+            </div>
+        </section>
+    </div>
+    <script th:inline="javascript">
+
+        function startCall(partnerId) {
+            window.location.href = `/call/loading?mode=calling&targetId=${partnerId}`;
+        }
+        /*]]>*/
+    </script>
+    </body>
+    </th:block>
+</th:block>
+</html>
