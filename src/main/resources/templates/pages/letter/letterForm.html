@@ -17,14 +17,24 @@
                 <!-- 받는 사람 -->
                 <div>
                     <label for="receiverId" class="block font-semibold text-gray-900 text-base mb-3">받는 사람</label>
-                    <select id="receiverId" name="receiverId" required
+
+                    <select id="receiverId"
+                            name="receiverId"
+                            th:disabled="${preSelectedReceiver != null}"
+                            required
                             class="w-full border border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5BF76] focus:border-transparent">
-                        <option value="" disabled selected>가족을 선택하세요</option>
+                        <option value="" disabled th:selected="${preSelectedReceiver == null}">가족을 선택하세요</option>
                         <option th:each="family : ${familyList}"
                                 th:value="${family.id}"
-                                th:text="${family.displayName}">
+                                th:text="${family.displayName}"
+                                th:selected="${preSelectedReceiver != null and preSelectedReceiver.id == family.id}">
                         </option>
                     </select>
+
+                    <!-- 답장 시 숨김 input 추가 -->
+                    <input type="hidden" name="receiverId"
+                           th:if="${preSelectedReceiver != null}"
+                           th:value="${preSelectedReceiver.id}">
                 </div>
 
                 <!-- 제목 -->
@@ -194,7 +204,7 @@
                 status.classList.add('text-[#F5BF76]');
 
                 try {
-                    const response = await fetch('/api/stt', { method:'POST', body: fd });
+                    const response = await fetch('/letter/api/stt', { method:'POST', body: fd });
                     if(!response.ok) throw new Error(response.statusText);
 
                     const data = await response.json();
@@ -229,7 +239,7 @@
                 status.classList.add('text-[#F5BF76]');
 
                 try {
-                    const resp = await fetch('/api/ai-correct', {
+                    const resp = await fetch('/letter/api/ai-correct', {
                         method:"POST",
                         headers:{ "Content-Type":"application/json" },
                         body: JSON.stringify({ text: originalText })

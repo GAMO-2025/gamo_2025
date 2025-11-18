@@ -9,7 +9,7 @@ public class LetterRequestDTO {
     private Long receiverId;
     private String title;
     private String content;
-    private String inputType; // TEXT / VOICE
+    private String inputType; // TEXT/STT
     private MultipartFile voiceFile; // STT용
     private MultipartFile letterImg;  // 이미지
 }

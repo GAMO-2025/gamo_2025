@@ -29,13 +29,25 @@ public class Letter extends BaseEntity {
     @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "leter_img")
+    @Column(name = "letter_img")
     private String letterImg;   // 파일 경로
 
     @Enumerated(EnumType.STRING)
     private InputType inputType; // TEXT, STT
 
-    @Column(name = "cancelled")
-    private boolean cancelled = false;
+    @Column(name = "is_cancelled")
+    private boolean isCancelled = false;
+
+    @Column(name = "is_read")
+    private boolean isRead = false;
+
+    @Column(name = "read_at")
+    private LocalDateTime readAt;
+
+    @Column(name = "is_sender_deleted", nullable = false)
+    private Boolean isSenderDeleted = false;
+
+    @Column(name = "is_receiver_deleted", nullable = false)
+    private Boolean isReceiverDeleted = false;
 }
 

@@ -5,9 +5,12 @@ import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
-import jakarta.annotation.PostConstruct;
+import gamo.web.common.exception.CustomException;
+import gamo.web.common.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,6 +20,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GcsService {
@@ -32,16 +36,21 @@ public class GcsService {
 
     private Storage storage;
 
-    // 초기화 블록에서 credentials 적용
     private void initStorage() throws IOException {
         if (storage == null) {
+            InputStream credentialsStream;
+            if (credentialsPath.startsWith("classpath:")) {
+                credentialsStream = new ClassPathResource(
+                        credentialsPath.substring("classpath:".length())
+                ).getInputStream();
+            } else {
+                credentialsStream = new FileInputStream(credentialsPath);
+            }
+
             storage = StorageOptions.newBuilder()
                     .setProjectId(projectId)
-                    .setCredentials(
-                            com.google.auth.oauth2.ServiceAccountCredentials.fromStream(
-                                    new FileInputStream(credentialsPath)
-                            )
-                    ).build()
+                    .setCredentials(ServiceAccountCredentials.fromStream(credentialsStream))
+                    .build()
                     .getService();
         }
     }
@@ -55,6 +64,7 @@ public class GcsService {
             BlobId blobId = BlobId.of(bucketName, objectName);
             BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
                     .setContentType(file.getContentType())
+                    .setCacheControl("public, max-age=604800") // 1주일 캐시
                     .build();
 
             storage.create(blobInfo, file.getBytes());
@@ -62,7 +72,7 @@ public class GcsService {
             return "gs://" + bucketName + "/" + objectName;
 
         } catch (IOException e) {
-            throw new RuntimeException("GCS 업로드 실패", e);
+            throw new CustomException(ErrorCode.LETTER_IMAGE_UPLOAD_FAILED);
         }
     }
 
@@ -76,7 +86,20 @@ public class GcsService {
 
             return storage.signUrl(blobInfo, durationMinutes, TimeUnit.MINUTES, Storage.SignUrlOption.withV4Signature());
         } catch (Exception e) {
-            throw new RuntimeException("Signed URL 생성 실패", e);
+            throw new CustomException(ErrorCode.LETTER_IMAGE_SIGNED_URL_FAILED);
         }
     }
+
+    // GCS 객체 삭제
+    public void deleteFile(String gsPath) throws IOException {
+        initStorage();
+
+        String objectName = gsPath.replace("gs://" + bucketName + "/", "");
+        boolean deleted = storage.delete(bucketName, objectName);
+
+        if (!deleted) {
+            log.warn("GCS 객체가 존재하지 않거나 삭제 실패: {}", objectName);
+        }
+    }
+
 }
