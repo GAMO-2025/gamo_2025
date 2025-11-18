@@ -172,7 +172,7 @@ public class LetterService {
     // 편지 전송
     // -------------------------------
     @Transactional
-    public Letter sendLetter(Long senderId, LetterRequestDTO request) {
+    public LetterResponseDTO sendLetter(Long senderId, LetterRequestDTO request) {
         // 발신자 확인
         Member sender = memberRepository.findById(senderId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
@@ -210,10 +210,10 @@ public class LetterService {
                 .isReceiverDeleted(false)
                 .build();
 
-        Letter savedLetter = letterRepository.save(letter);
+        letterRepository.save(letter);
         log.info("Letter {}: 편지 전송 성공", senderId);
 
-        return savedLetter;
+        return new LetterResponseDTO(letter.getId(), receiver.getName());
     }
 
     // -------------------------------
