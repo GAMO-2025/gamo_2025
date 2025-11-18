@@ -88,4 +88,23 @@ public class FamilyService {
         member.setFamily(family);
         memberRepository.save(member);
     }
+
+    // 가족 탈퇴
+    @Transactional
+    public void leaveFamily(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        Family family = member.getFamily();
+        if(family == null) {
+            throw new CustomException(ErrorCode.FAMILY_NOT_FOUND);
+        }
+
+        member.setFamily(null);
+
+        // 만약, 가족 구성원이 한 명도 안남아있다면 그 가족 엔티티를 삭제한다
+        if(!memberRepository.existsByFamily(family)) {
+            familyRepository.delete(family);
+        }
+    }
 }
