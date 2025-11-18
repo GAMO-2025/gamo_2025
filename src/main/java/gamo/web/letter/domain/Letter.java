@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
-@Setter
 @Table(name = "letter")
 public class Letter extends BaseEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -49,5 +48,27 @@ public class Letter extends BaseEntity {
 
     @Column(name = "is_receiver_deleted", nullable = false)
     private Boolean isReceiverDeleted = false;
+
+
+    public void markRead() {
+        this.isRead = true;
+    }
+
+    public void recordReadAt(LocalDateTime readAt) {
+        this.readAt = readAt;
+    }
+
+    public void cancelLetter(boolean cancelled) {
+        this.isCancelled = cancelled;
+    }
+
+    public void deleteBySender(boolean senderDeleted) {
+        this.isSenderDeleted = senderDeleted;
+    }
+
+    public void deleteByReceiver (boolean receiverDeleted) {
+        this.isReceiverDeleted = receiverDeleted;
+    }
+
 }
 

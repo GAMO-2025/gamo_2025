@@ -23,12 +23,6 @@ public interface LetterRepository extends JpaRepository<Letter, Long> {
     // [받은 편지함] 특정 발신자로부터 받은 편지 (삭제 미포함, 취소 미포함)
     Page<Letter> findByReceiverIdAndSenderIdAndIsCancelledFalseAndIsReceiverDeletedFalse(Long receiverId, Long senderId, Pageable pageable);
 
-    // 내가 발신자일 때 삭제한 보낸 편지 개수 (취소되지 않은 것)
-    Long countBySenderIdAndIsSenderDeletedTrueAndIsCancelledFalse(Long senderId);
-
-    // 내가 수신자일 때 삭제한 받은 편지 개수 (취소되지 않은 것)
-    Long countByReceiverIdAndIsReceiverDeletedTrueAndIsCancelledFalse(Long receiverId);
-
     // 내가 수신자일 때 삭제하지 않은 받은 편지 개수 (취소되지 않은 것)
     Long countByReceiverIdAndIsReceiverDeletedFalseAndIsCancelledFalse(Long receiverId);
 
@@ -41,10 +35,6 @@ public interface LetterRepository extends JpaRepository<Letter, Long> {
     // 전송 취소된 편지 수 (발신자 기준)
     Long countBySenderIdAndIsCancelledTrue(Long senderId);
 
-    // 받은 편지의 발신자 ID 전체 목록
-    @Query("SELECT DISTINCT l.senderId FROM Letter l WHERE l.receiverId = :receiverId")
-    List<Long> findDistinctSenderIdsByReceiverId(@Param("receiverId") Long receiverId);
-
     // 취소되지 않은 받은 편지 발신자 ID 목록
     @Query("SELECT DISTINCT l.senderId FROM Letter l WHERE l.receiverId = :receiverId AND l.isCancelled = false")
     List<Long> findDistinctSenderIdsByReceiverIdAndIsCancelledFalse(@Param("receiverId") Long receiverId);
@@ -52,8 +42,4 @@ public interface LetterRepository extends JpaRepository<Letter, Long> {
     // 보낸 편지 수신자 ID 전체 목록
     @Query("SELECT DISTINCT l.receiverId FROM Letter l WHERE l.senderId = :senderId")
     List<Long> findDistinctReceiverIdsBySenderId(@Param("senderId") Long senderId);
-
-    // 취소되지 않은 보낸 편지 수신자 ID 목록
-    @Query("SELECT DISTINCT l.receiverId FROM Letter l WHERE l.senderId = :senderId AND l.isCancelled = false")
-    List<Long> findDistinctReceiverIdsBySenderIdAndIsCancelledFalse(@Param("senderId") Long senderId);
 }
