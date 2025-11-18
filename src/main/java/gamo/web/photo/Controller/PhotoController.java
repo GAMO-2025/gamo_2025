@@ -4,7 +4,6 @@ import gamo.web.auth.UserPrincipal;
 import gamo.web.member.domain.Member;
 import gamo.web.photo.domain.Album;
 import gamo.web.photo.domain.Photo;
-import gamo.web.photo.dto.AlbumDto;
 import gamo.web.photo.service.LikeService;
 import gamo.web.photo.service.PhotoService;
 import gamo.web.photo.service.GcpStorageService;
@@ -21,8 +20,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Controller
 @RequiredArgsConstructor

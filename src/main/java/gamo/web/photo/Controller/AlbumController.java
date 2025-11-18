@@ -4,7 +4,7 @@ import gamo.web.family.service.FamilyService;
 import gamo.web.member.service.MemberService;
 import gamo.web.photo.domain.Album;
 import gamo.web.photo.domain.Photo;
-import gamo.web.photo.dto.AlbumDto;
+import gamo.web.photo.dto.AlbumDTO;
 import gamo.web.photo.service.PhotoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -33,10 +33,10 @@ public class AlbumController {
         Long familyId = memberService.getFamilyId(memberId);
         List<Album> albums = photoService.getAlbumsByFamilyId(familyId);
 
-        List<AlbumDto> albumDtos = albums.stream().map(album -> {
+        List<AlbumDTO> albumDtos = albums.stream().map(album -> {
             Photo latestPhoto = photoService.getLatestPhotoByAlbumId(album.getAlbum_id());
             String thumbnailUrl = (latestPhoto != null) ? latestPhoto.getUrl() : null;
-            return new AlbumDto(album.getAlbum_id(), album.getTitle(), thumbnailUrl);
+            return new AlbumDTO(album.getAlbum_id(), album.getTitle(), thumbnailUrl);
         }).collect(Collectors.toList());
 
         model.addAttribute("albums", albumDtos);
