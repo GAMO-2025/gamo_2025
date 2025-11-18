@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<th:block th:fragment="actionModal(modalId, actionMessage, okText, cancelText)">
+
+    <!-- 오버레이 + 모달 -->
+    <div th:id="${modalId}"
+         data-action-modal
+         class="fixed inset-0 z-[1200] hidden px-5
+                flex items-center justify-center
+                bg-black/40 backdrop-blur-sm">
+
+        <div class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg">
+
+            <!-- 메시지 -->
+            <p class="mt-3 text-m text-gray-600 font-bold"
+               data-action-message
+               th:text="${actionMessage}">
+                액션 메시지
+            </p>
+
+            <!-- 버튼 영역 -->
+            <div class="mt-6 flex gap-3">
+                <!-- 확인 버튼 -->
+                <button type="button"
+                        data-action-ok
+                        th:text="${okText}"
+                        class="flex-1 rounded-xl bg-amber-400 px-4 py-2
+                               text-m font-semibold text-white transition-colors">
+                    확인
+                </button>
+
+                <!-- 닫기 버튼 -->
+                <button type="button"
+                        data-modal-close
+                        th:text="${cancelText}"
+                        class="flex-1 rounded-xl border border-gray-300 px-4 py-2
+                               text-m font-semibold text-gray-700 bg-white transition-colors">
+                    닫기
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // openActionModal('modalId', '메시지', () => { 실행할 코드 })
+        window.openActionModal = function (id, message, onConfirm) {
+            const modal = document.getElementById(id);
+            if (!modal) return;
+
+            // 메시지 업데이트
+            if (message) {
+                const msgEl = modal.querySelector('[data-action-message]');
+                if (msgEl) msgEl.textContent = message;
+            }
+
+            // onConfirm 콜백 저장
+            modal._onConfirm = (typeof onConfirm === 'function') ? onConfirm : null;
+
+            // 포커스 해제 (input 자동완성 막기)
+            if (document.activeElement && document.activeElement.blur) {
+                document.activeElement.blur();
+            }
+
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 모달 닫기
+        function closeActionModal(modal) {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+            modal._onConfirm = null; // 콜백 제거
+        }
+
+        // 이벤트 위임
+        document.addEventListener('click', function (e) {
+
+            // 확인 버튼
+            if (e.target.matches('[data-action-ok]')) {
+                const modal = e.target.closest('[data-action-modal]');
+                if (!modal) return;
+
+                const handler = modal._onConfirm;
+                closeActionModal(modal);
+
+                // 콜백 실행
+                if (typeof handler === 'function') {
+                    handler();
+                }
+            }
+
+            // 닫기 버튼
+            if (e.target.matches('[data-modal-close]')) {
+                const modal = e.target.closest('[data-action-modal]');
+                if (modal) closeActionModal(modal);
+            }
+
+            // 오버레이 클릭 시 닫기
+            if (e.target.matches('[data-action-modal]')) {
+                closeActionModal(e.target);
+            }
+        });
+    </script>
+
+</th:block>
+</html>

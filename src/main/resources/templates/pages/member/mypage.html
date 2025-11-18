@@ -35,20 +35,19 @@
             </form>
 
             <!-- 가족탈퇴 -->
-            <a th:href="@{/member/family/leave}"
-               class="mx-auto block w-[200px] rounded-full bg-white px-6 py-3 text-center text-[14px] font-semibold text-gray-900 shadow-md">
+            <button id="leaveFamilyBtn" type="button"
+                    class="mx-auto block w-[200px] rounded-full bg-white px-6 py-3 text-center text-[14px] font-semibold text-gray-900 shadow-md">
                 가족탈퇴
-            </a>
+            </button>
 
             <!-- 회원탈퇴 -->
-            <form th:action="@{/api/member}" method="post"
-                  onsubmit="return confirm('정말 탈퇴하시겠어요?');">
-                <input type="hidden" name="_method" value="delete" />
+            <form id="deleteMemberForm" class="w-full">
                 <button type="submit"
                         class="mx-auto block w-[200px] rounded-full bg-white px-6 py-3 text-center text-[14px] font-semibold text-gray-400 shadow-md">
                     회원탈퇴
                 </button>
             </form>
+
         </div>
     </div>
 
@@ -60,6 +59,105 @@
             카카오로 로그인
         </a>
     </section>
+
+    <th:block th:replace="~{fragments/alert-modal :: alertModal('commonAlert', '알림 메시지')}" />
+    <th:block th:replace="~{fragments/action-modal :: actionModal('deleteConfirm', '정말 탈퇴하시겠어요?', '확인', '닫기')}" />
+
+    <script>
+        (function () {
+            const deleteForm = document.getElementById('deleteMemberForm');
+            const leaveFamilyBtn = document.getElementById('leaveFamilyBtn');
+
+            // CSRF 토큰
+            const csrfToken =
+                document.querySelector('meta[name="_csrf"]')?.content ||
+                document.querySelector('input[name="_csrf"]')?.value;
+
+            // 회원탈퇴랑 가족탈퇴 둘이 같은 함수로 묶기(액션이 비슷함)
+            async function sendActionRequest({ url, method, defaultSuccessMsg, defaultErrorMsg, redirectUrl }) {
+                try {
+                    const res = await fetch(url, {
+                        method,
+                        headers: {
+                            ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
+                        },
+                    });
+
+                    let msg = defaultSuccessMsg;
+
+                    if (res.ok) {
+                        try {
+                            const data = await res.json();
+                            if (data?.message) msg = data.message;
+                        } catch (_) {}
+                    } else {
+                        msg = defaultErrorMsg;
+                        try {
+                            const data = await res.json();
+                            if (data?.message) msg = data.message;
+                        } catch (_) {}
+                    }
+
+                    // 공통 알림 모달
+                    openAlertModal('commonAlert', msg);
+
+                    const alertModal = document.getElementById('commonAlert');
+                    if (!alertModal) return;
+
+                    const closeBtn = alertModal.querySelector('[data-modal-close]');
+                    if (!closeBtn) return;
+
+                    const handler = () => {
+                        closeBtn.removeEventListener('click', handler);
+
+                        if (res.ok && redirectUrl) {
+                            window.location.href = redirectUrl;
+                        }
+                    };
+
+                    closeBtn.addEventListener('click', handler);
+
+                } catch (err) {
+                    console.error(err);
+                    openAlertModal('commonAlert', '서버 오류가 발생했습니다.');
+                }
+            }
+
+            // 회원탈퇴
+            if (deleteForm) {
+                deleteForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+
+                    openActionModal('deleteConfirm', '정말 탈퇴하시겠어요?', () => {
+                        sendActionRequest({
+                            url: '/api/member',
+                            method: 'DELETE',
+                            defaultSuccessMsg: '회원 탈퇴가 완료되었습니다.',
+                            defaultErrorMsg: '회원 탈퇴 처리에 실패했습니다.',
+                            redirectUrl: '/login',   // 탈퇴 후 로그인 페이지로
+                        });
+                    });
+                });
+            }
+
+            // 가족탈퇴
+            if (leaveFamilyBtn) {
+                leaveFamilyBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+
+                    openActionModal('deleteConfirm', '정말 가족 모임에서 탈퇴하시겠어요?', () => {
+                        sendActionRequest({
+                            url: '/api/family/leave',
+                            method: 'POST',
+                            defaultSuccessMsg: '가족 모임에서 탈퇴되었습니다.',
+                            defaultErrorMsg: '가족 탈퇴 처리에 실패했습니다.',
+                            redirectUrl: '/member/family',  // 가족탈퇴 후 이동할 페이지
+                        });
+                    });
+                });
+            }
+        })();
+    </script>
 
 </th:block>
 
