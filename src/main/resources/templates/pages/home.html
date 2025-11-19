@@ -2,21 +2,41 @@
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="fragments/layout :: AppLayout('home', ~{::content}, null)">
 
-<!-- 🔹 본문 내용 슬롯 -->
 <th:block th:fragment="content">
-    <div class="flex flex-row gap-2">
-        <div class="flex flex-row items-center justify-center text-center mt-16
-        rounded-2xl shadow-[0_0_10px_rgba(0,0,0,0.08)]">
-            <p class = "text-[13px] font-bold text-[#AB8D66]" th:text="${home.getTargetNickname()}님과" />
-        <div>"
-        <p class="text-[13px] font-bold" th:text="${home.getAjenda()}" />"</div>
-        <p class="text-[13px] font-bold">주제로 통화해보세요!</p>
-    </div>
+    <div class="flex flex-col gap-2">
 
-    <div class="flex flex-row items-center justify-center text-center mt-16
+        <!-- 통화 대상이 있을 때 -->
+        <div th:if="${home.targetNickname != null}"
+             class="flex flex-col px-6 py-8 items-center justify-center text-center mt-16
+                rounded-2xl shadow-[0_0_10px_rgba(0,0,0,0.08)]">
+
+            <p class="flex text-[20px] font-bold text-[#AB8D66]"
+               th:text="${home.targetNickname + '님과'}"></p>
+
+            <p class="flex text-[16px] font-bold"
+               th:text="${home.ajenda}"></p>
+
+            <p class="flex text-[16px] font-bold">주제로 통화해보세요!</p>
+        </div>
+
+
+        <!-- 통화 대상이 없을 때 -->
+        <div th:unless="${home.targetNickname != null}"
+             class="flex flex-col px-6 py-8 items-center justify-center text-center mt-16
+                rounded-2xl shadow-[0_0_10px_rgba(0,0,0,0.08)]">
+
+            <p class="text-[16px] font-bold text-[#AB8D66]">
+                추천 주제가 없습니다...<br>
+                가족과 통화해보세요!
+            </p>
+        </div>
+
+
+
+    <div class="flex flex-col px-6 py-7 items-center justify-center text-center mt-16
     rounded-2xl shadow-[0_0_10px_rgba(0,0,0,0.08)]">
-        <p class = "text-[13px] font-bold text-[#AB8D66]">현재 읽지 않은 편지가</p>
-        <p class="text-[13px] font-bold text-[#AB8D66]" th:text="${home.getReceivedLetterCount()}">개 있어요!</p>
+        <p class = "text-[16px] font-bold text-[#AB8D66]">현재 읽지 않은 편지가</p>
+        <p class="text-[16px] font-bold text-[#AB8D66]" th:text="${home.receivedLetterCount + '개 있어요!'}" />
 
     </div>
 

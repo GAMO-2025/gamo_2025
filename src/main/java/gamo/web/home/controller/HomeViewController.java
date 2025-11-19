@@ -11,13 +11,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
-@RequestMapping("/home")
 @RequiredArgsConstructor
 public class HomeViewController {
 
     private final HomeService homeService;
 
-    @GetMapping
+    @GetMapping("/home")
     public String home(@AuthenticationPrincipal UserPrincipal user, Model model) {
         HomeSummaryDTO homeSummary = homeService.getHomeSummary(user.getMember());
 
