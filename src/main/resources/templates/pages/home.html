@@ -4,10 +4,23 @@
 
 <!-- 🔹 본문 내용 슬롯 -->
 <th:block th:fragment="content">
-    <section class="flex flex-col items-center justify-center text-center mt-16">
-        <img src="/svgs/header_logo.svg" alt="Gamo 로고" />
-        <p class="mt-2 text-gray-500">환영합니다! 이곳은 홈 화면입니다 :)</p>
-    </section>
+    <div class="flex flex-row gap-2">
+        <div class="flex flex-row items-center justify-center text-center mt-16
+        rounded-2xl shadow-[0_0_10px_rgba(0,0,0,0.08)]">
+            <p class = "text-[13px] font-bold text-[#AB8D66]" th:text="${home.getTargetNickname()}님과" />
+        <div>"
+        <p class="text-[13px] font-bold" th:text="${home.getAjenda()}" />"</div>
+        <p class="text-[13px] font-bold">주제로 통화해보세요!</p>
+    </div>
+
+    <div class="flex flex-row items-center justify-center text-center mt-16
+    rounded-2xl shadow-[0_0_10px_rgba(0,0,0,0.08)]">
+        <p class = "text-[13px] font-bold text-[#AB8D66]">현재 읽지 않은 편지가</p>
+        <p class="text-[13px] font-bold text-[#AB8D66]" th:text="${home.getReceivedLetterCount()}">개 있어요!</p>
+
+    </div>
+
+    </div>
 </th:block>
 
 </html>
