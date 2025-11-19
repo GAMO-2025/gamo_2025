@@ -1,10 +1,12 @@
 package gamo.web.videocall.controller;
 
 import gamo.web.auth.UserPrincipal;
+import gamo.web.member.domain.Member;
 import gamo.web.family.dto.FamilyListDTO;
 import gamo.web.member.service.MemberService;
 import gamo.web.videocall.dto.VideoCallHistoryListResponse;
 import gamo.web.videocall.dto.VideoCallListResponse;
+import gamo.web.videocall.dto.VideoCallResponseDTO;
 import gamo.web.videocall.service.VideoCallService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +45,7 @@ public class VideoCallViewController {
         model.addAttribute("videoCallHistory",response.getContent());
         return "pages/videocall/callMain";
     }
+
 
     // 프로필 조회
     @GetMapping("/video-call/profile")
