@@ -7,16 +7,24 @@
 
         <!-- 통화 대상이 있을 때 -->
         <div th:if="${home.targetNickname != null}"
-             class="flex flex-col px-6 py-8 items-center justify-center text-center mt-16
-                rounded-2xl shadow-[0_0_10px_rgba(0,0,0,0.08)]">
+             class="px-6 py-8 mt-16 rounded-2xl shadow-[0_0_10px_rgba(0,0,0,0.08)]">
 
-            <p class="flex text-[20px] font-bold text-[#AB8D66]"
-               th:text="${home.targetNickname + '님과'}"></p>
+            <div class="flex items-center gap-4">
 
-            <p class="flex text-[16px] font-bold"
-               th:text="${home.ajenda}"></p>
+                <img class="h-14 w-14 rounded-full object-cover"
+                     th:src="${home.getTargetProfileImage()}"
+                     alt="profile"/>
 
-            <p class="flex text-[16px] font-bold">주제로 통화해보세요!</p>
+                <div class="text-left">
+                    <p class="text-[20px] font-bold text-[#AB8D66]"
+                       th:text="${home.targetNickname + '님과'}"></p>
+
+                    <p class="text-[16px] font-bold"
+                       th:text="'&quot;' + ${home.ajenda} + '&quot;'"></p>
+
+                    <p class="text-[16px] font-bold">주제로 통화해보세요!</p>
+                </div>
+            </div>
         </div>
 
 
@@ -35,9 +43,10 @@
 
     <div class="flex flex-col px-6 py-7 items-center justify-center text-center mt-16
     rounded-2xl shadow-[0_0_10px_rgba(0,0,0,0.08)]">
+        <a th:href="@{/letter}">
         <p class = "text-[16px] font-bold text-[#AB8D66]">현재 읽지 않은 편지가</p>
-        <p class="text-[16px] font-bold text-[#AB8D66]" th:text="${home.receivedLetterCount + '개 있어요!'}" />
-
+        <p class="text-[16px] font-bold text-[#AB8D66]" th:text="${home.receivedLetterCount + '개 있어요!'}"></p>
+        </a>
     </div>
 
     </div>

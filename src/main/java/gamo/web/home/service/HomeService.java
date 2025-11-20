@@ -16,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class HomeService {
     private final VideoCallService videoCallService;
     private final LetterService letterService;
-    private HomeSummaryDTO hsDTO;
 
     @Transactional(readOnly = true)
     public HomeSummaryDTO getHomeSummary(Member member) {
