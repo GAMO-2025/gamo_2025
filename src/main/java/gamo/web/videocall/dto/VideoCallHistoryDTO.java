@@ -26,10 +26,10 @@ public class VideoCallHistoryDTO {
 
     public String getCallType(CallType type) {
         return switch (type.toString()) {
-            case "COMPLETED" -> "수신";
+            case "COMPLETED" -> "통화종료";
             case "REJECTED" -> "수신거부";
             case "MISSED" -> "부재중";
-            case "CANCELED" -> "발신취소";
+            case "CANCELLED" -> "발신취소";
             default -> "알수없음";
         };
     }

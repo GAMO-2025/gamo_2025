@@ -156,7 +156,7 @@ public class SignalHandler extends TextWebSocketHandler {
 
         CallManager.CallSession session = callStatusManager.getCallSession(from);
 
-        // session이 없으면 이미 reject/cancel로 저장되었음
+        // session이 없으면 이미 reject/cancel로 저장
         if (session == null) {
             log.info("[handleEndCall] Session not found - already saved as reject/cancel");
             return;

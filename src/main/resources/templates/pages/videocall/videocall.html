@@ -4,22 +4,17 @@
     <th:block th:fragment="content">
         <script src="https://cdn.webrtc-experiment.com/RecordRTC.js"></script>
 
-        <!-- 모바일 웹앱 컨테이너 -->
         <div class="relative w-full max-w-md h-screen bg-gray-900 overflow-hidden mx-auto">
-            <!-- 비디오 영역 (상대방 화면 - 전체 화면) -->
             <video id="remoteVideo" autoplay playsinline class="w-full h-full object-cover"></video>
 
-            <!-- 영상통화 헤더 (상단에 고정) -->
             <div class="absolute top-0 left-0 right-0 flex flex-row items-center gap-3 px-4 py-3 bg-black bg-opacity-40 z-20">
                 <img th:src="${target.profileImage()}" alt="profile" class="w-10 h-10 rounded-full object-cover">
                 <h1 class="text-base font-semibold text-white" th:text="${target.nickname()}">닉네임</h1>
             </div>
 
-            <!-- 내 화면 -->
             <video id="localVideo" autoplay playsinline muted
                    class="absolute top-16 right-4 w-24 h-32 rounded-lg border-2 border-white shadow-lg object-cover z-10"></video>
 
-            <!-- 컨트롤 버튼 -->
             <div class="absolute bottom-8 left-0 right-0 flex justify-center items-center gap-3 z-20 px-4">
                 <button id="muteBtn" class="bg-gray-700 bg-opacity-80 hover:bg-gray-600 p-3 rounded-full">
                     <img th:src="@{/svgs/volume-mute.svg}" alt="mute" class="w-6 h-6">
@@ -55,6 +50,10 @@
 
             console.log('videocall: userId=' + userId + ', targetId=' + targetId);
 
+            // OFFER를 보내는 대상인지를 저장
+            const isInitiator = userId < targetId;
+            console.log('videocall: isInitiator=' + isInitiator);
+
             let pc;
             let localStream;
             let remoteStream;
@@ -65,6 +64,7 @@
             let isWebRTCInitialized = false;
             let isCallEnding = false;
 
+            // WebRTC 상태 초기화
             async function initWebRTC() {
                 if (isWebRTCInitialized) {
                     console.log('videocall: WebRTC already initialized');
@@ -86,6 +86,7 @@
 
                     document.getElementById("localVideo").srcObject = localStream;
 
+                    // 사용자의 음성, 영상 가져옴
                     audioTracks = localStream.getAudioTracks();
                     videoTracks = localStream.getVideoTracks();
 
@@ -132,6 +133,7 @@
                 }
             }
 
+            let pendingCandidates = [];
 
             window.handleWebRTCMessage = async function(data) {
                 const { type, payload } = data;
@@ -167,6 +169,10 @@
                             await pc.setRemoteDescription(offer);
                             console.log('videocall: Remote description set from OFFER');
 
+                            await addPendingCandidates();
+                            console.log('videocall: Added ' + pendingCandidates.length + ' pending candidates');
+                            pendingCandidates = [];
+
                             const answer = await pc.createAnswer();
                             await pc.setLocalDescription(answer);
                             console.log('videocall: Local description set with ANSWER');
@@ -200,6 +206,10 @@
 
                             await pc.setRemoteDescription(answer);
                             console.log('videocall: Remote description set from ANSWER');
+
+                            await addPendingCandidates();
+                            console.log('videocall: Added ' + pendingCandidates.length + ' pending candidates');
+                            pendingCandidates = [];
                             break;
                         }
 
@@ -209,17 +219,26 @@
                                 return;
                             }
 
-                            try {
-                                await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
-                                console.log('videocall: ICE candidate added');
-                            } catch (e) {
-                                if (e.name === 'InvalidStateError') {
-                                    console.warn('videocall: Cannot add ICE candidate - invalid state');
-                                } else if (e.name === 'InvalidAccessError') {
-                                    console.warn('videocall: Duplicate or invalid ICE candidate');
-                                } else {
-                                    console.error('videocall: Error adding ICE candidate -', e.message);
+                            const signalingState = pc?.signalingState || 'unknown';
+                            console.log('videocall: Received CANDIDATE, current signaling state=' + signalingState);
+
+                            if (signalingState === 'stable' || signalingState === 'have-remote-offer' || signalingState === 'have-local-offer') {
+                                try {
+                                    await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
+                                    console.log('videocall: ICE candidate added immediately');
+                                } catch (e) {
+                                    if (e.name === 'InvalidStateError') {
+                                        console.warn('videocall: Cannot add ICE candidate - invalid state, buffering');
+                                        pendingCandidates.push(payload.candidate);
+                                    } else if (e.name === 'InvalidAccessError') {
+                                        console.warn('videocall: Duplicate or invalid ICE candidate');
+                                    } else {
+                                        console.error('videocall: Error adding ICE candidate -', e.message);
+                                    }
                                 }
+                            } else {
+                                console.log('videocall: State not ready for candidate, buffering');
+                                pendingCandidates.push(payload.candidate);
                             }
                             break;
                         }
@@ -237,51 +256,27 @@
                 }
             };
 
-            window.handleCallEnd = function(payload) {
-                console.log('videocall: END_CALL received from remote');
-                closeCallWithRedirect('상대방이 통화를 종료했습니다.');
-            };
+            async function addPendingCandidates() {
+                console.log('videocall: Adding ' + pendingCandidates.length + ' pending candidates');
 
-            function closeCallWithRedirect(message) {
-                if (isCallEnding) {
-                    console.log('videocall: Call already ending, ignoring click');
-                    return;
-                }
-
-                isCallEnding = true;
-                console.log('videocall: Closing call - ' + message);
-
-                // END_CALL 전송
-                const sent = sendMessage({
-                    type: 'END_CALL',
-                    payload: {
-                        from: userId,
-                        to: targetId
+                for (let candidate of pendingCandidates) {
+                    try {
+                        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                    } catch (e) {
+                        console.error('videocall: Error adding pending candidate -', e.message);
                     }
-                });
-
-                if (!sent) {
-                    console.error('videocall: Failed to send END_CALL');
                 }
-
-                stopRecording();
-
-                if (localStream) {
-                    localStream.getTracks().forEach(track => track.stop());
-                }
-                if (remoteStream) {
-                    remoteStream.getTracks().forEach(track => track.stop());
-                }
-                if (pc) {
-                    pc.close();
-                }
-
-                setTimeout(() => {
-                    alert(message);
-                    window.location.href = "/call";
-                }, 2000);
             }
+
             async function startCall() {
+                console.log('videocall: Checking WebSocket...');
+
+                // WebSocket이 OPEN될 때까지 대기
+                while (!window.globalCallSocket || window.globalCallSocket.readyState !== WebSocket.OPEN) {
+                    console.log('videocall: Waiting for WebSocket to be ready...');
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+
                 console.log('videocall: Starting call...');
 
                 await initWebRTC();
@@ -301,9 +296,7 @@
                 console.log('videocall: OFFER sent');
             }
 
-            async function stopCall() {
-                console.log('videocall: Stopping call...');
-            }
+            // 스트림 병합
             function mergeAudioStreams(localStream, remoteStream) {
                 const context = new (window.AudioContext || window.webkitAudioContext)();
                 const destination = context.createMediaStreamDestination();
@@ -317,25 +310,32 @@
                 return destination.stream;
             }
 
+            // 녹음 시작
             async function startRecording() {
+                // 사용자의 스트림이 있어야 녹음 시작 가능
                 if (!localStream) {
                     console.warn('videocall: Local stream not ready for recording');
                     return;
                 }
 
-                console.log('videocall: Auto recording started');
+                console.log('videocall: Waiting for remote stream...');
 
+                // 상대방의 remotestream이 올 때까지 계속 확인
                 const checkRemote = setInterval(() => {
-                    if (remoteStream) {
+                    if (remoteStream && !recorder) {
                         clearInterval(checkRemote);
+                        console.log('videocall: Remote stream received, starting recording');
 
                         try {
+                            // 로컬과 리모트 음성 병함
                             const mixedAudio = mergeAudioStreams(localStream, remoteStream);
+                            // 음성 + 로컬 비디오로 미디어스크림 생성
                             const mixedStream = new MediaStream([
                                 ...mixedAudio.getAudioTracks(),
                                 ...localStream.getVideoTracks()
                             ]);
 
+                            // 녹음 설정
                             recorder = RecordRTC(mixedStream, {
                                 type: 'video',
                                 mimeType: 'video/webm',
@@ -343,50 +343,117 @@
                                 bitsPerSecond: 128000
                             });
 
+                            // 녹음 시작
                             recorder.startRecording();
-                            console.log('videocall: Recording started');
+                            console.log('videocall: Recording started with merged audio');
                         } catch (e) {
                             console.error('videocall: Error starting recording -', e.message);
                         }
                     }
                 }, 500);
 
-                setTimeout(() => clearInterval(checkRemote), 30000);
+                setTimeout(() => {
+                    clearInterval(checkRemote);
+                    // 녹음 시작 안되었을 경우
+                    if (!recorder) {
+                        console.warn('videocall: Remote stream did not arrive, recording local stream only');
+                        // 로컬 스트림만으로 녹음 진행
+                        const mixedStream = new MediaStream([
+                            ...localStream.getAudioTracks(),
+                            ...localStream.getVideoTracks()
+                        ]);
+
+                        recorder = RecordRTC(mixedStream, {
+                            type: 'video',
+                            mimeType: 'video/webm',
+                            recorderType: RecordRTC.MediaStreamRecorder,
+                            bitsPerSecond: 128000
+                        });
+
+                        recorder.startRecording();
+                        console.log('videocall: Recording started with local stream only');
+                    }
+                }, 5000);
+            }
+            // 녹음 종료 및 stt 변환
+            function stopRecording() {
+                return new Promise((resolve) => {
+                    if (!recorder) {
+                        console.log('videocall: No recorder, skipping');
+                        resolve();
+                        return;
+                    }
+
+                    recorder.stopRecording(async () => {
+                        try {
+                            const blob = recorder.getBlob();
+                            const formData = new FormData();
+                            formData.append('voiceFile', blob, 'call_recording_' + userId + '_' + targetId + '.webm');
+
+                            console.log('videocall: Sending recording to STT');
+                            const response = await fetch('http://localhost:8080/letter/api/stt', {
+                                method: 'POST',
+                                body: formData
+                            });
+
+                            if (!response.ok) {
+                                console.error('videocall: STT failed -', response.statusText);
+                                resolve();
+                                return;
+                            }
+                            
+                            console.log('videocall: STT conversion complete');
+                            resolve();
+
+                        } catch (e) {
+                            console.error('videocall: Error saving recording -', e.message);
+                            resolve();
+                        }
+                    });
+                });
             }
 
-            function stopRecording() {
-                if (!recorder) return;
+            // 통화 종료 및 메세지 전송 처리
+            async function closeCallWithRedirect(message) {
+                if (isCallEnding) {
+                    console.log('videocall: Call already ending, ignoring request');
+                    window.locaion.herf("/call");
+                    return;
+                }
 
-                recorder.stopRecording(async () => {
-                    try {
-                        // 녹음 파일 blob으로 변환
-                        const blob = recorder.getBlob();
-                        const formData = new FormData();
-                        formData.append('voiceFile', blob, 'call_recording_' + userId + '_' + targetId + '.webm');
+                isCallEnding = true;
+                console.log('videocall: Closing call - ' + message);
 
-                        // stt post 요청
-                        console.log('videocall: Sending recording to STT');
-                        const response = await fetch('/api/stt', {
-                            method: 'POST',
-                            body: formData
-                        });
-                        //  응답 확인
-                        if (!response.ok) {
-                            console.error('videocall: STT failed -', response.statusText);
-                            return;
-                        }
-
-                        const data = await response.json();
-                        console.log('videocall: STT conversion complete -', data.text);
-
-                        // 결과 저장
-                        const recordingContent = data.text;
-                        console.log('videocall: Content prepared -', recordingContent.substring(0, 50) + '...');
-
-                    } catch (e) {
-                        console.error('videocall: Error saving recording -', e.message);
+                const sent = sendMessage({
+                    type: 'END_CALL',
+                    payload: {
+                        from: userId,
+                        to: targetId
                     }
                 });
+
+                if (!sent) {
+                    console.error('videocall: Failed to send END_CALL');
+                }
+
+                console.log('videocall: Waiting for recording to stop...');
+                await stopRecording();
+                console.log('videocall: Recording stopped');
+
+                if (localStream) {
+                    localStream.getTracks().forEach(track => track.stop());
+                }
+                if (remoteStream) {
+                    remoteStream.getTracks().forEach(track => track.stop());
+                }
+                if (pc) {
+                    pc.close();
+                }
+
+                setTimeout(() => {
+                    alert(message);
+                    window.location.href = "/call";
+                }, 300);
             }
 
             document.getElementById("muteBtn").addEventListener("click", () => {
@@ -451,42 +518,12 @@
                 closeCallWithRedirect('통화가 종료되었습니다.');
             });
 
-            function closeCallWithRedirect(message) {
-                if (isCallEnding) {
-                    console.log('videocall: Call already ending, ignoring click');
-                    return;
-                }
-
-                isCallEnding = true;
-                console.log('videocall: Closing call - ' + message);
-
-                sendMessage({
-                    type: 'END_CALL',
-                    payload: {
-                        from: userId,
-                        to: targetId
-                    }
-                });
-
-                stopRecording();
-
-                if (localStream) {
-                    localStream.getTracks().forEach(track => track.stop());
-                }
-                if (remoteStream) {
-                    remoteStream.getTracks().forEach(track => track.stop());
-                }
-                if (pc) {
-                    pc.close();
-                }
-
-                setTimeout(() => {
-                    alert(message);
-                    window.location.href = "/call";
-                }, 300);
+            if (isInitiator) {
+                console.log('videocall: I am INITIATOR, sending OFFER');
+                startCall();
+            } else {
+                console.log('videocall: I am RECEIVER, waiting for OFFER');
             }
-
-            startCall();
             /*]]>*/
         </script>
     </th:block>

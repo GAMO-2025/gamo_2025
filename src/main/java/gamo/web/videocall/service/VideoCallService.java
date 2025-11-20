@@ -60,7 +60,6 @@ public class VideoCallService {
     @Transactional(readOnly = true)
     public VideoCallHistoryListResponse viewVideoCallHistory (Member member, Long targetId, int size) {
         Pageable pageable = PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Member thisMember = memberRepository.findById(member.getId()).get();
         List<VideoCall> calls = videoCallRepository.findCallHistoryByUsersWithPaging(member.getId(), targetId, pageable);
         boolean hasNext = calls.size() == size;
         List<VideoCallHistoryDTO> content = calls.stream()
