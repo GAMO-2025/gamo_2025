@@ -113,11 +113,11 @@ public class LetterViewController {
         Member loginMember = userPrincipal.getMember();
         Long senderId = loginMember.getId();
 
-        Letter letter = letterService.sendLetter(senderId, letterRequest);
+        LetterResponseDTO response = letterService.sendLetter(senderId, letterRequest);
 
         String receiverName = letterService.getDisplayName(senderId, letterRequest.getReceiverId());
         model.addAttribute("receiverName", receiverName);
-        model.addAttribute("letterId", letter.getId());
+        model.addAttribute("letterId", response.getLetterId());
 
         return "/pages/letter/letterSuccess";
     }

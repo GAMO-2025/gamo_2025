@@ -121,8 +121,8 @@ public class LetterService {
 
         // 읽음 처리
         if (letter.getReceiverId().equals(currentUserId) && !letter.isRead()) {
-            letter.setRead(true);
-            letter.setReadAt(LocalDateTime.now());
+            letter.markRead();
+            letter.recordReadAt(LocalDateTime.now());
             letterRepository.save(letter);
         }
 
@@ -172,7 +172,7 @@ public class LetterService {
     // 편지 전송
     // -------------------------------
     @Transactional
-    public Letter sendLetter(Long senderId, LetterRequestDTO request) {
+    public LetterResponseDTO sendLetter(Long senderId, LetterRequestDTO request) {
         // 발신자 확인
         Member sender = memberRepository.findById(senderId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
@@ -210,10 +210,10 @@ public class LetterService {
                 .isReceiverDeleted(false)
                 .build();
 
-        Letter savedLetter = letterRepository.save(letter);
+        letterRepository.save(letter);
         log.info("Letter {}: 편지 전송 성공", senderId);
 
-        return savedLetter;
+        return new LetterResponseDTO(letter.getId(), receiver.getName());
     }
 
     // -------------------------------
@@ -245,11 +245,11 @@ public class LetterService {
         // 편지 일반 삭제 처리 (soft delete)
         if (isSender) {
             if (letter.getIsSenderDeleted()) throw new CustomException(ErrorCode.LETTER_ALREADY_DELETED);
-            letter.setIsSenderDeleted(true);
+            letter.deleteBySender(true);
         }
         if (isReceiver) {
             if (letter.getIsReceiverDeleted()) throw new CustomException(ErrorCode.LETTER_ALREADY_DELETED);
-            letter.setIsReceiverDeleted(true);
+            letter.deleteByReceiver(true);
         }
 
         // 발신자/수신자 모두 삭제 시 hard delete
@@ -274,7 +274,7 @@ public class LetterService {
     public void cancelLetter(Long letterId) {
         Letter letter = letterRepository.findById(letterId)
                 .orElseThrow(() -> new CustomException(ErrorCode.LETTER_NOT_FOUND));
-        letter.setCancelled(true);
+        letter.cancelLetter(true);
     }
 
     // -------------------------------
