@@ -26,7 +26,7 @@
                         <option value="" disabled th:selected="${preSelectedReceiver == null}">가족을 선택하세요</option>
                         <option th:each="family : ${familyList}"
                                 th:value="${family.id}"
-                                th:text="${family.displayName}"
+                                th:text="${family.nickname}"
                                 th:selected="${preSelectedReceiver != null and preSelectedReceiver.id == family.id}">
                         </option>
                     </select>

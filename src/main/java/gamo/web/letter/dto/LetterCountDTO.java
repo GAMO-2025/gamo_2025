@@ -2,12 +2,8 @@ package gamo.web.letter.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Getter
-@Setter
-@NoArgsConstructor
 @AllArgsConstructor
 public class LetterCountDTO {
     private Long receivedCount;  // 받은 편지 개수
