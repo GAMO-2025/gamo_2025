@@ -127,21 +127,23 @@
                         console.log('videocall: Added track to PeerConnection - kind=' + track.kind);
                     });
 
-                    // Step 6: 원격 트랙 수신 처리
+                    //  원격 트랙 수신 처리
                     pc.ontrack = (event) => {
                         console.log('videocall: Remote track received - kind=' + event.track.kind);
                         remoteStream = event.streams[0];
                         document.getElementById("remoteVideo").srcObject = remoteStream;
                         console.log('videocall: Remote video element set');
-
-                        if (!recordingStarted) {
+                        // 한쪽만 녹음을 진행
+                        if (!recordingStarted && isInitiator) {
                             console.log('videocall: Remote stream ready, starting recording');
                             startRecordingNow();
                             recordingStarted = true;
+                        } else if (!recordingStarted && !isInitiator) {
+                            console.log('videocall: I am RECEIVER - not recording');
                         }
                     };
 
-                    // Step 7: ICE Candidate 처리
+                    // ICE Candidate 처리
                     pc.onicecandidate = (event) => {
                         if (event.candidate) {
                             console.log('videocall: ICE candidate generated');
@@ -359,16 +361,33 @@
                 });
                 console.log('videocall: OFFER sent');
             }
-
             function mergeAudioStreams(localStream, remoteStream) {
-                const context = new (window.AudioContext || window.webkitAudioContext)();
-                const destination = context.createMediaStreamDestination();
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-                const localAudio = context.createMediaStreamSource(localStream);
-                const remoteAudio = context.createMediaStreamSource(remoteStream);
+                const localSource = audioContext.createMediaStreamSource(localStream);
+                const remoteSource = audioContext.createMediaStreamSource(remoteStream);
 
-                localAudio.connect(destination);
-                remoteAudio.connect(destination);
+                // Gain 노드 생성 (음량 조절)
+                const localGain = audioContext.createGain();
+                const remoteGain = audioContext.createGain();
+
+                // 각각의 음량을 1.0으로 설정
+                localGain.gain.value = 1.0;
+                remoteGain.gain.value = 1.0;
+
+                // 소스를 Gain에 연결
+                localSource.connect(localGain);
+                remoteSource.connect(remoteGain);
+
+                // 목적지 생성 (섞인 오디오 출력)
+                const destination = audioContext.createMediaStreamDestination();
+
+                // Gain을 목적지에 연결 (중요!)
+                localGain.connect(destination);
+                remoteGain.connect(destination);
+
+                console.log('videocall: Audio streams merged - destination tracks:', destination.stream.getTracks().length);
+                console.log('videocall: Audio streams merged - audio tracks:', destination.stream.getAudioTracks().length);
 
                 return destination.stream;
             }
@@ -390,34 +409,40 @@
                 }
 
                 try {
-                    console.log('videocall: DEBUG - localStream audio tracks count=' + localStream.getAudioTracks().length);
-                    localStream.getAudioTracks().forEach((track, idx) => {
-                        console.log('videocall: DEBUG - local audio track[' + idx + '] - enabled=' + track.enabled + ', readyState=' + track.readyState);
-                    });
+                    console.log('videocall: Starting to record both local and remote audio');
 
-                    console.log('videocall: DEBUG - remoteStream audio tracks count=' + remoteStream.getAudioTracks().length);
-                    remoteStream.getAudioTracks().forEach((track, idx) => {
-                        console.log('videocall: DEBUG - remote audio track[' + idx + '] - enabled=' + track.enabled + ', readyState=' + track.readyState);
-                    });
+                    // 1. 로컬 트랙 확인
+                    const localAudioTracks = localStream.getAudioTracks();
+                    console.log('videocall: Local audio tracks count=' + localAudioTracks.length);
 
-                    // 핵심: 두 개의 오디오를 mergeAudioStreams로 섞기
-                    const mergedAudio = mergeAudioStreams(localStream, remoteStream);
-                    console.log('videocall: Audio streams merged using AudioContext');
+                    // 2. 원격 트랙 확인
+                    const remoteAudioTracks = remoteStream.getAudioTracks();
+                    console.log('videocall: Remote audio tracks count=' + remoteAudioTracks.length);
 
-                    // 섞인 오디오만 담기 (오디오 1개!)
-                    const recordingTracks = [];
-                    recordingTracks.push(...mergedAudio.getAudioTracks());
-                    console.log('videocall: Added merged audio tracks count=' + mergedAudio.getAudioTracks().length);
-
-                    const mixedStream = new MediaStream(recordingTracks);
-
-                    console.log('videocall: DEBUG - final recording stream tracks count=' + mixedStream.getTracks().length);
-
-                    if (mixedStream.getTracks().length === 0) {
-                        console.error('videocall: ERROR - mixedStream has no audio tracks');
+                    if (localAudioTracks.length === 0 || remoteAudioTracks.length === 0) {
+                        console.error('videocall: ERROR - No audio tracks available');
                         return;
                     }
 
+                    // 3. 두 오디오를 Gain으로 섞기
+                    const mergedAudio = mergeAudioStreams(localStream, remoteStream);
+                    console.log('videocall: Merged audio tracks count=' + mergedAudio.getTracks().length);
+                    console.log('videocall: Merged audio audio-tracks count=' + mergedAudio.getAudioTracks().length);
+
+                    // 4. 섞인 오디오만 담기
+                    const recordingTracks = [];
+                    recordingTracks.push(...mergedAudio.getAudioTracks());
+
+                    const mixedStream = new MediaStream(recordingTracks);
+
+                    console.log('videocall: Final recording stream tracks count=' + mixedStream.getTracks().length);
+
+                    if (mixedStream.getTracks().length === 0) {
+                        console.error('videocall: ERROR - No tracks in final stream');
+                        return;
+                    }
+
+                    // 5. RecordRTC로 녹음 시작
                     recorder = RecordRTC(mixedStream, {
                         type: 'audio',
                         mimeType: 'audio/webm',
@@ -426,7 +451,7 @@
                     });
 
                     recorder.startRecording();
-                    console.log('videocall: Recording started (MERGED AUDIO)');
+                    console.log('videocall: Recording started - both local and remote audio mixed');
 
                 } catch (e) {
                     console.error('videocall: Error starting recording - ' + e.message);
@@ -459,7 +484,7 @@
 
                             console.log('videocall: Sending recording to STT');
 
-                            const response = await fetch('https://unflagging-conchiferous-monique.ngrok-free.dev/letter/api/stt', {
+                            const response = await fetch('https://unflagging-conchiferous-monique.ngrok-free.dev/letter/api/videocall/stt', {
                                 method: 'POST',
                                 body: formData
                             });
