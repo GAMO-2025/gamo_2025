@@ -484,7 +484,8 @@
 
                             console.log('videocall: Sending recording to STT');
 
-                            const response = await fetch('https://unflagging-conchiferous-monique.ngrok-free.dev/letter/api/videocall/stt', {
+                            // TODO: 서버 주소 환경변수로 관리 필요
+                            const response = await fetch('http://localhost:8080/letter/api/videocall/stt', {
                                 method: 'POST',
                                 body: formData
                             });
