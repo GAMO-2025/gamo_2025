@@ -1,19 +1,17 @@
 package gamo.web.member.domain;
 
-import gamo.web.photo.domain.Photo;
 import gamo.web.family.domain.Family;
 import jakarta.persistence.*;
-import lombok.*;
-
-import java.util.ArrayList;
-import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Getter
-@Setter //임시
 public class Member {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -46,12 +44,8 @@ public class Member {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "family_id",
-    foreignKey = @ForeignKey(name = "fk_Member_Family"))
+            foreignKey = @ForeignKey(name = "fk_Member_Family"))
     private Family family;
-
-    // Member : Photo
-    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Photo> photos = new ArrayList<>();
 
     public Member update(String name, String picture) {
         this.name = name;
