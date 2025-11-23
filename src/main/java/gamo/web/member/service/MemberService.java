@@ -108,9 +108,7 @@ public class MemberService {
                 ))
                 .toList();
     }
-    public Member findById(Long memberId) {
-        return memberRepository.findById(memberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-    }
+
+
 
 }
