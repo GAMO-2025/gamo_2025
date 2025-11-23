@@ -114,10 +114,4 @@ public class MemberService {
         return memberRepository.findFamilyIdById(memberId)
                 .orElse(null);
     }
-
-    public Member findById(Long memberId) {
-        return memberRepository.findById(memberId)
-                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-    }
-
 }
