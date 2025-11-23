@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 public class DeletedMember {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "deledted_member_id")
+    @Column(name = "deleted_member_id")
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)

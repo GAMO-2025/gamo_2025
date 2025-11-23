@@ -10,9 +10,4 @@ public class AuthViewController {
         return "login";
     }
 
-    @GetMapping("/home")
-    public String home() {
-        return "pages/home";
-    }
-
 }
