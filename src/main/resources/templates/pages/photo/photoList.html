@@ -13,7 +13,7 @@
             +
         </div>
         <div class="photo-item relative w-full aspect-square overflow-hidden" th:each="photo : ${photoList}">
-            <a th:href="@{'/photo/' + ${photo.photo_id}}" class="block w-full h-full">
+            <a th:href="@{'/photo/' + ${photo.photoId}}" class="block w-full h-full">
                 <img th:src="@{'https://storage.cloud.google.com/gamo_bucket/photo/' + ${photo.url}}"
                      alt="앨범 사진"
                      class="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />

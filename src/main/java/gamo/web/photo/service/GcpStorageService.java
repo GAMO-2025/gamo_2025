@@ -4,8 +4,14 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
+import gamo.web.common.exception.CustomException;
+import gamo.web.common.response.ErrorCode;
+import gamo.web.photo.domain.Photo;
+import gamo.web.photo.repository.PhotoRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -14,7 +20,10 @@ import java.io.InputStream;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class GcpStorageService {
+    private final PhotoRepository photoRepository;
+
     @Value("${gcp.credentials.location}")
     private String keyFileName;
 
@@ -36,7 +45,10 @@ public class GcpStorageService {
         Storage storage = getStorage();
 
         // 파일 이름 랜덤으로 생성
-        String fileName = UUID.randomUUID().toString();
+        String fileName;
+        do {
+            fileName = UUID.randomUUID().toString();
+        } while (photoRepository.findByUrl(fileName) != null);
 
         // 업로드
         BlobInfo blobInfo = BlobInfo.newBuilder(bucketName, "photo/"+fileName)
@@ -45,19 +57,18 @@ public class GcpStorageService {
 
         storage.create(blobInfo, file.getBytes());
 
-        // 업로드된 파일 URL 반환
-        return "https://storage.googleapis.com/photo/" + bucketName + "/" + fileName;
+        return fileName; //업로드한 파일이름
     }
 
     // 사진 삭제
-    public boolean delete(String fileName) throws IOException {
+    @Transactional
+    public void delete(Long photoId) throws IOException {
+        Photo photo = photoRepository.findById(photoId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PHOTO_NOT_FOUND));
+        String fileName = photo.getUrl();
+
         Storage storage = getStorage();
 
-        boolean deleted = storage.delete(bucketName, "photo/" + fileName);
-        if (!deleted) {
-            System.err.println("⚠️ 파일이 존재하지 않거나 삭제 실패: " + fileName);
-        }
-
-        return deleted;
+        storage.delete(bucketName, "photo/" + fileName);
     }
 }

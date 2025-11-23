@@ -3,6 +3,9 @@
       th:replace="fragments/layout :: AppLayout('home', ~{::content}, null)">
 
 <th:block th:fragment="content">
+    <div th:if="${successMessage}" th:text="${successMessage}" style="display:none;" id="flash-success"></div>
+    <div th:if="${errorMessage}" th:text="${errorMessage}" style="display:none;" id="flash-error"></div>
+
     <section class="grid grid-cols-2 gap-2 p-4">
         <div th:each="album : ${albums}"
              class="relative rounded-2xl shadow-md h-40 overflow-hidden cursor-pointer">
@@ -72,7 +75,6 @@
     </div>
 
 </body>
-<!--<script src="https://cdn.tailwindcss.com"></script>-->
 <script>
     function toggleMenu(id) {
         const menu = document.getElementById(id);
@@ -92,8 +94,8 @@
         });
     });
 
-    <!-- 모달 스크립트 -->
     document.addEventListener("DOMContentLoaded", () => {
+        <!-- 모달 스크립트 -->
         const modal = document.getElementById("albumModal");
         const openBtn = document.getElementById("openModalBtn");
         const cancelBtn = document.getElementById("cancelModalBtn");
@@ -117,7 +119,21 @@
                 modal.classList.add("hidden");
             }
         });
+
+        // flash 메시지 alert 처리
+        const success = document.getElementById("flash-success");
+        const error = document.getElementById("flash-error");
+
+        if (success) alert(success.textContent);
+        if (error) alert(error.textContent);
     });
+
+    //앨범 삭제 기능 (Controller에서 처리 후 리다이렉트 사용)
+    function submitDeleteForm(formId) {
+        const form = document.getElementById(formId);
+        if (!confirm("정말 이 앨범을 삭제하시겠습니까?")) return;
+        form.submit();
+    }
 </script>
 
 </th:block>

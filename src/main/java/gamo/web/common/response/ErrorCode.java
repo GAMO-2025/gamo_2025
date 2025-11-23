@@ -33,7 +33,11 @@ public enum ErrorCode implements BaseCode {
     LETTER_IMAGE_SIGNED_URL_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "LETTER-500", "편지 이미지 Signed URL 생성에 실패했습니다."),
 
     //Photo 관련
-    PHOTO_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "PHOTO-404", "이미지를 찾을 수 없습니다.");
+    ALBUM_DELETE_FORBIDDEN(HttpStatus.FORBIDDEN, "PHOTO-403", "앨범를 삭제할 권한이 없습니다."),
+    ALBUM_NOT_FOUND(HttpStatus.FORBIDDEN, "PHOTO-404", "앨범을 찾을 수 없습니다."),
+    ALBUM_NOT_EMPTY(HttpStatus.FORBIDDEN, "PHOTO-409", "앨범이 비어있지 않습니다."),
+    PHOTO_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "PHOTO-404", "이미지를 찾을 수 없습니다."),
+    PHOTO_ACCESS_FORBIDDEN(HttpStatus.INTERNAL_SERVER_ERROR, "PHOTO-403", "이미지에 접근할 권한이 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

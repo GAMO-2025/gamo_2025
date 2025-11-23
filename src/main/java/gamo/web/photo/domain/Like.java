@@ -2,12 +2,13 @@ package gamo.web.photo.domain;
 
 import gamo.web.member.domain.Member;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
-@Setter
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Table(name = "photo_like")
 public class Like {
     @Id

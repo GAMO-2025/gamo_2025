@@ -1,16 +1,20 @@
 package gamo.web.photo.domain;
 
+import gamo.web.common.entity.BaseEntity;
 import gamo.web.member.domain.Member;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity @Setter @Getter
-public class Photo {
+@Entity
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Photo extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "photo_id")
@@ -18,8 +22,8 @@ public class Photo {
 
     private String url;
 
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime created_at = LocalDateTime.now();
+//    @Column(name = "created_at", nullable = false, updatable = false)
+//    private LocalDateTime createdAt = LocalDateTime.now();
 
     // PK: Album
     @ManyToOne(fetch = FetchType.LAZY)

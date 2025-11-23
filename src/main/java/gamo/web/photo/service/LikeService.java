@@ -21,7 +21,6 @@ public class LikeService {
     private final MemberRepository memberRepository;
 
     public boolean clickLike(Long memberId, Long photoId) {
-//        boolean liked = likeRepository.findByMemberAndPhoto(memberId, photoId);
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
         Photo photo = photoRepository.findById(photoId)
@@ -33,15 +32,17 @@ public class LikeService {
             return false;
 
         } else { //아직 좋아요를 누르지 않은 경우
-            Like newLike = new Like();
-            newLike.setMember(member);
-            newLike.setPhoto(photo);
+            Like newLike = Like.builder()
+                    .member(member)
+                    .photo(photo)
+                    .build();
             likeRepository.save(newLike);
             return true;
         }
     }
 
     // 좋아요 개수 조회
+    @Transactional(readOnly = true)
     public Long getLikeCount(Long photoId) {
         Photo photo = photoRepository.findById(photoId)
                 .orElseThrow(() -> new CustomException((ErrorCode.PHOTO_NOT_FOUND)));
@@ -49,6 +50,7 @@ public class LikeService {
     }
 
     //특정 유저가 좋아요를 눌렀는지
+    @Transactional(readOnly = true)
     public boolean isLikedByMemberId(Long memberId, Long photoId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));

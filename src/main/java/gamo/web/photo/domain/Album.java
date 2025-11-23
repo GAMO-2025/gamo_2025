@@ -2,13 +2,16 @@ package gamo.web.photo.domain;
 
 import gamo.web.family.domain.Family;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity @Setter @Getter
+@Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Getter
 public class Album {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -17,7 +20,6 @@ public class Album {
 
     private String title;
 
-    //PK: family_id
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "family_id", nullable = false)
     private Family family;

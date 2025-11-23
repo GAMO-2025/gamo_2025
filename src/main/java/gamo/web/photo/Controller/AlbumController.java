@@ -1,24 +1,26 @@
 package gamo.web.photo.Controller;
 
+import gamo.web.common.exception.CustomException;
 import gamo.web.family.service.FamilyService;
 import gamo.web.member.service.MemberService;
-import gamo.web.photo.domain.Album;
-import gamo.web.photo.domain.Photo;
 import gamo.web.photo.dto.AlbumDTO;
+import gamo.web.photo.dto.PhotoInAlbumDTO;
 import gamo.web.photo.service.PhotoService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import gamo.web.auth.UserPrincipal;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
+@Slf4j
 @Controller
 @RequiredArgsConstructor
 public class AlbumController {
@@ -27,37 +29,39 @@ public class AlbumController {
     private final FamilyService familyService;
 
     //앨범 리스트
-    @GetMapping(value = "/album") //앨범 리스트
+    @GetMapping(value = "/album")
     public String getAlbums(@AuthenticationPrincipal UserPrincipal user, Model model) {
-        Long memberId = user.getMember().getId();
-        Long familyId = memberService.getFamilyId(memberId);
-        List<Album> albums = photoService.getAlbumsByFamilyId(familyId);
+        if(user == null) return "login"; //로그인 안한 경우
 
-        List<AlbumDTO> albumDtos = albums.stream().map(album -> {
-            Photo latestPhoto = photoService.getLatestPhotoByAlbumId(album.getAlbum_id());
-            String thumbnailUrl = (latestPhoto != null) ? latestPhoto.getUrl() : null;
-            return new AlbumDTO(album.getAlbum_id(), album.getTitle(), thumbnailUrl);
-        }).collect(Collectors.toList());
+        Long familyId = memberService.getFamilyId(user.getMember().getId());
+        if(familyId == null) return "member/family"; //가족이 없는 경우
 
-        model.addAttribute("albums", albumDtos);
+        List<AlbumDTO> albumDTOS = photoService.getAlbumsOfFamily(familyId);
+        model.addAttribute("albums", albumDTOS);
         return "pages/photo/album";
     }
 
-    //앨범 만들기
+    //앨범 생성
     @PostMapping(value = "/album/new")
-    public String createAlbum(@RequestParam("newTitle") String title, @AuthenticationPrincipal UserPrincipal user) {
-//        Long memberId = 2L; //임시
+    public String createAlbum(@AuthenticationPrincipal UserPrincipal user,
+                              @RequestParam("newTitle") String title) {
         Long memberId = memberService.getMemberId(user);
-
         photoService.createAlbum(title, memberId);
         return "redirect:/album";
     }
 
-    //앨범 삭제
+//    //앨범 삭제
     @PostMapping(value = "/album/delete")
-    public String deleteAlbum(@RequestParam("albumId") Long albumId) {
-        photoService.deleteAlbum(albumId);
-
+    public String deleteAlbum(@AuthenticationPrincipal UserPrincipal user,
+                                      @RequestParam("albumId") Long albumId,
+                                         RedirectAttributes redirectAttributes) {
+        try {
+            Long memberId = user.getMember().getId();
+            photoService.deleteAlbum(memberId, albumId);
+            redirectAttributes.addFlashAttribute("successMessage", "앨범이 삭제되었습니다.");
+        } catch (CustomException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
         return "redirect:/album";
     }
 
@@ -66,14 +70,9 @@ public class AlbumController {
     public String getPhotosInAlbum(@AuthenticationPrincipal UserPrincipal user,
                                    @PathVariable("albumId") Long albumId,
                                    Model model) {
-        //권한 체크
-        Long familyId_user = user.getMember().getId();
-        Long familyId_album = photoService.getFamilyIdByAlbumId(albumId);
-        if(familyId_user != familyId_album) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "해당 앨범에 접근할 권한이 없습니다.");
-        }
 
-        Page<Photo> photoList = photoService.getPhotoListByAlbumId(albumId, 0, 20);
+        Long memberId = user.getMember().getId();
+        Page<PhotoInAlbumDTO> photoList = photoService.getPhotoListByAlbumId(memberId, albumId, 0, 20);
 
         model.addAttribute("photoList", photoList);
         return "pages/photo/photoList";
@@ -82,11 +81,15 @@ public class AlbumController {
     //앨범의 사진 : 무한 스크롤
     @GetMapping(value = "/album/{albumId}/paged")
     @ResponseBody
-    public Page<Photo> getPhotosInAlbumPaged(
+    public Page<PhotoInAlbumDTO> getPhotosInAlbumPaged(
+            @AuthenticationPrincipal UserPrincipal user,
             @PathVariable("albumId") Long albumId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        return photoService.getPhotoListByAlbumId(albumId, page, size);
+
+        Long memberId = user.getMember().getId();
+
+        return photoService.getPhotoListByAlbumId(memberId, albumId, page, size);
     }
 }

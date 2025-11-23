@@ -4,6 +4,7 @@ import gamo.web.auth.UserPrincipal;
 import gamo.web.auth.refresh.RefreshTokenRepository;
 import gamo.web.common.exception.CustomException;
 import gamo.web.common.response.ErrorCode;
+import gamo.web.family.domain.Family;
 import gamo.web.member.domain.DeletedMember;
 import gamo.web.member.domain.Member;
 import gamo.web.member.domain.Nickname;
@@ -110,7 +111,8 @@ public class MemberService {
     }
 
     public Long getFamilyId(Long memberId) {
-        return memberRepository.findFamilyIdById(memberId);
+        return memberRepository.findFamilyIdById(memberId)
+                .orElse(null);
     }
 
     public Member findById(Long memberId) {
