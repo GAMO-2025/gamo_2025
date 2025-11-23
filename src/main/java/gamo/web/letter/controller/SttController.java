@@ -45,4 +45,38 @@ public class SttController {
             return Map.of("text", "", "error", e.getMessage());
         }
     }
+
+    /**
+     * 비디오콜 STT 엔드포인트 (2채널 스테레오)
+     * - 로컬 오디오 + 원격 오디오가 섞인 파일 처리
+     */
+    @PostMapping("/videocall/stt")
+    public Map<String, String> sttVideoCall(@RequestParam("voiceFile") MultipartFile voiceFile) {
+        try {
+            log.info("비디오콜 STT 요청 들어옴");
+
+            if (voiceFile == null || voiceFile.isEmpty()) {
+                log.warn("업로드된 파일이 없습니다!");
+                return Map.of("text", "", "error", "파일이 없습니다");
+            } else {
+                log.info("파일 이름: {}", voiceFile.getOriginalFilename());
+                log.info("파일 크기: {} bytes", voiceFile.getSize());
+                log.info("파일 contentType: {}", voiceFile.getContentType());
+            }
+
+            String text = sttService.videoCallStt(voiceFile);
+
+            log.info("비디오콜 STT 변환 결과: {}", text);
+
+            return Map.of("text", text);
+
+        } catch (Exception e) {
+            log.error("비디오콜 STT 변환 중 오류 발생", e);
+            return Map.of("text", "", "error", e.getMessage());
+        }
+    }
+
+
+
+
 }
