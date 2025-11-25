@@ -1,7 +1,6 @@
-package gamo.web.photo.Controller;
+package gamo.web.photo.controller;
 
 import gamo.web.common.exception.CustomException;
-import gamo.web.family.service.FamilyService;
 import gamo.web.member.service.MemberService;
 import gamo.web.photo.dto.AlbumDTO;
 import gamo.web.photo.dto.PhotoInAlbumDTO;
@@ -9,7 +8,6 @@ import gamo.web.photo.service.PhotoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,7 +16,6 @@ import gamo.web.auth.UserPrincipal;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Controller
@@ -26,7 +23,6 @@ import java.util.Map;
 public class AlbumController {
     private final PhotoService photoService;
     private final MemberService memberService;
-    private final FamilyService familyService;
 
     //앨범 리스트
     @GetMapping(value = "/album")
@@ -34,7 +30,7 @@ public class AlbumController {
         if(user == null) return "login"; //로그인 안한 경우
 
         Long familyId = memberService.getFamilyId(user.getMember().getId());
-        if(familyId == null) return "member/family"; //가족이 없는 경우
+        if(familyId == null) return "redirect:/member/invite"; //가족이 없는 경우
 
         List<AlbumDTO> albumDTOS = photoService.getAlbumsOfFamily(familyId);
         model.addAttribute("albums", albumDTOS);

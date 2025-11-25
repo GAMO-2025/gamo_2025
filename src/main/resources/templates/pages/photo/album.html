@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="fragments/layout :: AppLayout('home', ~{::content}, null)">
+      th:replace="fragments/layout :: AppLayout('photo', ~{::content}, null)">
 
 <th:block th:fragment="content">
     <div th:if="${successMessage}" th:text="${successMessage}" style="display:none;" id="flash-success"></div>
@@ -11,7 +11,7 @@
              class="relative rounded-2xl shadow-md h-40 overflow-hidden cursor-pointer">
 
             <div th:if="${album.thumbnailUrl != null}">
-                <img th:src="@{'https://storage.cloud.google.com/gamo_bucket/photo/' + ${album.thumbnailUrl}}"
+                <img th:src="@{'/photo/file/' + ${album.thumbnailUrl}}"
                      class="absolute inset-0 w-full h-full object-cover" alt="앨범 사진">
             </div>
             <div th:unless="${album.thumbnailUrl != null}"

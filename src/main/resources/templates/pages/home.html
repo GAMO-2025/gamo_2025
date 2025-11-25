@@ -40,13 +40,34 @@
         </div>
 
 
+        <a th:href="@{/album}">
+            <div class="flex flex-col px-6 py-8 items-center justify-center text-center mt-16
+            rounded-2xl shadow-[0_0_10px_rgba(0,0,0,0.08)]">
 
-    <div class="flex flex-col px-6 py-7 items-center justify-center text-center mt-16
-    rounded-2xl shadow-[0_0_10px_rgba(0,0,0,0.08)]">
-        <a th:href="@{/letter}">
-        <p class = "text-[16px] font-bold text-[#AB8D66]">현재 읽지 않은 편지가</p>
-        <p class="text-[16px] font-bold text-[#AB8D66]" th:text="${home.receivedLetterCount + '개 있어요!'}"></p>
+                <!-- 썸네일이 있을 때(앨범 있을 때) -->
+                <img class="w-full"
+                     th:if="${home.albumThumbnail != null}"
+                     th:src="${home.albumThumbnail}"
+                     alt="album-thumbnail"/>
+
+                <!-- 썸네일이 없을 때(앨범 없을 때) -->
+                <p th:if="${home.albumThumbnail == null}"
+                   class="text-[16px] font-bold text-[#AB8D66]">
+                    아직 앨범이 없어요!<br>가족 앨범을 만들어보세요 📸
+                </p>
+
+            </div>
         </a>
+
+
+
+
+        <div class="flex flex-col px-6 py-8 items-center justify-center text-center mt-16
+        rounded-2xl shadow-[0_0_10px_rgba(0,0,0,0.08)]">
+            <a th:href="@{/letter}">
+            <p class = "text-[16px] font-bold text-[#AB8D66]">현재 읽지 않은 편지가</p>
+            <p class="text-[16px] font-bold text-[#AB8D66]" th:text="${home.unreadLetterCount + '개 있어요!'}"></p>
+            </a>
     </div>
 
     </div>
