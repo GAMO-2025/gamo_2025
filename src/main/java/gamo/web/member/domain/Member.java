@@ -44,7 +44,7 @@ public class Member {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "family_id",
-    foreignKey = @ForeignKey(name = "fk_Member_Family"))
+            foreignKey = @ForeignKey(name = "fk_Member_Family"))
     private Family family;
 
     public Member update(String name, String picture) {

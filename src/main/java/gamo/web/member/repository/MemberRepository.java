@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import javax.swing.text.html.Option;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,4 +30,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
             @Param("status") Member.MemberStatus status
     );
     boolean existsByFamily(Family family);
+
+    @Query("SELECT m.family.id FROM Member m WHERE m.id = :memberId")
+    Optional<Long> findFamilyIdById(@Param("memberId") Long memberId);
 }

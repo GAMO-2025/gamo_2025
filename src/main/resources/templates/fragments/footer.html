@@ -30,7 +30,7 @@
                 </li>
                 <!-- 사진 -->
                 <li>
-                    <a href="/photo" class="flex flex-col items-center gap-1">
+                    <a href="/album" class="flex flex-col items-center gap-1">
                         <img alt="사진" class="block w-6 h-6"
                              th:src="${active}=='photo' ? @{/svgs/ac_footer_photo.svg} : @{/svgs/footer_photo.svg}" />
                         <span th:classappend="${active}=='photo' ? ' text-black' : ''">사진</span>

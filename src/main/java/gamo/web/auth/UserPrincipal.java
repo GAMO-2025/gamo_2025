@@ -1,5 +1,6 @@
 package gamo.web.auth;
 
+import gamo.web.family.domain.Family;
 import gamo.web.member.domain.Member;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
@@ -35,4 +36,5 @@ public class UserPrincipal implements OAuth2User {
     public String getName() {
         return member.getSocialId();
     }
+
 }

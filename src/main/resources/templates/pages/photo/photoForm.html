@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>사진 업로드</title>
+</head>
+<body>
+<h2>사진 업로드</h2>
+
+<!-- form: enctype="multipart/form-data" 필수 -->
+<form th:action="@{/photo/new}" method="post" enctype="multipart/form-data">
+    <label for="file">사진 선택:</label>
+    <input type="file" id="file" name="image" accept="image/*" required/>
+    <br/><br/>
+    <button type="submit">업로드</button>
+</form>
+
+<!-- 업로드 결과 출력 -->
+<div th:if="${imgUrl != null}">
+    <p>업로드 완료!</p>
+    <img th:src="${imgUrl}" alt="Uploaded Image" width="300"/>
+</div>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="fragments/layout :: AppLayout('home', ~{::content}, null)">
+
+<th:block th:fragment="content">
+    <div class="flex items-center justify-center">
+        <img th:src="@{'https://storage.cloud.google.com/gamo_bucket/photo/' + ${photo.url}}"
+             class="w-full h-auto object-contain">
+    </div>
+    <div class="flex items-center justify-between w-full" style="bottom: 90px;">
+
+        <!-- 좋아요 버튼 -->
+        <button class="flex items-center gap-2 text-red-500"
+                th:attr="data-id=${photo.photoId}" id="like-btn">
+            <img th:src="${photo.isLikedByUser} ? '/svgs/photo_heart.svg' : '/svgs/photo_empty_heart.svg'"
+                 alt="좋아요" class="w-6 h-6" id="like-img">
+            <span th:text="${photo.likeCount}">0</span>
+        </button>
+
+        <!-- 업로드 날짜 -->
+        <span class="text-gray-500 text-sm" th:text="${#temporals.format(photo.created_at, 'yyyy-MM-dd HH:mm')}">
+            0000-00-00 00:00
+        </span>
+
+        <!-- 삭제 버튼 -->
+        <button class="flex items-center text-gray-500" id="delete-btn"
+                th:attr="data-id=${photo.photoId}">
+            <img src="/svgs/photo_trash.svg" alt="삭제" class="w-6 h-6">
+        </button>
+
+    </div>
+
+</body>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // 삭제 버튼
+        const deleteBtn = document.getElementById("delete-btn");
+            deleteBtn.addEventListener("click", async function () {
+                const photoId = this.dataset.id;
+                if (!confirm("이 사진을 정말 삭제하시겠습니까?")) return;
+
+                try {
+                    const response = await fetch(`/photo/delete/${photoId}`, {
+                        method: "DELETE",
+                    });
+                    if (response.redirected) {
+                        alert("사진이 삭제되었습니다.");
+                        window.location.href = response.url;  // 👈 최종 리다이렉트 주소로 이동
+                    } else {
+                        alert("삭제 중 오류가 발생했습니다.");
+                    }
+                } catch (error) {
+                    console.error(error);
+                    alert("네트워크 오류가 발생했습니다.");
+                }
+            });
+
+        // 좋아요 버튼
+        const likeBtn = document.getElementById("like-btn");
+        const likeImg = likeBtn.querySelector("#like-img");
+        const likeCountSpan = likeBtn.querySelector("span");
+        likeBtn.addEventListener("click", async function () {
+                const photoId = this.dataset.id;
+                try {
+                    const response = await fetch(`/photoLike/${photoId}`, {
+                        method: "POST"
+                    });
+
+                    if (response.ok) {
+                        const isLiked = (await response.text()).trim();
+                        if (isLiked === "liked") {
+                            likeImg.src = "/svgs/photo_heart.svg"; // 채워진 하트
+                            this.dataset.liked = "true";
+                            likeCountSpan.textContent = parseInt(likeCountSpan.textContent) + 1;
+                        } else {
+                            likeImg.src = "/svgs/photo_empty_heart.svg"; // 빈 하트
+                            this.dataset.liked = "false";
+                            likeCountSpan.textContent = parseInt(likeCountSpan.textContent) - 1;
+                        }
+                    } else {
+                        alert("좋아요 처리 중 오류가 발생했습니다.");
+                    }
+                } catch (error) {
+                    console.error(error);
+                    alert("네트워크 오류가 발생했습니다.");
+                }
+        });
+    });
+</script>
+</th:block>
+</html>
