@@ -20,24 +20,27 @@ pipeline {
             steps {
                 withCredentials([
                     file(credentialsId: 'application-secret', variable: 'APP_SECRET_FILE'),
-                    file(credentialsId: 'google-service-account', variable: 'GOOGLE_KEY_FILE')
+                    file(credentialsId: 'google-service-key', variable: 'GOOGLE_KEY_FILE')
                 ]) {
                     echo "서버(${params.DEPLOY_HOST})에 SSH 접속하여 Spring Boot 애플리케이션 배포 시작..."
                     sshagent([params.CREDENTIALS_ID]) {
                         sh """
-                            echo '[1] 시크릿 파일 전송 중...'
+                            echo '[1] 시크릿 파일 전송 준비 중...'
+                            ssh -o StrictHostKeyChecking=no ${params.DEPLOY_USER}@${params.DEPLOY_HOST} "mkdir -p ${params.DEPLOY_PATH}/src/main/resources"
+
+                            echo '[2] 시크릿 파일 전송 중...'
                             scp -o StrictHostKeyChecking=no $APP_SECRET_FILE ${params.DEPLOY_USER}@${params.DEPLOY_HOST}:${params.DEPLOY_PATH}/src/main/resources/application-secret.properties
                             scp -o StrictHostKeyChecking=no $GOOGLE_KEY_FILE ${params.DEPLOY_USER}@${params.DEPLOY_HOST}:${params.DEPLOY_PATH}/src/main/resources/google-service-account.json
 
-                            echo '[2] 원격 서버에서 빌드 및 배포 실행...'
+                            echo '[3] 서버에서 빌드 및 실행 시작...'
                             ssh -o StrictHostKeyChecking=no ${params.DEPLOY_USER}@${params.DEPLOY_HOST} << 'EOF'
                                 cd ${params.DEPLOY_PATH} || exit 1
 
-                                echo '[2-1] 최신 main 코드 반영 중...'
+                                echo '[1] 최신 main 코드 반영 중...'
                                 git fetch origin main &&
                                 git reset --hard origin/main
 
-                                echo '[2-2] Gradle 빌드 실행 중...'
+                                echo '[2] Gradle 빌드 실행 중...'
                                 chmod +x ./gradlew
                                 ./gradlew clean build
 
