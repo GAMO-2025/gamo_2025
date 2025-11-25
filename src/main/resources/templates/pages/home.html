@@ -64,11 +64,35 @@
         rounded-2xl shadow-[0_0_10px_rgba(0,0,0,0.08)]">
             <a th:href="@{/letter}">
             <p class = "text-[16px] font-bold text-[#AB8D66]">현재 읽지 않은 편지가</p>
-            <p class="text-[16px] font-bold text-[#AB8D66]" th:text="${home.unreadLetterCount + '개 있어요!'}"></p>
+            <p id="unreadLetterCount" class="text-[16px] font-bold text-[#AB8D66]" th:text="${home.unreadLetterCount + '개 있어요!'}"></p>
             </a>
     </div>
 
     </div>
+
+    <script th:inline="javascript">
+        const unreadCountElem = document.getElementById('unreadLetterCount');
+
+        if (unreadCountElem) {
+            const homeEventSource = new EventSource('/sse/letters');
+
+            homeEventSource.onmessage = function (event) {
+                const data = JSON.parse(event.data);
+                console.log("[HOME SSE] 이벤트 도착:", data);
+
+                // unreadCount 값만 있으면 갱신
+                if (typeof data.unreadCount === "number") {
+                    unreadCountElem.textContent = data.unreadCount + "개 있어요!";
+                }
+            };
+
+            homeEventSource.onerror = function (err) {
+                console.error("SSE 연결 오류", err);
+            };
+        }
+    </script>
+
+
 </th:block>
 
 </html>

@@ -1,6 +1,5 @@
 package gamo.web.auth;
 
-import gamo.web.family.domain.Family;
 import gamo.web.member.domain.Member;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
