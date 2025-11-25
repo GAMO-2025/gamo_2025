@@ -12,7 +12,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 echo "GitHub main 브랜치 코드 체크아웃 중..."
-                git branch: 'main', credentialsId: 'github-clone', url: 'https://github.com/GAMO-2025/gamo_service.git'
+                git branch: 'main', credentialsId: 'github-clone', url: 'https://github.com/GAMO-2025/gamo_2025.git'
             }
         }
 
