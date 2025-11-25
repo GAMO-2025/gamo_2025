@@ -19,7 +19,7 @@ import java.io.IOException;
 
 @RestController
 @RequiredArgsConstructor
-public class PhotoProxyController {   // ✅ [신규 클래스]
+public class PhotoProxyController {
 
     private final GcpStorageService gcpStorageService;
     private final PhotoRepository photoRepository;

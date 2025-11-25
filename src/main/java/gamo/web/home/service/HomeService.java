@@ -28,7 +28,7 @@ public class HomeService {
         String targetProfileImage = null;
         String albumThumbnail = null;
 
-        if (member.getFamily() != null) {          // ⭐ 가족이 있을 때만 familyId 사용
+        if (member.getFamily() != null) {
             Long familyId = member.getFamily().getId();
             albumThumbnail = photoService.getLatestAlbumThumbnailByFamily(familyId);
         }
@@ -45,8 +45,6 @@ public class HomeService {
             targetNickname = latestCall.getTargetNickName();
             targetProfileImage = latestCall.getTargetProfileImage();
         }
-
-
 
         return HomeSummaryDTO.builder()
                 .targetNickname(targetNickname)

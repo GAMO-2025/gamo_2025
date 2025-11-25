@@ -73,7 +73,7 @@ public class GcpStorageService {
         storage.delete(bucketName, "photo/" + fileName);
     }
 
-    // ✅ [추가] GCS에서 사진 바이트 가져오기 (프록시용)
+    // GCS에서 사진 바이트 가져오기 (프록시용)
     public byte[] load(String fileName) throws IOException {
         String objectName = "photo/" + fileName;
         Storage storage = getStorage();

@@ -47,7 +47,7 @@
                 <!-- 썸네일이 있을 때(앨범 있을 때) -->
                 <img class="w-full"
                      th:if="${home.albumThumbnail != null}"
-                     th:src="${home.albumThumbnail}"
+                     th:src="@{'/photo/file/' + ${home.albumThumbnail}}"
                      alt="album-thumbnail"/>
 
                 <!-- 썸네일이 없을 때(앨범 없을 때) -->
@@ -58,8 +58,6 @@
 
             </div>
         </a>
-
-
 
 
         <div class="flex flex-col px-6 py-8 items-center justify-center text-center mt-16
