@@ -7,7 +7,8 @@
         <!-- Title Section -->
         <div class="mb-8">
             <h2 class="text-2xl font-bold text-[#AB8D66] mb-2">
-                읽지 않은 편지가<br><span th:text="${letterCounts.unreadCount}">0</span>개 있습니다.
+                읽지 않은 편지가<br>
+                <span id="unreadCount" th:text="${letterCounts.unreadCount}">0</span>개 있습니다.
             </h2>
             <p class="text-gray-500 text-sm">편지를 확인해보세요!</p>
         </div>
@@ -18,8 +19,8 @@
             <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
                 <div class="flex flex-col mb-2">
                     <h3 class="text-base font-bold text-gray-900 mb-2">받은 편지</h3>
-                    <span class="px-3 py-1 bg-orange-100 text-orange-400 rounded-full text-xs font-medium text-center w-fit">
-                        <span th:text="${letterCounts.receivedCount}">0</span>개
+                    <span id="receivedCount" class="px-3 py-1 bg-orange-100 text-orange-400 rounded-full text-xs font-medium text-center w-fit">
+                        <span id="receivedCountValue" th:text="${letterCounts.receivedCount}">0</span>개
                     </span>
                 </div>
             </div>
@@ -28,8 +29,8 @@
             <div class="bg-[#F5BF76] rounded-2xl p-4 shadow-sm">
                 <div class="flex flex-col mb-2">
                     <h3 class="text-base font-bold text-white mb-2">보낸 편지</h3>
-                    <span class="px-3 py-1 bg-white text-[#F5BF76] rounded-full text-xs font-medium text-center w-fit">
-                        <span th:text="${letterCounts.sentCount}">0</span>개
+                    <span id="sentCount" class="px-3 py-1 bg-white text-[#F5BF76] rounded-full text-xs font-medium text-center w-fit">
+                        <span id="sentCountValue" th:text="${letterCounts.sentCount}">0</span>개
                     </span>
                 </div>
             </div>
@@ -45,6 +46,31 @@
             편지 보관함
         </a>
     </div>
+
+    <script th:inline="javascript">
+        /* SSE 연결 */
+        const eventSource = new EventSource('/sse/letters'); // 서버 SSE URL
+
+        eventSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+
+            if(data.type === 'received') {
+                // 읽지 않은 편지 수 갱신
+                document.getElementById('unreadCount').textContent = data.unreadCount;
+                // 받은 편지 총 개수 갱신
+                document.getElementById('receivedCountValue').textContent = data.totalCount;
+            }
+
+            if(data.type === 'sent') {
+                // 보낸 편지 총 개수 갱신
+                document.getElementById('sentCountValue').textContent = data.totalCount;
+            }
+        };
+
+        eventSource.onerror = function(err) {
+            console.error("SSE 연결 오류", err);
+        };
+    </script>
 
 </th:block>
 </html>

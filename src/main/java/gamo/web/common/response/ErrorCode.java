@@ -21,6 +21,7 @@ public enum ErrorCode implements BaseCode {
     FAMILY_EXISTS(HttpStatus.CONFLICT, "FAMILY-409", "이미 가족에 가입되어 있습니다."),
     FAMILY_CODE_DUPLICATED(HttpStatus.CONFLICT, "FAMILY-CODE-409", "가족 코드가 중복되었습니다."),
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER-404","회원 정보를 찾을 수 없습니다."),
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "AUTH-401", "로그인이 필요합니다."),
 
     // Letter 관련
     LETTER_NOT_FOUND(HttpStatus.NOT_FOUND, "LETTER-404", "편지를 찾을 수 없습니다."),

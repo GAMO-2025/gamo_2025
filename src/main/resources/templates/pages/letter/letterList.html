@@ -57,16 +57,15 @@
         </div>
 
         <!-- Letter List -->
-        <div class="space-y-3 mb-4">
+        <div class="space-y-3 mb-4" id="letterList">
             <!-- No Letters Message -->
-            <div th:if="${#lists.isEmpty(letters)}"
-                 class="text-center py-12 text-gray-400">
+            <div th:if="${#lists.isEmpty(letters)}" class="text-center py-12 text-gray-400" id="noLettersMsg">
                 <span th:if="${type == 'received'}">받은 편지가 없습니다</span>
                 <span th:if="${type == 'sent'}">보낸 편지가 없습니다</span>
             </div>
 
             <!-- Letter Cards -->
-            <div th:each="letter : ${letters}">
+            <div th:each="letter : ${letters}" data-letter-id="${letter.id}">
                 <!-- Letter Card -->
                 <div th:classappend="${type == 'received' && !letter.isRead ? 'border-2 border-[#F5BF76]' : 'border border-gray-200'}"
                      class="bg-white rounded-2xl p-4 shadow-sm relative cursor-pointer hover:shadow-md transition"
@@ -202,6 +201,9 @@
         let deleteTargetId = null;
         let cancelForm = null;
 
+        // ------------------------------
+        // 페이지 이동 / 필터 / 정렬
+        // ------------------------------
         function changeTab(type) {
             window.location.href = `/letter/list?type=${type}&sort=desc&page=0`;
         }
@@ -209,26 +211,22 @@
         function applyFilters() {
             const personId = document.getElementById('personFilter').value;
             const sort = document.getElementById('sortOrder').value;
-
             let url = `/letter/list?type=${currentType}&sort=${sort}&page=0`;
-            if (personId) {
-                url += `&personId=${personId}`;
-            }
+            if (personId) url += `&personId=${personId}`;
             window.location.href = url;
         }
 
         function changePage(page) {
             const personId = document.getElementById('personFilter').value;
             const sort = document.getElementById('sortOrder').value;
-
             let url = `/letter/list?type=${currentType}&sort=${sort}&page=${page}`;
-            if (personId) {
-                url += `&personId=${personId}`;
-            }
+            if (personId) url += `&personId=${personId}`;
             window.location.href = url;
         }
 
-        // Delete Modal Functions
+        // ------------------------------
+        // Delete Modal
+        // ------------------------------
         function showDeleteModal(letterId) {
             deleteTargetId = letterId;
             const modal = document.getElementById('deleteModal');
@@ -247,9 +245,7 @@
         function confirmDelete() {
             if (!deleteTargetId) return;
 
-            fetch(`/letter/delete/${deleteTargetId}`, {
-                method: 'POST'
-            })
+            fetch(`/letter/delete/${deleteTargetId}`, { method: 'POST' })
                 .then(response => response.text())
                 .then(result => {
                     if (result === 'success') {
@@ -265,7 +261,9 @@
                 });
         }
 
-        // Cancel Modal Functions
+        // ------------------------------
+        // Cancel Modal
+        // ------------------------------
         function showCancelModal(event, form) {
             event.preventDefault();
             event.stopPropagation();
@@ -285,18 +283,91 @@
         }
 
         function confirmCancel() {
-            if (cancelForm) {
-                cancelForm.submit();
-            }
+            if (cancelForm) cancelForm.submit();
         }
 
-        // Close modal on ESC key
+        // ESC 키로 모달 닫기
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 closeDeleteModal();
                 closeCancelModal();
             }
         });
+
+        // ------------------------------
+        // SSE: 새로 받은 편지
+        // ------------------------------
+        const eventSource = new EventSource('/sse/letters');
+
+        eventSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data.type !== currentType) return;
+
+            const listContainer = document.getElementById('letterList');
+            const noLettersMsg = document.getElementById('noLettersMsg');
+
+            if (data.action === 'add') {
+                if (noLettersMsg) noLettersMsg.style.display = 'none';
+
+                const borderClass = (!data.isRead && currentType === 'received')
+                    ? 'border-2 border-[#F5BF76]'
+                    : 'border border-gray-200';
+
+                const cardHtml = `
+<div data-letter-id="${data.letterId}" class="bg-white rounded-2xl p-4 shadow-sm relative cursor-pointer hover:shadow-md transition ${borderClass}"
+     onclick="location.href='/letter/detail/${data.letterId}'">
+    <div class="absolute top-3 right-3">
+        ${!data.isRead
+                    ? '<span class="text-xs font-semibold text-red-500 bg-red-50 px-2 py-1 rounded-full">안읽음</span>'
+                    : '<span class="text-xs font-medium text-gray-400 bg-gray-100 px-2 py-1 rounded-full">읽음</span>'}
+    </div>
+    <div class="pr-20 mb-10">
+        <div class="flex items-center gap-2 mb-2">
+            <span class="text-sm font-bold text-gray-900">${data.senderName}</span>
+            <span class="text-xs text-gray-400">방금</span>
+        </div>
+        <h3 class="font-semibold mb-1 text-gray-900">${data.title}</h3>
+        <p class="text-sm text-gray-500 line-clamp-2">${data.contentPreview}</p>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="absolute bottom-3 right-3 flex gap-2">
+        ${currentType === 'sent' && data.canCancel ? `
+        <form style="display:inline;" onsubmit="event.stopPropagation(); return showCancelModal(event, this);">
+            <input type="hidden" name="letterId" value="${data.letterId}"/>
+            <button type="submit"
+                    onclick="event.stopPropagation();"
+                    class="text-orange-500 text-sm font-medium border border-orange-500 rounded-lg px-3 py-1.5 hover:bg-orange-50 transition">
+                취소
+            </button>
+        </form>` : ''}
+
+        <button onclick="event.stopPropagation(); showDeleteModal(${data.letterId})"
+                class="text-red-500 text-sm font-medium border border-red-500 rounded-lg px-4 py-1.5 hover:bg-red-50 transition">
+            삭제
+        </button>
+    </div>
+</div>
+`;
+                listContainer.insertAdjacentHTML('afterbegin', cardHtml);
+            }
+
+            // -----------------------------
+            // 전송 취소 처리
+            // -----------------------------
+            else if (data.action === 'cancel' && data.type === 'received') {
+                const letterElem = listContainer.querySelector(`[data-letter-id='${data.letterId}']`);
+                if (letterElem) {
+                    letterElem.remove();
+                }
+
+                // 남은 편지 없으면 메시지 표시
+                if (listContainer.querySelectorAll('[data-letter-id]').length === 0 && noLettersMsg) {
+                    noLettersMsg.style.display = 'block';
+                }
+            }
+        };
+
     </script>
 
 </th:block>

@@ -2,7 +2,6 @@ package gamo.web.letter.controller;
 
 import gamo.web.auth.UserPrincipal;
 import gamo.web.family.dto.FamilyListDTO;
-import gamo.web.letter.domain.Letter;
 import gamo.web.letter.dto.*;
 import gamo.web.letter.service.LetterService;
 import gamo.web.member.domain.Member;
