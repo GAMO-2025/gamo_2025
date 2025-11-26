@@ -4,6 +4,7 @@ import gamo.web.home.dto.HomeSummaryDTO;
 import gamo.web.letter.dto.LetterCountDTO;
 import gamo.web.letter.service.LetterService;
 import gamo.web.member.domain.Member;
+import gamo.web.photo.service.PhotoService;
 import gamo.web.videocall.dto.VideoCallListResponse;
 import gamo.web.videocall.dto.VideoCallResponseDTO;
 import gamo.web.videocall.service.VideoCallService;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class HomeService {
     private final VideoCallService videoCallService;
     private final LetterService letterService;
+    private final PhotoService photoService;
 
     @Transactional(readOnly = true)
     public HomeSummaryDTO getHomeSummary(Member member) {
@@ -24,10 +26,16 @@ public class HomeService {
 
         String targetNickname = null;
         String targetProfileImage = null;
+        String albumThumbnail = null;
+
+        if (member.getFamily() != null) {
+            Long familyId = member.getFamily().getId();
+            albumThumbnail = photoService.getLatestAlbumThumbnailByFamily(familyId);
+        }
 
         String ajenda = "추후 추가예정";
 
-        long receivedLetterCount = lcDTO.getReceivedCount();
+        long unreadLetterCount = lcDTO.getUnreadCount();
 
 
         // 가장 최근 통화자 정보 가져오기!(1명)
@@ -41,8 +49,9 @@ public class HomeService {
         return HomeSummaryDTO.builder()
                 .targetNickname(targetNickname)
                 .targetProfileImage(targetProfileImage)
+                .AlbumThumbnail(albumThumbnail)
                 .ajenda(ajenda)
-                .receivedLetterCount(receivedLetterCount)
+                .unreadLetterCount(unreadLetterCount)
                 .build();
 
     }

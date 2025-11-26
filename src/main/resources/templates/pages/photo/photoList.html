@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="fragments/layout :: AppLayout('home', ~{::content}, null)">
+      th:replace="fragments/layout :: AppLayout('photo', ~{::content}, null)">
 
 <th:block th:fragment="content">
     <section class="grid grid-cols-4 gap-1" id="pic-grid">
@@ -14,7 +14,7 @@
         </div>
         <div class="photo-item relative w-full aspect-square overflow-hidden" th:each="photo : ${photoList}">
             <a th:href="@{'/photo/' + ${photo.photoId}}" class="block w-full h-full">
-                <img th:src="@{'https://storage.cloud.google.com/gamo_bucket/photo/' + ${photo.url}}"
+                <img th:src="@{'/photo/file/' + ${photo.url}}"
                      alt="앨범 사진"
                      class="w-full h-full object-cover transition-transform duration-300 hover:scale-105" />
             </a>

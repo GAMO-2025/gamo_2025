@@ -21,12 +21,6 @@ public class MemberViewController {
 
     private final MemberService memberService;
 
-    @ModelAttribute("member")
-    public LoginResponseDTO currentMember(@AuthenticationPrincipal UserPrincipal user) {
-        if (user == null) return null;               // 비로그인 대비
-        Long memberId = memberService.getMemberId(user);
-        return memberService.getMyInfo(memberId);
-    }
 
     @GetMapping("/family")
     public String family(@AuthenticationPrincipal UserPrincipal user, Model model) {

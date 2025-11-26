@@ -1,4 +1,4 @@
-package gamo.web.photo.Controller;
+package gamo.web.photo.controller;
 
 import gamo.web.auth.UserPrincipal;
 import gamo.web.photo.service.LikeService;

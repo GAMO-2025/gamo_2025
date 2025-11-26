@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="fragments/layout :: AppLayout('home', ~{::content}, null)">
+      xmlns:sec="https://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{fragments/layout :: AppLayout('home', ~{::content}, null)}">
 
 <th:block th:fragment="content">
 
     <!-- 로그인 사용자 전용 -->
-    <div class="flex flex-col px-5 pt-6 w-full" th:if="${member != null}">
+    <div class="flex flex-col px-5 pt-6 w-full" sec:authorize="isAuthenticated()">
         <!-- 프로필 영역 -->
         <a th:href="@{/member/mypage}" class="flex items-center gap-4">
             <img class="h-20 w-20 rounded-full object-cover"
@@ -51,14 +52,10 @@
                 </button>
             </div>
         </div>
-
-
     </div>
 
-
-
     <!-- 비로그인 사용자 -->
-    <section class="px-5 py-10 text-center" th:if="${member == null}">
+    <section class="px-5 py-10 text-center" sec:authorize="isAnonymous()">
         <p class="text-sm text-gray-600">로그인이 필요합니다.</p>
         <a th:href="@{/oauth2/authorization/kakao}"
            class="mx-auto mt-4 inline-block rounded-full bg-amber-300 px-6 py-3 text-[14px] font-semibold text-gray-900 shadow-md">
@@ -66,6 +63,7 @@
         </a>
     </section>
 
+    <!-- 모달 프래그먼트 -->
     <th:block th:replace="~{fragments/input-modal :: inputModal('초대 코드를 입력하세요', '확인', '취소')}" />
     <th:block th:replace="~{fragments/alert-modal :: alertModal('commonAlert', '알림 메시지')}" />
 
@@ -76,7 +74,12 @@
             const input = document.getElementById('input');        // 프래그먼트 input
             const openBtn = document.getElementById('openInviteModal');
 
-            // 모달 열기,닫기 (닉네임 모달과 동일 스타일)
+            // 비로그인(버튼 없음)일 때는 스크립트 종료
+            if (!openBtn || !modal || !form || !input) {
+                return;
+            }
+
+            // 모달 열기,닫기
             function openModal() {
                 modal.classList.remove('hidden');
                 document.body.style.overflow = 'hidden';
@@ -103,7 +106,7 @@
                 if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
             });
 
-            // 초대 코드로 가족 참가 (닉네임 모달과 동일한 패턴)
+            // 초대 코드로 가족 참가
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
 
@@ -147,9 +150,6 @@
         })();
     </script>
 
-
-
 </th:block>
-
 
 </html>
