@@ -42,13 +42,13 @@ public class LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
         // 쿠키 생성 및 설정
         ResponseCookie accessCookie = ResponseCookie.from("accessToken", accessToken)
-                .httpOnly(true).secure(false).path("/")
+                .httpOnly(true).secure(true).path("/")
                 .maxAge(Duration.ofHours(1))
                 .sameSite("Lax")
                 .build();
 
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", refreshToken)
-                .httpOnly(true).secure(false).path("/")
+                .httpOnly(true).secure(true).path("/")
                 .maxAge(Duration.ofDays(30))
                 .sameSite("Lax")
                 .build();
