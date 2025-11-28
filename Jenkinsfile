@@ -3,7 +3,7 @@ pipeline {
 
     parameters {
         string(name: 'DEPLOY_USER', defaultValue: 'pjhyun0225', description: 'SSH 접속 사용자명')
-        string(name: 'DEPLOY_HOST', defaultValue: '34.64.202.182', description: '배포 대상 서버 IP')
+        string(name: 'DEPLOY_HOST', defaultValue: '34.47.120.158', description: '배포 대상 서버 IP')
         string(name: 'DEPLOY_PATH', defaultValue: '/home/pjhyun0225/gamo_service', description: '프로젝트 배포 경로')
         string(name: 'CREDENTIALS_ID', defaultValue: 'service-server-ssh', description: 'SSH 자격 증명 ID')
     }
