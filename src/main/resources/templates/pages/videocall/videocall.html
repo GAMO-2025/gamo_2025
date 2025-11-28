@@ -458,6 +458,8 @@
                     console.error('videocall: Error stack - ' + e.stack);
                 }
             }
+
+
             function stopRecording() {
                 return new Promise((resolve) => {
                     if (!recorder) {
@@ -471,7 +473,6 @@
                             const blob = recorder.getBlob();
 
                             console.log('videocall: DEBUG - Blob size=' + blob.size + ' bytes');
-                            console.log('videocall: DEBUG - Blob type=' + blob.type);
 
                             if (blob.size === 0) {
                                 console.warn('videocall: WARNING - Blob is empty, no recording data was captured');
@@ -484,8 +485,8 @@
 
                             console.log('videocall: Sending recording to STT');
 
-                            // TODO: 서버 주소 환경변수로 관리 필요
-                            const response = await fetch('http://localhost:8080/letter/api/videocall/stt', {
+                            // STT 변환 요청
+                            let response = await fetch('/letter/api/videocall/stt', {
                                 method: 'POST',
                                 body: formData
                             });
@@ -498,6 +499,18 @@
                                 return;
                             }
 
+                            // STT 결과 가져오기
+                            const data = await response.json();
+                            const sttStatus = data.status;
+                            const sttText = data.text;
+
+                            // 가장 최근의 videocallId 가져오기
+                            const videCallId = fetchLatestVideoCallId(userId);
+
+
+
+                            sendToKeywordAPIWithRetry(videCallId, sttText);
+
                             console.log('videocall: STT conversion complete');
                             resolve();
 
@@ -507,6 +520,88 @@
                         }
                     });
                 });
+            }
+
+            // 가장 최근의 videocallId 가져오기
+            async function fetchLatestVideoCallId(userId) {
+                try {
+                    const response = await fetch(`/api/video-calls/latest/${userId}`);
+                    if (!response.ok) {
+                        console.error('videocall: Failed to fetch latest videocallId - ' + response.statusText);
+                        return null;
+                    }
+                    const data = await response.json();
+                    console.log('videocall: Latest videocallId fetched - ' + data.videocallId);
+                    return data.videocallId;
+                } catch (e) {
+                    console.error('videocall: Error fetching latest videocallId - ' + e.message);
+                    return null;
+                }
+            }
+
+            // 키워드 조회 API 호출
+            async function sendToKeywordAPIWithRetry(videoCallId, sttText) {
+                const maxRetries = 5;
+                let currentRetry = 0;
+                const fetchTimeout = 10000;
+
+                while(currentRetry < maxRetries) {
+                    try{
+                        console.log('videocall: Keyword API attempt ' + (currentRetry + 1) + '/' + maxRetries);
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), fetchTimeout);
+
+                        const payload = {
+                            call_id: videoCallId,
+                            text: sttText
+                        };
+
+                        const response = await fetch('http://34.64.181.41:8000/api/keyword', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(payload),
+                            signal: controller.signal
+                        });
+                        clearTimeout(timeoutId);
+
+                        const responseData = await response.json();
+                        const status = responseData.status;
+
+                        console.log('videocall: Keyword API response status=' + status);
+                        if (status === 200) {
+                            console.log('videocall: Keyword API success - STT processing complete');
+                            return;
+                        } else if (status === 500) {
+                            console.warn('videocall: Keyword API server error - ' + responseData.detail);
+                            currentRetry++;
+
+                            if (currentRetry < maxRetries) {
+                                const waitTime = Math.pow(2, currentRetry) * 1000;
+                                console.log('videocall: Retrying in ' + waitTime + 'ms (' + currentRetry + '/' + maxRetries + ')');
+                                await new Promise(resolve => setTimeout(resolve, waitTime));
+                            } else {
+                                console.error('videocall: Max retries reached (5/5)');
+                            }
+                        } else {
+                            console.error('videocall: Unexpected keyword API status=' + status);
+                            return;
+                        }
+                    } catch (e) {
+                        console.error('videocall: Keyword API request error - ' + e.message);
+                        currentRetry++;
+
+                        if (currentRetry < maxRetries) {
+                            const waitTime = Math.pow(2, currentRetry) * 1000;
+                            console.log('videocall: Retrying after error in ' + waitTime + 'ms (' + currentRetry + '/' + maxRetries + ')');
+                            await new Promise(resolve => setTimeout(resolve, waitTime));
+                        } else {
+                            console.error('videocall: Keyword API failed');
+                            return;
+                        }
+                    }
+                }
             }
 
             async function closeCallWithRedirect(message) {
