@@ -34,7 +34,7 @@ public class LetterViewController {
         LetterCountDTO letterCounts = letterService.getLetterCounts(loginMemberId);
         model.addAttribute("letterCounts", letterCounts);
 
-        return "/pages/letter/letterHome";
+        return "pages/letter/letterHome";
     }
 
     // -------------------------------
@@ -68,7 +68,7 @@ public class LetterViewController {
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", letterPage.getTotalPages());
 
-        return "/pages/letter/letterList";
+        return "pages/letter/letterList";
     }
 
     // -------------------------------
@@ -97,7 +97,7 @@ public class LetterViewController {
         }
         model.addAttribute("preSelectedReceiver", preSelectedReceiver);
 
-        return "/pages/letter/letterForm";
+        return "pages/letter/letterForm";
     }
 
     // -------------------------------
@@ -118,7 +118,7 @@ public class LetterViewController {
         model.addAttribute("receiverName", receiverName);
         model.addAttribute("letterId", response.getLetterId());
 
-        return "/pages/letter/letterSuccess";
+        return "pages/letter/letterSuccess";
     }
 
     // -------------------------------
@@ -163,7 +163,7 @@ public class LetterViewController {
         try {
             LetterDetailDTO letterDetail = letterService.getLetterDetail(letterId, loginMemberId);
             model.addAttribute("letter", letterDetail);
-            return "/pages/letter/letterDetail";
+            return "pages/letter/letterDetail";
         } catch (Exception e) {
             // 권한 없거나 편지가 없는 경우
             return "redirect:/letter/list";
