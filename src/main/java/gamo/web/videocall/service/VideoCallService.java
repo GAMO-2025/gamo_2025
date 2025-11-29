@@ -18,7 +18,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,11 +26,10 @@ import java.util.Optional;
 public class VideoCallService {
     private final VideoCallRepository videoCallRepository;
     private final MemberRepository memberRepository;
-    private final SttService sttService;
 
     // 통화 종료 시에 통화 기록 저장
     @Transactional
-    public void saveVideoCall(String fromUserId, String toUserId, CallType callType) {
+    public VideoCallResponseDTO saveVideoCall(String fromUserId, String toUserId, CallType callType) {
             Optional<Member> caller = memberRepository.findById(Long.valueOf(fromUserId));
             Optional<Member> receiver = memberRepository.findById(Long.valueOf(toUserId));
             if (caller.isPresent() && receiver.isPresent()) {
@@ -41,8 +39,10 @@ public class VideoCallService {
                         .callType(callType)
                         .build();
                 videoCallRepository.save(newVideoCall);
+                return new VideoCallResponseDTO(newVideoCall, Long.valueOf(fromUserId));
             }
-        }
+        return null;
+    }
 
     // 통화 기록 최신순 조회
     @Transactional(readOnly = true)
@@ -67,5 +67,13 @@ public class VideoCallService {
                 .toList();
         return new VideoCallHistoryListResponse(content, hasNext);
     }
+
+    // 가장 최근의 통화 기록 조회
+    @Transactional(readOnly = true)
+    public Long getLatestCallId(Long userId) {
+        return videoCallRepository.findLatestCallIdByUserId(userId);
+    }
+
+    // 홈 화면 키워드 조회 가장 최근에 통화한 사람과의 추천 키워드 조회
 
 }

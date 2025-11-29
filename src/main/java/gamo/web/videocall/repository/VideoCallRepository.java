@@ -34,4 +34,12 @@ public interface VideoCallRepository extends JpaRepository<VideoCall, Long> {
             @Param("member2") Long member2,
             Pageable pageable
     );
+
+    @Query("""
+    SELECT v FROM VideoCall v
+        WHERE v.caller.id = :userId OR v.receiver.id = :userId
+        ORDER BY v.createdAt DESC
+        LIMIT 1
+    """)
+    Long findLatestCallIdByUserId(@Param("userId") Long userId);
 }

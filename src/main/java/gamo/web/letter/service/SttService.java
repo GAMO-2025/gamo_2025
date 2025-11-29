@@ -47,6 +47,7 @@ public class SttService {
             return "gs://" + bucketName + "/" + objectName;
         }
     }
+
     /**
      * Google STT 장시간 음성 처리 (공통)
      * @param gcsUri GCS에 업로드된 파일 경로
