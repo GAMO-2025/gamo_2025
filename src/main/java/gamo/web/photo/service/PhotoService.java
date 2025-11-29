@@ -143,8 +143,6 @@ public class PhotoService {
         Long familyOfPhoto = albumRepository.findFamilyIdById(photoRepository.findAlbumIdByPhotoId(photoId));
         Long familyOfMember = memberRepository.findFamilyIdById(memberId)
                 .orElseThrow(() -> new CustomException((ErrorCode.FAMILY_NOT_FOUND)));
-        log.info("[PhotoService] photo의 family: {}", familyOfPhoto);
-        log.info("[PhotoService] member의 family: {}", familyOfMember);
         if(!familyOfMember.equals(familyOfPhoto))
             throw new CustomException(ErrorCode.PHOTO_ACCESS_FORBIDDEN);
 
