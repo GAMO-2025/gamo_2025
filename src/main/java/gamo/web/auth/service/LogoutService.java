@@ -21,11 +21,11 @@ public class LogoutService {
 
         // 2. JWT 쿠키 만료
         ResponseCookie expiredAccess = ResponseCookie.from("accessToken", "")
-                .httpOnly(true).secure(false).path("/")
+                .httpOnly(true).secure(true).path("/")
                 .maxAge(0).sameSite("Lax").build();
 
         ResponseCookie expiredRefresh = ResponseCookie.from("refreshToken", "")
-                .httpOnly(true).secure(false).path("/")
+                .httpOnly(true).secure(true).path("/")
                 .maxAge(0).sameSite("Lax").build();
 
         response.addHeader("Set-Cookie", expiredAccess.toString());
