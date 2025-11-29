@@ -28,6 +28,7 @@ public class HomeService {
         String targetProfileImage = null;
         String albumThumbnail = null;
 
+        //앨범 최근꺼 하나 가져오기
         if (member.getFamily() != null) {
             Long familyId = member.getFamily().getId();
             albumThumbnail = photoService.getLatestAlbumThumbnailByFamily(familyId);
