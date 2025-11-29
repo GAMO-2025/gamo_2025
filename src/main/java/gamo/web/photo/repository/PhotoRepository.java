@@ -31,4 +31,7 @@ public interface PhotoRepository extends JpaRepository<Photo, Long> {
     boolean existsByAlbumId(@Param("albumId") Long albumId);
 
     Photo findByUrl(String url);
+
+    @Query("SELECT p.album.album_id FROM Photo p WHERE p.photo_id = :photoId")
+    Long findAlbumIdByPhotoId(@Param("photoId") Long photoId);
 }

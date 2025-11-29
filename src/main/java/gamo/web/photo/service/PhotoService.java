@@ -140,9 +140,10 @@ public class PhotoService {
     @Transactional(readOnly = true)
     public PhotoRequestDTO getPhotoById(Long memberId, Long photoId) {
         //권한 확인
-        Long memberOfPhoto = photoRepository.findMemberById(photoId);
-
-        if(!memberId.equals(memberOfPhoto))
+        Long familyOfPhoto = albumRepository.findFamilyIdById(photoRepository.findAlbumIdByPhotoId(photoId));
+        Long familyOfMember = memberRepository.findFamilyIdById(memberId)
+                .orElseThrow(() -> new CustomException((ErrorCode.FAMILY_NOT_FOUND)));
+        if(!familyOfMember.equals(familyOfPhoto))
             throw new CustomException(ErrorCode.PHOTO_ACCESS_FORBIDDEN);
 
         Photo photo = photoRepository.findById(photoId).get();
