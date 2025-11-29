@@ -55,7 +55,7 @@ public class PhotoService {
 
     @Transactional(readOnly = true)
     public String getLatestAlbumThumbnailByFamily(Long familyId) {
-        Album latestAlbum = albumRepository.findLatestAlbumByFamilyId(familyId)
+        Album latestAlbum = albumRepository.findTop1ByFamilyIdOrderByAlbumIdDesc(familyId)
                 .orElse(null);
 
         if (latestAlbum == null) {
