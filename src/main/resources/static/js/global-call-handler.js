@@ -17,8 +17,7 @@
 
         console.log('[Global Call Handler] WebSocket 연결 시작 userId=' + userId);
 
-        // TODO: 실제 서버 주소로 변경
-        const socket = new WebSocket(`ws://localhost:8080/ws/signaling?userId=${userId}`);
+        const socket = new WebSocket(`wss://peaceproject.site/ws/signaling?userId=${userId}`);
         window.globalCallSocket = socket;
         previousUserId = userId;
 

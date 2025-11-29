@@ -1,6 +1,7 @@
 package gamo.web.photo.service;
 
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
@@ -70,5 +71,17 @@ public class GcpStorageService {
         Storage storage = getStorage();
 
         storage.delete(bucketName, "photo/" + fileName);
+    }
+
+    // GCS에서 사진 바이트 가져오기 (프록시용)
+    public byte[] load(String fileName) throws IOException {
+        String objectName = "photo/" + fileName;
+        Storage storage = getStorage();
+
+        Blob blob = storage.get(bucketName, objectName);
+        if (blob == null) {
+            throw new CustomException(ErrorCode.PHOTO_NOT_FOUND);
+        }
+        return blob.getContent();
     }
 }

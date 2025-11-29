@@ -5,7 +5,6 @@ import gamo.web.member.domain.Member;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,9 +20,6 @@ public class Photo extends BaseEntity {
     private Long photo_id;
 
     private String url;
-
-//    @Column(name = "created_at", nullable = false, updatable = false)
-//    private LocalDateTime createdAt = LocalDateTime.now();
 
     // PK: Album
     @ManyToOne(fetch = FetchType.LAZY)

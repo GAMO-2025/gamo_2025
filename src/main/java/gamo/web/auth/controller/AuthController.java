@@ -64,13 +64,13 @@ public class AuthController {
                 .build());
 
         ResponseCookie accessCookie = ResponseCookie.from("accessToken", newAccess)
-                .httpOnly(true).secure(false).path("/")
+                .httpOnly(true).secure(true).path("/")
                 .maxAge(Duration.ofHours(1))
                 .sameSite("Lax")
                 .build();
 
         ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", newRefresh)
-                .httpOnly(true).secure(false).path("/")
+                .httpOnly(true).secure(true).path("/")
                 .maxAge(Duration.ofDays(30))
                 .sameSite("Lax")
                 .build();

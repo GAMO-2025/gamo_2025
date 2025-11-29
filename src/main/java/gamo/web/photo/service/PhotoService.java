@@ -53,7 +53,19 @@ public class PhotoService {
         return photo == null ? null : photo.getUrl();
     }
 
-    //앨범 생성
+    @Transactional(readOnly = true)
+    public String getLatestAlbumThumbnailByFamily(Long familyId) {
+        List<Album> albums = albumRepository.findAlbumByFamilyId(familyId);
+
+        if (albums.isEmpty()) {
+            return null;
+        }
+
+        Album latestAlbum = albums.get(0);
+        return getThumbnail(latestAlbum);
+    }
+
+        //앨범 생성
     @Transactional
     public void createAlbum(String title, Long memberId) {
         Long familyId = memberRepository.findFamilyIdById(memberId)

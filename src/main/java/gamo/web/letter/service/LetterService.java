@@ -34,6 +34,7 @@ public class LetterService {
     private final MemberRepository memberRepository;
     private final NicknameRepository nicknameRepository;
     private final GcsService gcsService;
+    private final LetterSseEmitters emitters;
 
     // 캐시: letterId → signedUrl
     private final Cache<Long, String> signedUrlCache = Caffeine.newBuilder()
@@ -210,8 +211,27 @@ public class LetterService {
                 .isReceiverDeleted(false)
                 .build();
 
-        letterRepository.save(letter);
+        letterRepository.saveAndFlush(letter);
         log.info("Letter {}: 편지 전송 성공", senderId);
+
+        // SSE 알림: 전송 후 갱신
+        // 수신자 알림
+        long totalReceivedCount = letterRepository.countByReceiverIdAndIsReceiverDeletedFalseAndIsCancelledFalse(receiver.getId());
+        long unreadCount = letterRepository.countByReceiverIdAndIsReceiverDeletedFalseAndIsCancelledFalseAndIsReadFalse(receiver.getId());
+
+        String preview = getPreview(letter.getContent());
+
+        LetterSseDTO receivedDto = new LetterSseDTO(
+                "received", "add",
+                letter.getId(),
+                getDisplayName(senderId, senderId),
+                getDisplayName(senderId, receiver.getId()),
+                preview,
+                letter.getTitle(),
+                totalReceivedCount,
+                unreadCount
+        );
+        emitters.sendLetterUpdate(receiver.getId(), receivedDto);
 
         return new LetterResponseDTO(letter.getId(), receiver.getName());
     }
@@ -275,6 +295,25 @@ public class LetterService {
         Letter letter = letterRepository.findById(letterId)
                 .orElseThrow(() -> new CustomException(ErrorCode.LETTER_NOT_FOUND));
         letter.cancelLetter(true);
+
+        // SSE 알림: 취소 후 갱신
+        // 수신자 알림
+        long totalReceived = letterRepository.countByReceiverIdAndIsReceiverDeletedFalseAndIsCancelledFalse(letter.getReceiverId());
+        long unread = letterRepository.countByReceiverIdAndIsReceiverDeletedFalseAndIsCancelledFalseAndIsReadFalse(letter.getReceiverId());
+
+        String preview = getPreview(letter.getContent());
+
+        LetterSseDTO receivedDto = new LetterSseDTO(
+                "received", "cancel",
+                letter.getId(),
+                getDisplayName(letter.getReceiverId(), letter.getSenderId()),
+                getDisplayName(letter.getReceiverId(), letter.getReceiverId()),
+                preview,
+                letter.getTitle(),
+                totalReceived,
+                unread
+        );
+        emitters.sendLetterUpdate(letter.getReceiverId(), receivedDto);
     }
 
     // -------------------------------

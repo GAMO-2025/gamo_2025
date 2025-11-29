@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      th:replace="fragments/layout :: AppLayout('home', ~{::content}, null)">
+      th:replace="fragments/layout :: AppLayout('photo', ~{::content}, null)">
 
 <th:block th:fragment="content">
     <div class="flex items-center justify-center">
-        <img th:src="@{'https://storage.cloud.google.com/gamo_bucket/photo/' + ${photo.url}}"
-             class="w-full h-auto object-contain">
+            <!-- ✅ GCS 직접 접근 대신 우리 서버 프록시 사용 -->
+            <img th:src="@{'/photo/file/' + ${photo.url}}"
+                 class="w-full h-auto object-contain">
     </div>
     <div class="flex items-center justify-between w-full" style="bottom: 90px;">
 

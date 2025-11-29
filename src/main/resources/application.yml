@@ -1,5 +1,5 @@
 jwt:
-  access-token-validity-in-seconds: 3600 # 하루를 accessToken 유효시간으로 설정
+  access-token-validity-in-seconds: 3600 # 1시간이 accessToken 유효 시간
   refresh-token-validity-in-seconds: 2592000
 
 spring:
@@ -14,6 +14,9 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
+
+  profiles:
+    active: local
 
   jpa:
     hibernate:

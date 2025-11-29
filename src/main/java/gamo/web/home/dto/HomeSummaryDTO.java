@@ -10,9 +10,12 @@ public class HomeSummaryDTO {
     private final String targetNickname;
     private final String targetProfileImage;
 
+    //앨범 썸네일
+    private final String AlbumThumbnail;
+
     //통화 내용 추천
     private final String ajenda;
 
     //받은 편지 개수
-    private final long receivedLetterCount;
+    private final long unreadLetterCount;
 }
