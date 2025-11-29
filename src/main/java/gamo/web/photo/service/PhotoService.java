@@ -55,13 +55,13 @@ public class PhotoService {
 
     @Transactional(readOnly = true)
     public String getLatestAlbumThumbnailByFamily(Long familyId) {
-        Album latestAlbum = albumRepository.findTop1ByFamilyIdOrderByAlbum_idDesc(familyId)
-                .orElse(null);
+        List<Album> albums = albumRepository.findAlbumByFamilyId(familyId);
 
-        if (latestAlbum == null) {
-            return null; // 해당 가족의 앨범이 하나도 없을 때
+        if (albums.isEmpty()) {
+            return null;
         }
 
+        Album latestAlbum = albums.get(0);
         return getThumbnail(latestAlbum);
     }
 

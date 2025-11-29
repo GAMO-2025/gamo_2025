@@ -6,7 +6,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface AlbumRepository extends JpaRepository<Album, Long> {
     @Query("SELECT a FROM Album a WHERE a.family.id = :familyId")
@@ -16,5 +15,13 @@ public interface AlbumRepository extends JpaRepository<Album, Long> {
     @Query("SELECT a.family.id FROM Album a WHERE a.album_id = :albumId")
     Long findFamilyIdById(@Param("albumId") Long albumId);
 
-    Optional<Album> findTop1ByFamilyIdOrderByAlbum_idDesc(Long familyId);
+    @Query("""
+        SELECT a
+        FROM Album a
+        WHERE a.family.id = :familyId
+          AND SIZE(a.photos) > 0
+        ORDER BY a.album_id DESC
+        """)
+    List<Album> findAlbumByFamilyId(@Param("familyId") Long familyId);
+
 }
