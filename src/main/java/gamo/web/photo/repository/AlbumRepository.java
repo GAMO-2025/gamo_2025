@@ -16,5 +16,5 @@ public interface AlbumRepository extends JpaRepository<Album, Long> {
     @Query("SELECT a.family.id FROM Album a WHERE a.album_id = :albumId")
     Long findFamilyIdById(@Param("albumId") Long albumId);
 
-    Optional<Album> findTop1ByFamilyIdOrderByAlbumIdDesc(Long familyId);
+    Optional<Album> findTop1ByFamilyIdOrderByAlbum_idDesc(Long familyId);
 }
