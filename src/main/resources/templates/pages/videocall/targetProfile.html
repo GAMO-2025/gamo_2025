@@ -2,99 +2,146 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <th:block th:replace="~{fragments/layout :: AppLayout('videocall', ~{::content}, null)}">
     <th:block th:fragment="content">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>가족 프로필 상세</title>
-        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    </head>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>가족 프로필 상세</title>
+            <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+        </head>
 
-    <body class="bg-gray-50 min-h-screen">
+        <body class="bg-gray-50 min-h-screen">
 
-    <div class="max-w-md mx-auto bg-white min-h-screen px-5 py-6">
+        <div class="max-w-md mx-auto bg-white min-h-screen px-5 py-6">
 
-        <!-- 가족 프로필 -->
-        <div class="flex items-center space-x-4 mb-8">
-            <img th:src="${partner.profileImage}"
-                 alt="profile"
-                 class="w-20 h-20 rounded-full object-cover">
-            <h2 class="text-2xl font-bold text-gray-900" th:text="${partner.nickname()}">엄마</h2>
-        </div>
-
-        <!-- 최근 통화기록 -->
-        <section class="mb-8">
-            <div class="flex justify-between items-center mb-3">
-                <h3 class="text-lg font-bold text-gray-900">최근 통화기록</h3>
-                <a href="/video/history" class="text-sm text-orange-300">더보기</a>
+            <!-- 가족 프로필 -->
+            <div class="flex items-center space-x-4 mb-8">
+                <img th:src="${partner.profileImage}"
+                     alt="profile"
+                     class="w-20 h-20 rounded-full object-cover">
+                <h2 class="text-2xl font-bold text-gray-900" th:text="${partner.nickname()}">엄마</h2>
             </div>
 
-            <div class="space-y-2 bg-gray-50 rounded-xl p-3">
-                <div th:each="call, iterStat : ${videoCallHistory}"
-                     class="flex justify-between items-center py-2.5"
-                     th:classappend="${!iterStat.last} ? 'border-b border-gray-200' : ''">
+            <!-- 최근 통화기록 -->
+            <section class="mb-8">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-lg font-bold text-gray-900">최근 통화기록</h3>
+                </div>
+
+                <div class="space-y-2 bg-gray-50 rounded-xl p-3">
+                    <div th:each="call, iterStat : ${videoCallHistory}"
+                         class="flex justify-between items-center py-2.5"
+                         th:classappend="${!iterStat.last} ? 'border-b border-gray-200' : ''">
                     <span class="text-sm text-gray-700"
                           th:text="${#temporals.format(call.createdDate, 'yyyy. MM. dd')}">
                         2025. 05. 06
                     </span>
-                    <div class="flex flex-col items-end gap-0.5">
+                        <div class="flex flex-col items-end gap-0.5">
                         <span class="text-sm font-medium"
                               th:classappend="${call.callType == '부재중'} ? 'text-red-500' : 'text-gray-600'"
                               th:text="${call.callType}">
                             부재중
                         </span>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <!-- 통화걸기 버튼 -->
-        <div class="mb-10">
-            <button type="button"
-                    th:onclick="|startCall(${partner.id})|"
-                    class="w-full text-gray-800 font-bold text-lg py-4 rounded-full shadow-md hover:shadow-lg transition-all"
-                    style="background: linear-gradient(90deg, #F5BF76 36%, #FFF9F2 100%);">
-                통화걸기
-            </button>
+            <!-- 통화걸기 버튼 -->
+            <div class="mb-10">
+                <button type="button"
+                        th:onclick="|startCall(${partner.id})|"
+                        class="w-full text-gray-800 font-bold text-lg py-4 rounded-full shadow-md hover:shadow-lg transition-all"
+                        style="background: linear-gradient(90deg, #F5BF76 36%, #FFF9F2 100%);">
+                    통화걸기
+                </button>
+            </div>
+
+            <!-- 추천 주제 -->
+            <section class="mb-8">
+                <h4 class="text-center text-sm font-bold text-gray-700 mb-4">추천 주제</h4>
+                <div id="topicContainer" class="bg-gray-100 rounded-lg p-4 text-center">
+                    <p class="text-sm text-gray-500">주제를 불러오는 중입니다...</p>
+                </div>
+            </section>
         </div>
 
-        <!-- 추천 키워드 / 추후 api 연결-->
-        <section class="mb-8">
-            <h4 class="text-center text-sm font-bold text-gray-700 mb-4">추천 키워드</h4>
-            <div class="grid grid-cols-4 gap-3">
-                <button class="bg-gray-100 text-gray-600 text-xs py-2.5 rounded-lg hover:bg-gray-200 transition">
-                    교환학생
-                </button>
-                <button class="bg-gray-100 text-gray-600 text-xs py-2.5 rounded-lg hover:bg-gray-200 transition">
-                    친구
-                </button>
-                <button class="bg-gray-100 text-gray-600 text-xs py-2.5 rounded-lg hover:bg-gray-200 transition">
-                    학원
-                </button>
-                <button class="bg-gray-100 text-gray-600 text-xs py-2.5 rounded-lg hover:bg-gray-200 transition">
-                    시험
-                </button>
-            </div>
-            <div class="grid grid-cols-3 gap-3 mt-3">
-                <button class="bg-gray-100 text-gray-600 text-xs py-2.5 rounded-lg hover:bg-gray-200 transition">
-                    아빠
-                </button>
-                <button class="bg-gray-100 text-gray-600 text-xs py-2.5 rounded-lg hover:bg-gray-200 transition">
-                    용돈
-                </button>
-                <button class="bg-gray-100 text-gray-600 text-xs py-2.5 rounded-lg hover:bg-gray-200 transition">
-                    본가
-                </button>
-            </div>
-        </section>
-    </div>
-    <script th:inline="javascript">
+        <script th:inline="javascript">
+            /*<![CDATA[*/
+            const partnerId = /*[[${partner.id}]]*/ 1;
 
-        function startCall(partnerId) {
-            window.location.href = `/call/loading?mode=calling&targetId=${partnerId}`;
-        }
-        /*]]>*/
-    </script>
-    </body>
+            function startCall(partnerId) {
+                window.location.href = `/call/loading?mode=calling&targetId=${partnerId}`;
+            }
+
+            function loadRecommendedTopic() {
+                console.log("추천 주제 조회 시작 - partnerId=" + partnerId);
+                const token = document.querySelector('meta[name="_csrf"]')?.content
+                    || document.querySelector('input[name="_csrf"]')?.value;
+                fetch(`/api/topics/recommended/${partnerId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { 'X-CSRF-TOKEN': token } : {})
+                    }
+                })
+                    .then(response => {
+                        console.log("응답 상태: " + response.status);
+
+                        if (!response.ok) {
+                            throw new Error('네트워크 응답이 정상이 아닙니다. status=' + response.status);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log("추천 주제 조회 완료:", data);
+                        updateTopicUI(data);
+                    })
+                    .catch(error => {
+                        console.error('추천 주제 조회 실패:', error);
+                        updateTopicUI({ success: false, topic: '주제가 없습니다' });
+                    });
+            }
+
+            function updateTopicUI(data) {
+                const topicContainer = document.getElementById('topicContainer');
+
+                if (data.success && data.topic && data.topic.trim().length > 0) {
+                    topicContainer.innerHTML = `
+                    <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                        <p class="text-sm text-gray-700 leading-relaxed">
+                            ${escapeHtml(data.topic)}
+                        </p>
+                    </div>
+                `;
+                    console.log("주제 표시 완료");
+                } else {
+                    topicContainer.innerHTML = `
+                    <div class="bg-gray-100 rounded-lg p-4 text-center">
+                        <p class="text-sm text-gray-500">주제가 없습니다</p>
+                    </div>
+                `;
+                    console.log("주제 없음");
+                }
+            }
+
+            function escapeHtml(text) {
+                const map = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                };
+                return text.replace(/[&<>"']/g, m => map[m]);
+            }
+
+            window.addEventListener('DOMContentLoaded', () => {
+                console.log("DOMContentLoaded 이벤트 발생");
+                loadRecommendedTopic();
+            });
+            /*]]>*/
+        </script>
+        </body>
     </th:block>
 </th:block>
 </html>

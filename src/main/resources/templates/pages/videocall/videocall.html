@@ -31,9 +31,10 @@
                 </button>
             </div>
         </div>
-
-        <div id="downloadLink" class="mt-6"></div>
     </th:block>
+
+    <th:block th:replace="~{fragments/alert-modal :: alertModal('commonAlert', '알림 메시지')}" />
+    <th:block th:replace="~{fragments/action-modal :: actionModal('cancelConfirmModal', '정말 통화를 종료하시겠습니까?', '종료', '닫기')}" />
 
     <th:block th:fragment="script">
         <script th:inline="javascript">
@@ -556,7 +557,7 @@
                             text: sttText
                         };
 
-                        const response = await fetch('http://34.64.181.41:8000/api/keyword', {
+                        const response = await fetch('http://34.158.203.193:8000/api/keyword', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'
@@ -712,8 +713,13 @@
             });
 
             document.getElementById("endBtn").addEventListener("click", () => {
-                console.log('videocall: End button clicked');
-                closeCallWithRedirect('통화가 종료되었습니다.');
+                openActionModal('cancelConfirmModal',
+                    '정말 통화를 종료하시겠습니까?',
+                    () => {
+                        console.log('videocall: End call confirmed by user');
+                        closeCallWithRedirect('통화가 종료되었습니다.');
+                    }
+                );
             });
 
             if (isInitiator) {
