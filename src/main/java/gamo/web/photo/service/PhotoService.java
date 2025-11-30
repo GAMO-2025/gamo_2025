@@ -174,6 +174,6 @@ public class PhotoService {
 
     @Transactional(readOnly = true)
     public Long getMemberId(Long photoId) {
-        return photoRepository.findAlbumIdByPhotoId(photoId);
+        return photoRepository.findMemberIdByPhotoId(photoId);
     }
 }

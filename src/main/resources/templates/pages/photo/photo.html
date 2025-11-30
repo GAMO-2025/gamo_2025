@@ -30,70 +30,127 @@
         </button>
 
     </div>
+    <th:block th:replace="~{fragments/action-modal :: actionModal('deleteConfirm', '이 사진을 정말 삭제하시겠습니까?', '삭제', '취소')}" />
+    <th:block th:replace="~{fragments/alert-modal :: alertModal('commonAlert', '알림 메시지')}" />
 
 </body>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // 삭제 버튼
-        const deleteBtn = document.getElementById("delete-btn");
-            deleteBtn.addEventListener("click", async function () {
-                const photoId = this.dataset.id;
-                if (!confirm("이 사진을 정말 삭제하시겠습니까?")) return;
+    <script>
+        <!-- 모달 -->
+        const modal = document.getElementById('inputModal');
 
-                try {
-                    const response = await fetch(`/photo/delete/${photoId}`, {
-                        method: "DELETE",
-                    });
+        function openModal() {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeModal() {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
 
-                    if (!response.ok) {
-                        if (response.status === 403) { // 403 에러 처리
-                            alert("삭제 권한이 없습니다.");
-                        } else {
-                            alert("삭제 중 오류가 발생했습니다.");
-                        }
-                        return;
+        // CSRF 토큰
+        const csrfToken =
+            document.querySelector('meta[name="_csrf"]')?.content ||
+            document.querySelector('input[name="_csrf"]')?.value;
+
+        async function sendActionRequest({
+            url,
+            method,
+            defaultSuccessMsg,
+            defaultErrorMsg,
+            onSuccess,
+            onError
+        }) {
+            try {
+                const res = await fetch(url, {
+                    method,
+                    headers: {
+                        ...(csrfToken ? { "X-CSRF-TOKEN": csrfToken } : {})
                     }
-                    // 성공 처리
-                    const albumId = await response.text();
-                    alert("사진이 삭제되었습니다.");
-                    window.location.href = `/album/${albumId}`;
-                } catch (error) {
-                    console.error(error);
-                    alert("네트워크 오류가 발생했습니다.");
+                });
+
+                // 서버 응답은 항상 문자열
+                let body = "";
+                try {
+                    body = await res.text();
+                } catch (_) {}
+
+                if (res.ok) {
+                    // 성공 콜백 실행 (앨범ID 포함)
+                    if (onSuccess) return onSuccess(body);
+
+                    openAlertModal("commonAlert", defaultSuccessMsg);
+                } else {
+                    // 실패 콜백 실행
+                    if (onError) return onError(res.status, body);
+
+                    openAlertModal("commonAlert", defaultErrorMsg);
                 }
+            } catch (err) {
+                console.error(err);
+                openAlertModal("commonAlert", "서버 오류가 발생했습니다.");
+
+                if (onError) onError(500, "");
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            // 삭제 버튼
+            const deleteBtn = document.getElementById("delete-btn");
+                deleteBtn.addEventListener("click", async function () {
+                    const photoId = this.dataset.id;
+
+                    openActionModal( "deleteConfirm", "이 사진을 정말 삭제하시겠습니까?", () => {
+                        sendActionRequest({
+                            url: `/photo/delete/${photoId}`,
+                            method: "DELETE",
+                            defaultSuccessMsg: "사진이 삭제되었습니다.",
+                            defaultErrorMsg: "삭제 중 오류가 발생했습니다.",
+                            onSuccess: (response) => {
+                                window.location.href = `/album/${response}`;
+                            },
+                            onError: (status) => {
+                                if (status === 403) {
+                                    openAlertModal("commonAlert", "이 사진은 업로드한 사용자만 삭제할 수 있습니다.");
+                                } else {
+                                    openAlertModal("commonAlert", "삭제 중 오류가 발생했습니다.");
+                                }
+                            }
+                        });
+                    }
+                    );
+                });
+
+            // 좋아요 버튼
+            const likeBtn = document.getElementById("like-btn");
+            const likeImg = likeBtn.querySelector("#like-img");
+            const likeCountSpan = likeBtn.querySelector("span");
+            likeBtn.addEventListener("click", async function () {
+                    const photoId = this.dataset.id;
+                    try {
+                        const response = await fetch(`/photoLike/${photoId}`, {
+                            method: "POST"
+                        });
+
+                        if (response.ok) {
+                            const isLiked = (await response.text()).trim();
+                            if (isLiked === "liked") {
+                                likeImg.src = "/svgs/photo_heart.svg"; // 채워진 하트
+                                this.dataset.liked = "true";
+                                likeCountSpan.textContent = parseInt(likeCountSpan.textContent) + 1;
+                            } else {
+                                likeImg.src = "/svgs/photo_empty_heart.svg"; // 빈 하트
+                                this.dataset.liked = "false";
+                                likeCountSpan.textContent = parseInt(likeCountSpan.textContent) - 1;
+                            }
+                        } else {
+                            openAlertModal('commonAlert', '좋아요 처리 중 오류가 발생했습니다.');
+                        }
+                    } catch (error) {
+                        console.error(error);
+                        openAlertModal('commonAlert', '네트워크 오류가 발생했습니다.');
+                    }
             });
-
-        // 좋아요 버튼
-        const likeBtn = document.getElementById("like-btn");
-        const likeImg = likeBtn.querySelector("#like-img");
-        const likeCountSpan = likeBtn.querySelector("span");
-        likeBtn.addEventListener("click", async function () {
-                const photoId = this.dataset.id;
-                try {
-                    const response = await fetch(`/photoLike/${photoId}`, {
-                        method: "POST"
-                    });
-
-                    if (response.ok) {
-                        const isLiked = (await response.text()).trim();
-                        if (isLiked === "liked") {
-                            likeImg.src = "/svgs/photo_heart.svg"; // 채워진 하트
-                            this.dataset.liked = "true";
-                            likeCountSpan.textContent = parseInt(likeCountSpan.textContent) + 1;
-                        } else {
-                            likeImg.src = "/svgs/photo_empty_heart.svg"; // 빈 하트
-                            this.dataset.liked = "false";
-                            likeCountSpan.textContent = parseInt(likeCountSpan.textContent) - 1;
-                        }
-                    } else {
-                        alert("좋아요 처리 중 오류가 발생했습니다.");
-                    }
-                } catch (error) {
-                    console.error(error);
-                    alert("네트워크 오류가 발생했습니다.");
-                }
         });
-    });
-</script>
+    </script>
 </th:block>
 </html>
