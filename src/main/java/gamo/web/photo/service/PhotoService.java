@@ -165,7 +165,7 @@ public class PhotoService {
     @Transactional
     public Long deletePhoto(Long memberId, Long photoId) {
         Photo photo = photoRepository.findById(photoId)
-                        .orElseThrow(() -> new RuntimeException("사진을 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException((ErrorCode.PHOTO_NOT_FOUND)));
         Long albumId = photo.getAlbum().getAlbum_id();
 
         photoRepository.deleteById(photoId);

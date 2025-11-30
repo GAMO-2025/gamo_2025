@@ -61,8 +61,6 @@ public class PhotoController {
 
         //권한 확인
         Long memberOfPhoto = photoService.getMemberId(photoId);
-        System.out.println("[PhotoController] memberOfPhoto: "+ memberOfPhoto);
-        System.out.println("[PhotoController] memberId: "+ memberId);
         if(!memberId.equals(memberOfPhoto))
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("FORBIDDEN");
 
