@@ -164,16 +164,16 @@ public class PhotoService {
     //사진 삭제
     @Transactional
     public Long deletePhoto(Long memberId, Long photoId) {
-        //권한 확인
-        Long memberOfPhoto = photoRepository.findMemberById(photoId);
-        if(!memberId.equals(memberOfPhoto))
-            throw new CustomException(ErrorCode.PHOTO_ACCESS_FORBIDDEN);
-
         Photo photo = photoRepository.findById(photoId)
-                        .orElseThrow(() -> new RuntimeException("사진을 찾을 수 없습니다."));
+                .orElseThrow(() -> new CustomException((ErrorCode.PHOTO_NOT_FOUND)));
         Long albumId = photo.getAlbum().getAlbum_id();
 
         photoRepository.deleteById(photoId);
         return albumId;
+    }
+
+    @Transactional(readOnly = true)
+    public Long getMemberId(Long photoId) {
+        return photoRepository.findMemberIdByPhotoId(photoId);
     }
 }

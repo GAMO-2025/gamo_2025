@@ -1,6 +1,8 @@
 package gamo.web.photo.controller;
 
 import gamo.web.auth.UserPrincipal;
+import gamo.web.common.exception.CustomException;
+import gamo.web.common.response.ErrorCode;
 import gamo.web.member.service.MemberService;
 import gamo.web.photo.dto.PhotoRequestDTO;
 import gamo.web.photo.dto.PhotoUploadRequestDTO;
@@ -8,6 +10,8 @@ import gamo.web.photo.service.PhotoService;
 import gamo.web.photo.service.GcpStorageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -49,14 +53,20 @@ public class PhotoController {
     }
 
     //사진 삭제
-    @DeleteMapping("photo/delete/{photoId}")
-    public String deletePhoto(
+    @DeleteMapping("/photo/delete/{photoId}")
+    public ResponseEntity<String> deletePhoto(
             @AuthenticationPrincipal UserPrincipal user,
             @PathVariable("photoId") Long photoId) throws IOException {
         Long memberId = memberService.getMemberId(user);
 
+        //권한 확인
+        Long memberOfPhoto = photoService.getMemberId(photoId);
+        if(!memberId.equals(memberOfPhoto))
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("FORBIDDEN");
+
         gcpStorageService.delete(photoId);
-        Long album_id = photoService.deletePhoto(memberId, photoId);
-        return "redirect:/album/" + album_id;
+        Long albumId = photoService.deletePhoto(memberId, photoId);
+
+        return ResponseEntity.ok(String.valueOf(albumId));
     }
 }
