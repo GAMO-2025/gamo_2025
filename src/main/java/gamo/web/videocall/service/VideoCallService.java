@@ -1,13 +1,8 @@
 package gamo.web.videocall.service;
 
-import gamo.web.common.exception.CustomException;
-import gamo.web.common.response.SuccessCode;
-import gamo.web.family.dto.FamilyListDTO;
-import gamo.web.letter.service.SttService;
 import gamo.web.member.domain.Member;
 import gamo.web.member.repository.MemberRepository;
 import gamo.web.member.repository.NicknameRepository;
-import gamo.web.member.service.MemberService;
 import gamo.web.videocall.domain.CallType;
 import gamo.web.videocall.domain.VideoCall;
 import gamo.web.videocall.dto.*;
@@ -114,10 +109,19 @@ public class VideoCallService {
     public RecommendDTO.HomeKeywordResponseDTO viewLatestRecommendedKeywords(Member member) {
         // 가장 최근에 통화한 사람의 userId 조회
         VideoCall videoCall = videoCallRepository.findLatestCallIdByUserId(member.getId()).get();
-        Long targetId = videoCall.getCaller().getId().equals(member.getId()) ? videoCall.getCaller().getId() : videoCall.getReceiver().getId();
+        // 최근 통화기록이 없을 경우
+        if(videoCall == null) {
+            log.warn("VideoCallService: 최근 통화기록이 없음 - memberId={}", member.getId());
+            return new RecommendDTO.HomeKeywordResponseDTO(false, null, null, null);
+        }
+        // 대상 userId 불러오기
+        Long targetId =
+                videoCall.getCaller().getId().equals(member.getId()) ? videoCall.getReceiver().getId() : videoCall.getCaller().getId();
         // 가장 최근에 통화한 사람 프로필, 이름, 주제 조회
         RecommendDTO.KeywordResponse keywordResponse = viewRecommendedKeywords(member, targetId, 1);
+        // 조회 성공 시 success true로 반환
         RecommendDTO.HomeKeywordResponseDTO homeKeywordResponse = new RecommendDTO.HomeKeywordResponseDTO(
+                true,
                 memberRepository.findById(targetId).get().getProfileImage(),
                 nicknameRepository.findByMemberIdAndAliasMemberId(member.getId(),targetId).get().getAlias(),
                 keywordResponse.getTopic()
