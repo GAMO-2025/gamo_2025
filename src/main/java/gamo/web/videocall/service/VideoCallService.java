@@ -1,6 +1,9 @@
 package gamo.web.videocall.service;
 
+import gamo.web.common.exception.CustomException;
+import gamo.web.common.response.ErrorCode;
 import gamo.web.member.domain.Member;
+import gamo.web.member.domain.Nickname;
 import gamo.web.member.repository.MemberRepository;
 import gamo.web.member.repository.NicknameRepository;
 import gamo.web.videocall.domain.CallType;
@@ -107,25 +110,54 @@ public class VideoCallService {
     // 홈화면 - 가장 최근에 통화한 사람과의 키워드 조회
     @Transactional(readOnly = true)
     public RecommendDTO.HomeKeywordResponseDTO viewLatestRecommendedKeywords(Member member) {
-        // 가장 최근에 통화한 사람의 userId 조회
-        VideoCall videoCall = videoCallRepository.findLatestCallIdByUserId(member.getId()).get();
-        // 최근 통화기록이 없을 경우
-        if(videoCall == null) {
+
+        // 가장 최근 통화 조회 , Optional 에러 처리
+        Optional<VideoCall> optionalCall =
+                videoCallRepository.findLatestCallIdByUserId(member.getId());
+
+        // 최근 통화기록 없으면 응답 실패로
+        if (optionalCall.isEmpty()) {
             log.warn("VideoCallService: 최근 통화기록이 없음 - memberId={}", member.getId());
             return new RecommendDTO.HomeKeywordResponseDTO(false, null, null, null);
         }
-        // 대상 userId 불러오기
-        Long targetId =
-                videoCall.getCaller().getId().equals(member.getId()) ? videoCall.getReceiver().getId() : videoCall.getCaller().getId();
-        // 가장 최근에 통화한 사람 프로필, 이름, 주제 조회
-        RecommendDTO.KeywordResponse keywordResponse = viewRecommendedKeywords(member, targetId, 1);
-        // 조회 성공 시 success true로 반환
-        RecommendDTO.HomeKeywordResponseDTO homeKeywordResponse = new RecommendDTO.HomeKeywordResponseDTO(
-                true,
-                memberRepository.findById(targetId).get().getProfileImage(),
-                nicknameRepository.findByMemberIdAndAliasMemberId(member.getId(),targetId).get().getAlias(),
-                keywordResponse.getTopic()
+
+        VideoCall videoCall = optionalCall.get();
+
+        // 대상 userId (내가 caller면 receiver, 아니면 caller)
+        Long targetId = videoCall.getCaller().getId().equals(member.getId())
+                ? videoCall.getReceiver().getId()
+                : videoCall.getCaller().getId();
+
+        // 추천 키워드
+        RecommendDTO.KeywordResponse keywordResponse =
+                viewRecommendedKeywords(member, targetId, 1);
+
+        String topic = null;
+        boolean topicSuccess = false;
+
+        if (keywordResponse != null && keywordResponse.isSuccess()) {
+            topic = keywordResponse.getTopic();
+            topicSuccess = (topic != null);
+        }
+
+        // 대상 Member 조회
+        Member target = memberRepository.findById(targetId)
+                .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        // 닉네임 있으면 닉네임, 없으면 기본 이름!!
+        Optional<Nickname> nickOpt =
+                nicknameRepository.findByMemberIdAndAliasMemberId(member.getId(), targetId);
+
+        String displayName = nickOpt
+                .map(Nickname::getAlias)
+                .orElse(target.getName());
+
+        // 최종 응답
+        return new RecommendDTO.HomeKeywordResponseDTO(
+                topicSuccess,
+                target.getProfileImage(),
+                displayName,
+                topic
         );
-        return homeKeywordResponse;
     }
 }
