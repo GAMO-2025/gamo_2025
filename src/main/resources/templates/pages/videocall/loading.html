@@ -9,7 +9,6 @@
     </head>
     <body class="bg-gray-900 text-white flex flex-col items-center justify-center h-screen">
 
-    <!-- 전화 거는 중 -->
     <div th:if="${mode == 'calling'}" id="calling" class="hidden text-center">
         <div class="animate-spin rounded-full h-24 w-24 border-8 border-gray-700 border-t-blue-500 mb-6"></div>
         <h2 class="text-2xl font-semibold mb-2" th:text="${target.nickname()} + '님에게 전화를 거는 중입니다.'"></h2>
@@ -18,7 +17,6 @@
                 style="background: linear-gradient(135deg, #FFDEB2 72%, #FFF9F2 100%);">통화 취소</button>
     </div>
 
-    <!-- 전화 받는 화면 -->
     <div th:if="${mode == 'incoming'}" id="incoming" class="hidden text-center">
         <h2 class="text-2xl font-semibold mb-3" th:text="${caller.nickname()} + '님이 전화 중입니다.'">전화가 왔습니다.</h2>
         <div class="flex justify-center space-x-6 mt-6">
@@ -29,7 +27,6 @@
         </div>
     </div>
 
-    <!-- 전화 거절됨 / 부재중 -->
     <div th:if="${mode == 'rejected'}" id="rejected" class="hidden text-center">
         <div class="rounded-full bg-red-500/20 p-6 mb-4">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-red-400 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -42,147 +39,208 @@
         <button onclick="goBack()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg font-semibold">돌아가기</button>
     </div>
 
-
     <th:block th:replace="~{fragments/alert-modal :: alertModal('commonAlert', '알림 메시지')}" />
     <th:block th:replace="~{fragments/action-modal :: actionModal('cancelConfirmModal', '정말 통화를 취소하시겠습니까?', '취소', '닫기')}" />
 
     <script th:inline="javascript">
-        /*<![CDATA[*/
         const mode = /*[[${mode}]]*/ 'calling';
         const userId = /*[[${userId}]]*/ 1;
         const targetId = /*[[${targetId}]]*/ 2;
+        const targetNickname = /*[[${target?.nickname() ?: caller?.nickname() ?: '알 수 없는 사용자'}]]*/ '알 수 없는 사용자';
 
         let callTimeout;
         let socket;
+        let isNavigating = false;
 
         function handleSocketOpen() {
-            console.log("loading: handleSocketOpen 실행");
+            console.log("[loading-handleSocketOpen] 소켓 열림");
             if (mode === 'calling') {
                 const msg = {
                     type: "CALL_REQUEST",
                     payload: { from: userId, to: targetId }
                 };
                 socket.send(JSON.stringify(msg));
-                console.log("loading: CALL_REQUEST 전송:", msg);
+                console.log("[loading-handleSocketOpen] CALL_REQUEST 전송");
 
-                callTimeout = setTimeout(() => {
-                    openAlertModal('commonAlert', '상대방이 응답하지 않습니다.');
-                    socket.close();
-                    window.location.href = "/call";
-                }, 90000);
+                startCallTimeout();
             } else if (mode === 'incoming') {
-                console.log("loading: incoming 모드 - CALL_REQUEST 보낼 필요 없음");
+                console.log("[loading-handleSocketOpen] incoming 모드");
             }
+        }
+
+        function startCallTimeout() {
+            clearTimeout(callTimeout);
+            callTimeout = setTimeout(() => {
+                console.log("[loading-startCallTimeout] 통화 타임아웃 발생 (90초)");
+                handleCallTimeout();
+            }, 90000);
+            console.log("[loading-startCallTimeout] 90초 타임아웃 설정됨");
+        }
+
+        function handleCallTimeout() {
+            if (isNavigating) {
+                console.log("[loading-handleCallTimeout] 이미 이동 중");
+                return;
+            }
+
+            isNavigating = true;
+            console.log("[loading-handleCallTimeout] 타임아웃 처리 시작");
+
+            openAlertModal('commonAlert', '상대방이 응답하지 않습니다.');
+
+            const alertButton = document.querySelector('[id="commonAlert"] button');
+            if (alertButton) {
+                alertButton.addEventListener('click', () => {
+                    console.log("[loading-handleCallTimeout] 사용자가 모달 확인");
+                    socket.close();
+                    navigateAfterDelay('/call');
+                }, { once: true });
+            } else {
+                navigateAfterDelay('/call');
+            }
+        }
+
+        function navigateAfterDelay(url) {
+            setTimeout(() => {
+                console.log("[loading-navigateAfterDelay] " + url + "로 이동");
+                window.location.href = url;
+            }, 300);
         }
 
         function initSocket() {
             if (!window.globalCallSocket) {
-                console.error("loading: globalCallSocket이 없습니다");
+                console.error("[loading-initSocket] globalCallSocket이 없음");
                 return;
             }
 
             socket = window.globalCallSocket;
-            console.log("loading: socket readyState=" + socket.readyState);
+            console.log("[loading-initSocket] 소켓 상태 = " + socket.readyState);
 
             socket.onopen = handleSocketOpen;
 
             socket.onmessage = event => {
                 const data = JSON.parse(event.data);
-                console.log("loading: 메시지 수신:", data);
+                console.log("[loading-onmessage] 메시지 수신 - type=" + data.type + ", message=" + data.message);
 
                 clearTimeout(callTimeout);
 
-                switch (data.code) {
+                if (isNavigating) {
+                    console.log("[loading-onmessage] 이미 이동 중, 무시");
+                    return;
+                }
+
+                switch (data.type) {
                     case "CALL_INCOMING":
-                        console.log("loading: 전화가 왔습니다!");
+                        console.log("[loading-onmessage] CALL_INCOMING 수신");
                         break;
 
                     case "CALL_ACCEPTED":
-                        console.log("loading: 상대방이 통화를 수락했습니다!");
-                        const otherUserId = data.sender === userId ? data.receiver : data.sender;
-                        window.location.href = `/call/videocall/${otherUserId}`;
+                        console.log("[loading-onmessage] CALL_ACCEPTED 수신");
+                        isNavigating = true;
+                        navigateAfterDelay(`/call/videocall/${targetId}`);
                         break;
 
                     case "CALL_TIMEOUT":
-                        openAlertModal('commonAlert', '통화 시간이 초과되었습니다.');
-                        window.location.href = "/call";
+                        console.log("[loading-onmessage] CALL_TIMEOUT 수신");
+                        isNavigating = true;
+                        handleCallTimeout();
                         break;
 
                     case "CALL_REJECTED":
+                        console.log("[loading-onmessage] CALL_REJECTED 수신");
+                        isNavigating = true;
                         openAlertModal('commonAlert', '상대방이 전화를 거절했습니다.');
-                        alert("상대방이 전화를 거절했습니다.");
-                        window.location.href = "/call";
+                        setTimeout(() => {
+                            navigateAfterDelay('/call');
+                        }, 500);
                         break;
 
                     case "CALL_BUSY":
+                        console.log("[loading-onmessage] CALL_BUSY 수신");
+                        isNavigating = true;
                         openAlertModal('commonAlert', '상대방이 통화 중입니다.');
-                        window.location.href = "/call";
+                        setTimeout(() => {
+                            navigateAfterDelay('/call');
+                        }, 500);
                         break;
 
                     case "CALL_CANCELLED":
+                        console.log("[loading-onmessage] CALL_CANCELLED 수신");
+                        isNavigating = true;
                         openAlertModal('commonAlert', '상대방이 통화를 취소했습니다.');
-                        window.location.href = "/call";
+                        setTimeout(() => {
+                            navigateAfterDelay('/call');
+                        }, 500);
                         break;
+
+                    default:
+                        console.log("[loading-onmessage] 알 수 없는 메시지 타입 - " + data.type);
                 }
             };
 
             socket.onerror = (error) => {
-                console.error("loading: WebSocket error:", error);
+                console.error("[loading-onerror] 웹소켓 오류: " + error);
             };
 
             socket.onclose = () => {
-                console.log("loading: WebSocket closed");
+                console.log("[loading-onclose] 웹소켓 닫힘");
+                clearTimeout(callTimeout);
             };
 
             if (socket.readyState === WebSocket.OPEN) {
-                console.log("loading: socket 이미 OPEN, onopen 수동 호출");
+                console.log("[loading-initSocket] 소켓이 이미 OPEN");
                 handleSocketOpen();
             } else if (socket.readyState === WebSocket.CONNECTING) {
-                console.log("loading: socket 연결 중, onopen 대기");
+                console.log("[loading-initSocket] 소켓 연결 대기 중");
             } else if (socket.readyState === WebSocket.CLOSED) {
-                console.error("loading: socket이 이미 닫혀있습니다");
-                window.location.href = "/call";
+                console.error("[loading-initSocket] 소켓이 이미 닫혀있음");
+                isNavigating = true;
+                navigateAfterDelay('/call');
             }
         }
 
         function sendMessage(type, payload) {
             if (socket && socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({ type, payload }));
-                console.log("loading: Message sent -", type);
+                console.log("[loading-sendMessage] 메시지 전송 - type=" + type);
             } else {
-                console.warn("loading: WebSocket not open. Cannot send:", type);
+                console.warn("[loading-sendMessage] 웹소켓 미연결 - type=" + type);
             }
         }
 
         function acceptCall() {
+            console.log("[loading-acceptCall] 통화 수락");
+            clearTimeout(callTimeout);
+            isNavigating = true;
             sendMessage("CALL_ACCEPT", { from: userId, to: targetId });
-            console.log("loading: CALL_ACCEPT 전송 완료");
-            setTimeout(() => {
-                window.location.href = `/call/videocall/${targetId}`;
-            }, 200);
+            navigateAfterDelay(`/call/videocall/${targetId}`);
         }
 
         function rejectCall() {
+            console.log("[loading-rejectCall] 통화 거절");
+            clearTimeout(callTimeout);
+            isNavigating = true;
             sendMessage("CALL_REJECT", { from: userId, to: targetId });
-            console.log("loading: CALL_REJECT 전송 완료");
-            setTimeout(() => {
-                window.location.href = "/call";
-            }, 200);
+            navigateAfterDelay('/call');
         }
 
         function cancelCall() {
+            console.log("[loading-cancelCall] 취소 확인 모달 열기");
             clearTimeout(callTimeout);
 
             openActionModal('cancelConfirmModal',
                 '정말 통화를 취소하시겠습니까?',
                 () => {
+                    console.log("[loading-cancelCall] 취소 확인됨");
+                    isNavigating = true;
                     sendMessage("CALL_CANCEL", { from: userId, to: targetId });
-                    window.location.href = "/call";
+                    navigateAfterDelay('/call');
                 }
             );
         }
 
         window.addEventListener("DOMContentLoaded", () => {
+            console.log("[loading-DOMContentLoaded] 페이지 로드됨, mode=" + mode);
             document.querySelectorAll("div[id]").forEach(div => div.classList.add("hidden"));
             const modeElement = document.getElementById(mode);
             if (modeElement) {
@@ -193,9 +251,10 @@
         });
 
         function goBack() {
-            window.location.href = `/call/video-call/profile?partnerId=${targetId}`;
+            console.log("[loading-goBack] 뒤로가기");
+            isNavigating = true;
+            navigateAfterDelay(`/call/video-call/profile?partnerId=${targetId}`);
         }
-        /*]]>*/
     </script>
     </body>
 </th:block>
