@@ -73,6 +73,7 @@
             </form>
         </div>
     </div>
+    <th:block th:replace="~{fragments/alert-modal :: alertModal('commonAlert', '알림 메시지')}" />
 
 </body>
 <script>
@@ -93,6 +94,19 @@
             }
         });
     });
+
+    // 모달 열기,닫기
+    function openModal() {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        input.value = '';
+        input.placeholder = '초대 코드를 입력하세요';
+        setTimeout(() => input.focus(), 0);
+    }
+    function closeModal() {
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
 
     document.addEventListener("DOMContentLoaded", () => {
         <!-- 모달 스크립트 -->
@@ -124,8 +138,8 @@
         const success = document.getElementById("flash-success");
         const error = document.getElementById("flash-error");
 
-        if (success) alert(success.textContent);
-        if (error) alert(error.textContent);
+        if (success) openAlertModal("commonAlert", "앨범이 삭제되었습니다.");
+        if (error) openAlertModal("commonAlert", "앨범이 비어있지 않으면 삭제할 수 없습니다.");
     });
 
     //앨범 삭제 기능 (Controller에서 처리 후 리다이렉트 사용)
