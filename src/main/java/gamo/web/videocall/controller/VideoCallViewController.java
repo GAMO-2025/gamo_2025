@@ -92,7 +92,7 @@ public class VideoCallViewController {
 
             } else if ("incoming".equals(mode)) {
                 // 전화 받는 사람 입장
-                FamilyListDTO caller = memberService.getFamilyMember(targetId, currentUserId);
+                FamilyListDTO caller = memberService.getFamilyMember(currentUserId, targetId);
                 if (caller == null) {
                     throw new IllegalArgumentException("존재하지 않는 발신자입니다.");
                 }
