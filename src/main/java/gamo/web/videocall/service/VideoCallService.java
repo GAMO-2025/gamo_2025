@@ -1,13 +1,10 @@
 package gamo.web.videocall.service;
 
-import gamo.web.common.exception.CustomException;
-import gamo.web.common.response.SuccessCode;
-import gamo.web.family.dto.FamilyListDTO;
-import gamo.web.letter.service.SttService;
 import gamo.web.member.domain.Member;
+import gamo.web.member.domain.Nickname;
 import gamo.web.member.repository.MemberRepository;
 import gamo.web.member.repository.NicknameRepository;
-import gamo.web.member.service.MemberService;
+
 import gamo.web.videocall.domain.CallType;
 import gamo.web.videocall.domain.VideoCall;
 import gamo.web.videocall.dto.*;
@@ -110,18 +107,69 @@ public class VideoCallService {
     }
 
     // 홈화면 - 가장 최근에 통화한 사람과의 키워드 조회
+//    @Transactional(readOnly = true)
+//    public RecommendDTO.HomeKeywordResponseDTO viewLatestRecommendedKeywords(Member member) {
+//        // 가장 최근에 통화한 사람의 userId 조회
+//        VideoCall videoCall = videoCallRepository.findLatestCallIdByUserId(member.getId()).get();
+//        Long targetId = videoCall.getCaller().getId().equals(member.getId()) ? videoCall.getCaller().getId() : videoCall.getReceiver().getId();
+//        // 가장 최근에 통화한 사람 프로필, 이름, 주제 조회
+//        RecommendDTO.KeywordResponse keywordResponse = viewRecommendedKeywords(member, targetId, 1);
+//        RecommendDTO.HomeKeywordResponseDTO homeKeywordResponse = new RecommendDTO.HomeKeywordResponseDTO(
+//                memberRepository.findById(targetId).get().getProfileImage(),
+//                nicknameRepository.findByMemberIdAndAliasMemberId(member.getId(),targetId).get().getAlias(),
+//                keywordResponse.getTopic()
+//        );
+//        return homeKeywordResponse;
+//    }
     @Transactional(readOnly = true)
     public RecommendDTO.HomeKeywordResponseDTO viewLatestRecommendedKeywords(Member member) {
-        // 가장 최근에 통화한 사람의 userId 조회
-        VideoCall videoCall = videoCallRepository.findLatestCallIdByUserId(member.getId()).get();
-        Long targetId = videoCall.getCaller().getId().equals(member.getId()) ? videoCall.getCaller().getId() : videoCall.getReceiver().getId();
-        // 가장 최근에 통화한 사람 프로필, 이름, 주제 조회
-        RecommendDTO.KeywordResponse keywordResponse = viewRecommendedKeywords(member, targetId, 1);
-        RecommendDTO.HomeKeywordResponseDTO homeKeywordResponse = new RecommendDTO.HomeKeywordResponseDTO(
-                memberRepository.findById(targetId).get().getProfileImage(),
-                nicknameRepository.findByMemberIdAndAliasMemberId(member.getId(),targetId).get().getAlias(),
-                keywordResponse.getTopic()
+
+        // 1. 최근 통화
+        Optional<VideoCall> latestCallOpt =
+                videoCallRepository.findLatestCallIdByUserId(member.getId());
+
+        if (latestCallOpt.isEmpty()) {
+            return null;
+        }
+
+        VideoCall latestCall = latestCallOpt.get();
+
+        // 2. 상대방 찾기
+        Long targetId = latestCall.getCaller().getId().equals(member.getId()) ?
+                latestCall.getReceiver().getId() :
+                latestCall.getCaller().getId();
+
+        // 3. 추천 주제 가져오기
+        RecommendDTO.KeywordResponse keywordResponse =
+                viewRecommendedKeywords(member, targetId, 1);
+
+        String topic = (keywordResponse != null && keywordResponse.isSuccess())
+                ? keywordResponse.getTopic()
+                : null;
+
+        // 4. 상대방 Member 조회
+        Member target = memberRepository.findById(targetId)
+                .orElse(null);
+
+        String profileImage = (target != null) ? target.getProfileImage() : null;
+
+        // 5. 닉네임이 없으면 상대방 원래 이름 사용
+        String displayName = null;
+        if (target != null) {
+            Nickname nickname = nicknameRepository
+                    .findByMemberIdAndAliasMemberId(member.getId(), targetId)
+                    .orElse(null);
+
+            displayName = (nickname != null)
+                    ? nickname.getAlias()
+                    : target.getName();
+        }
+
+        // 6. 결과 리턴
+        return new RecommendDTO.HomeKeywordResponseDTO(
+                profileImage,
+                displayName,
+                topic
         );
-        return homeKeywordResponse;
     }
 }
