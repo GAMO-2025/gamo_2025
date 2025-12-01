@@ -40,6 +40,7 @@ public class RecommendDTO {
     @Getter
     @NoArgsConstructor
     public static class HomeKeywordResponseDTO {
+        private boolean success;
         private String profileImage;
         private String name;
         private String topic;
