@@ -5,55 +5,60 @@
 <th:block th:fragment="content">
     <div class="flex flex-col gap-2">
 
-        <!-- 통화 대상이 있을 때 -->
-        <div th:if="${home.targetNickname != null}"
-             class="px-6 py-8 mt-10 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.15)]">
+        <!-- 통화 추천 카드 (초기 로딩 상태) -->
+        <a th:href="@{/call}" class="block">
+        <div id="call-section"
+             class="px-6 py-8 mt-10 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.15)] animate-pulse">
 
             <div class="flex items-center gap-4">
 
-                <img class="h-14 w-14 rounded-full object-cover"
-                     th:src="${home.getTargetProfileImage()}"
+                <!-- 로딩 중에는 이미지 숨기게 -->
+                <img id="call-profile-img"
+                     class="h-14 w-14 rounded-full object-cover hidden"
+                     src=""
                      alt="profile"/>
 
                 <div class="text-left">
-                    <p class="text-[20px] font-bold text-[#AB8D66]"
-                       th:text="${home.targetNickname + '님과'}"></p>
 
-                    <p class="text-[16px] font-bold"
-                       th:text="'&quot;' + ${home.ajenda} + '&quot;'"></p>
+                    <p id="call-name-text"
+                       class="text-[20px] font-bold text-[#AB8D66]">
+                        ...
+                    </p>
 
-                    <p class="text-[16px] font-bold">주제로 통화해보세요!</p>
+                    <p id="call-topic-text"
+                       class="text-[16px] font-bold text-gray-600">
+                        주제를 불러오는 중이에요...
+                    </p>
+
                 </div>
             </div>
         </div>
+        </a>
 
-
-        <!-- 통화 대상이 없을 때 -->
-        <div th:unless="${home.targetNickname != null}"
+        <!-- 추천 없음 카드 -->
+        <a th:href="@{/call}" class="block">
+        <div id="call-empty-section"
              class="flex flex-col px-6 py-8 items-center justify-center text-center mt-10
-                rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.15)]">
+                    rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.15)] hidden">
 
             <p class="text-[16px] font-bold text-[#AB8D66]">
                 추천 주제가 없습니다...<br>
                 가족과 통화해보세요!
             </p>
         </div>
-
+        </a>
 
         <!-- 앨범 카드 -->
         <a th:href="@{/album}">
             <div class="mt-4 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.15)] overflow-hidden">
 
-                <!-- 썸네일이 있을 때 -->
                 <div th:if="${home.albumThumbnail != null}"
-                     class="relative w-full h-40">  <!-- 높이 고정 -->
+                     class="relative w-full h-40">
 
-                    <!-- 배경 이미지 (카드 안에서 크기 고정) -->
                     <img class="w-full h-full object-cover"
                          th:src="@{'/photo/file/' + ${home.albumThumbnail}}"
                          alt="album-thumbnail"/>
 
-                    <!-- 왼쪽 30%만 덮는 오버레이 -->
                     <div class="absolute inset-y-0 left-0 w-1/3 bg-black/30 flex items-center">
                         <div class="px-4 text-left">
                             <p class="text-xs font-semibold text-white opacity-90">
@@ -66,7 +71,6 @@
                     </div>
                 </div>
 
-                <!-- 썸네일이 없을 때 -->
                 <div th:if="${home.albumThumbnail == null}"
                      class="flex flex-col px-6 py-8 items-center justify-center text-center bg-white">
                     <p class="text-[16px] font-bold text-[#AB8D66]">
@@ -78,28 +82,70 @@
         </a>
 
 
-
+        <!-- 편지 카드 -->
         <div class="mt-4 flex flex-col px-6 py-8 items-center justify-center text-center
-        rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.15)]">
+                    rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.15)]">
             <a th:href="@{/letter}">
-            <p class = "text-[16px] font-bold text-[#AB8D66]">현재 읽지 않은 편지가</p>
-            <p id="unreadLetterCount" class="text-[16px] font-bold text-[#AB8D66]" th:text="${home.unreadLetterCount + '개 있어요!'}"></p>
+                <p class="text-[16px] font-bold text-[#AB8D66]">현재 읽지 않은 편지가</p>
+                <p id="unreadLetterCount"
+                   class="text-[16px] font-bold text-[#AB8D66]"
+                   th:text="${home.unreadLetterCount + '개 있어요!'}"></p>
             </a>
-    </div>
+        </div>
 
     </div>
 
     <script th:inline="javascript">
-        const unreadCountElem = document.getElementById('unreadLetterCount');
 
+        <!-- 통화 추천 주제 비동기 로딩-->
+        document.addEventListener('DOMContentLoaded', function () {
+            const callSection = document.getElementById('call-section');
+            const callEmptySection = document.getElementById('call-empty-section');
+
+            const profileImg = document.getElementById('call-profile-img');
+            const nameText = document.getElementById('call-name-text');
+            const topicText = document.getElementById('call-topic-text');
+
+            // 초기 로딩 상태 텍스트 유지 (img는 hidden 상태)
+            nameText.textContent = '...';
+            topicText.textContent = '주제를 불러오는 중이에요...';
+
+            fetch('/api/topics/home')
+                .then(res => res.ok ? res.json() : Promise.reject(res))
+                .then(data => {
+                    console.log("[HOME] 추천 주제 API 응답:", data);
+
+                    if (!data || !data.success || !data.topic || !data.name) {
+                        callSection.classList.add('hidden');
+                        callEmptySection.classList.remove('hidden');
+                        return;
+                    }
+
+                    // 성공 → 내용 채우고 이미지 보이기
+                    if (data.profileImage) {
+                        profileImg.src = data.profileImage;
+                        profileImg.classList.remove('hidden');  // API 성공하면 이미지 보여줌
+                    }
+
+                    nameText.textContent = data.name + '님과';
+                    topicText.textContent = '"' + data.topic + '"';
+
+                    callSection.classList.remove('animate-pulse'); // 로딩 애니 제거
+                })
+                .catch(err => {
+                    console.error("추천 주제 API 오류:", err);
+                    callSection.classList.add('hidden');
+                    callEmptySection.classList.remove('hidden');
+                });
+        });
+
+        const unreadCountElem = document.getElementById('unreadLetterCount');
         if (unreadCountElem) {
             const homeEventSource = new EventSource('/sse/letters');
 
             homeEventSource.onmessage = function (event) {
                 const data = JSON.parse(event.data);
-                console.log("[HOME SSE] 이벤트 도착:", data);
 
-                // unreadCount 값만 있으면 갱신
                 if (typeof data.unreadCount === "number") {
                     unreadCountElem.textContent = data.unreadCount + "개 있어요!";
                 }
@@ -109,8 +155,8 @@
                 console.error("SSE 연결 오류", err);
             };
         }
-    </script>
 
+    </script>
 
 </th:block>
 
