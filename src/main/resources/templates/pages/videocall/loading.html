@@ -42,6 +42,10 @@
         <button onclick="goBack()" class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg font-semibold">돌아가기</button>
     </div>
 
+
+    <th:block th:replace="~{fragments/alert-modal :: alertModal('commonAlert', '알림 메시지')}" />
+    <th:block th:replace="~{fragments/action-modal :: actionModal('cancelConfirmModal', '정말 통화를 취소하시겠습니까?', '취소', '닫기')}" />
+
     <script th:inline="javascript">
         /*<![CDATA[*/
         const mode = /*[[${mode}]]*/ 'calling';
@@ -62,7 +66,7 @@
                 console.log("loading: CALL_REQUEST 전송:", msg);
 
                 callTimeout = setTimeout(() => {
-                    alert("상대방이 응답하지 않습니다.");
+                    openAlertModal('commonAlert', '상대방이 응답하지 않습니다.');
                     socket.close();
                     window.location.href = "/call";
                 }, 90000);
@@ -100,22 +104,23 @@
                         break;
 
                     case "CALL_TIMEOUT":
-                        alert("통화 시간이 초과되었습니다.");
+                        openAlertModal('commonAlert', '통화 시간이 초과되었습니다.');
                         window.location.href = "/call";
                         break;
 
                     case "CALL_REJECTED":
+                        openAlertModal('commonAlert', '상대방이 전화를 거절했습니다.');
                         alert("상대방이 전화를 거절했습니다.");
                         window.location.href = "/call";
                         break;
 
                     case "CALL_BUSY":
-                        alert("상대방이 통화 중입니다.");
+                        openAlertModal('commonAlert', '상대방이 통화 중입니다.');
                         window.location.href = "/call";
                         break;
 
                     case "CALL_CANCELLED":
-                        alert("상대방이 통화를 취소하였습니다.");
+                        openAlertModal('commonAlert', '상대방이 통화를 취소했습니다.');
                         window.location.href = "/call";
                         break;
                 }
@@ -167,11 +172,14 @@
 
         function cancelCall() {
             clearTimeout(callTimeout);
-            sendMessage("CALL_CANCEL", { from: userId, to: targetId });
-            alert("통화를 취소했습니다.");
-            setTimeout(() => {
-                window.location.href = "/call";
-            }, 200);
+
+            openActionModal('cancelConfirmModal',
+                '정말 통화를 취소하시겠습니까?',
+                () => {
+                    sendMessage("CALL_CANCEL", { from: userId, to: targetId });
+                    window.location.href = "/call";
+                }
+            );
         }
 
         window.addEventListener("DOMContentLoaded", () => {

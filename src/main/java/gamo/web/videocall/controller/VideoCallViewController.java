@@ -2,6 +2,7 @@ package gamo.web.videocall.controller;
 import gamo.web.auth.UserPrincipal;
 import gamo.web.family.dto.FamilyListDTO;
 import gamo.web.member.service.MemberService;
+import gamo.web.videocall.dto.RecommendDTO;
 import gamo.web.videocall.dto.VideoCallHistoryListResponse;
 import gamo.web.videocall.dto.VideoCallListResponse;
 import gamo.web.videocall.service.VideoCallService;
@@ -121,6 +122,7 @@ public class VideoCallViewController {
         model.addAttribute("targetId", targetId);
         return "pages/videocall/videocall";
     }
+
 
 
 
