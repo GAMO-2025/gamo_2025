@@ -68,62 +68,63 @@
         });
 
 
+    let page = 1;          // 첫 페이지(0)는 서버에서 이미 내려줌
+    const size = 20;
+    let isLoading = false;
+    let isLast = false;
+    const grid = document.getElementById("pic-grid");
 
-        let page = 1;
-        const size = 20; //20개씩
-        let isLoading = false; // 중복 요청 방지
-        let isLast = false; //마지막 페이지 도달 여부
-        const grid = document.getElementById("pic-grid");
+    async function loadMorePhotos() {
+        if (isLoading || isLast) return;
+        isLoading = true;
 
-        async function loadMorePhotos() {
-                if (isLoading || isLast) return;
-                isLoading = true;
+        try {
+            const response = await fetch(`/album/${albumId}/paged?page=${page}&size=${size}`);
+            const pageData = await response.json();
 
-                try {
-                    const response = await fetch(`/album/${albumId}/paged?page=${page}&size=${size}`);
-                    const pageData = await response.json();
-
-                    // 마지막 페이지 체크
-                    if (!pageData.content || pageData.content.length === 0 || pageData.last === true) {
-                        isLast = true;
-                        return;
-                    }
-
-                    // 받아온 사진 띄우기
-                    pageData.content.forEach(photo => {
-                        const div = document.createElement("div");
-                        div.className = "photo-item relative w-full aspect-square overflow-hidden";
-
-                        div.innerHTML = `
-                            <a href="/photo/${photo.photo_id}" class="block w-full h-full">
-                                <img src="https://storage.cloud.google.com/gamo_bucket/photo/${photo.url}"
-                                     alt="앨범 사진"
-                                     class="w-full h-full object-cover transition-transform duration-300 hover:scale-105"/>
-                            </a>
-                        `;
-
-                        grid.appendChild(div);
-                    });
-
-                    page++; // 다음 페이지 준비
-
-                } catch (err) {
-                    console.error("무한 스크롤 요청 중 오류:", err);
-                } finally {
-                    isLoading = false;
-                }
+            if (!pageData.content || pageData.content.length === 0) {
+                isLast = true;
+                return;
             }
 
-        // 스크롤 이벤트 감지
-        window.addEventListener("scroll", () => {
-            const scrollPosition = window.innerHeight + window.scrollY;
-            const documentHeight = document.body.offsetHeight;
-
-            // 페이지 끝에서 300px 남았을 때 로딩
-            if (scrollPosition >= documentHeight - 300) {
-                loadMorePhotos();
+            // 마지막 페이지인지 체크
+            if (pageData.last === true) {
+                isLast = true;
             }
-        });
+
+            pageData.content.forEach(photo => {
+                const div = document.createElement("div");
+                div.className = "photo-item relative w-full aspect-square overflow-hidden";
+
+                div.innerHTML = `
+                    <a href="/photo/${photo.photo_id}" class="block w-full h-full">
+                        <img src="${photo.url}"
+                             alt="앨범 사진"
+                             class="w-full h-full object-cover transition-transform duration-300 hover:scale-105"/>
+                    </a>
+                `;
+
+                grid.appendChild(div);
+            });
+
+            page++; // 다음 페이지
+
+        } catch (err) {
+            console.error("무한 스크롤 오류:", err);
+        } finally {
+            isLoading = false;
+        }
+    }
+
+    window.addEventListener("scroll", () => {
+        const scrollPosition = window.innerHeight + window.scrollY;
+        const documentHeight = document.body.offsetHeight;
+
+        if (scrollPosition >= documentHeight - 400) {
+            loadMorePhotos();
+        }
+    });
+
     });
 </script>
 </th:block>

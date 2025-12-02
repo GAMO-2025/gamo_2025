@@ -68,9 +68,11 @@ public class AlbumController {
                                    Model model) {
 
         Long memberId = user.getMember().getId();
+
         Page<PhotoInAlbumDTO> photoList = photoService.getPhotoListByAlbumId(memberId, albumId, 0, 20);
 
         model.addAttribute("photoList", photoList);
+        model.addAttribute("albumId", albumId);
         return "pages/photo/photoList";
     }
 
@@ -80,12 +82,11 @@ public class AlbumController {
     public Page<PhotoInAlbumDTO> getPhotosInAlbumPaged(
             @AuthenticationPrincipal UserPrincipal user,
             @PathVariable("albumId") Long albumId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size
     ) {
 
         Long memberId = user.getMember().getId();
-
         return photoService.getPhotoListByAlbumId(memberId, albumId, page, size);
     }
 }
