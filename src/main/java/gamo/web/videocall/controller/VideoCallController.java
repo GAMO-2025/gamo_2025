@@ -44,5 +44,4 @@ public class VideoCallController {
         return ResponseEntity.ok(latestCallId);
     }
 
-
 }

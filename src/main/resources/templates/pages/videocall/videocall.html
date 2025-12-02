@@ -31,9 +31,10 @@
                 </button>
             </div>
         </div>
-
-        <div id="downloadLink" class="mt-6"></div>
+        <th:block th:replace="~{fragments/alert-modal :: alertModal('commonAlert', '알림 메시지')}" />
+        <th:block th:replace="~{fragments/action-modal :: actionModal('cancelConfirmModal', '정말 통화를 종료하시겠습니까?', '종료', '닫기')}" />
     </th:block>
+
 
     <th:block th:fragment="script">
         <script th:inline="javascript">
@@ -382,7 +383,7 @@
                 // 목적지 생성 (섞인 오디오 출력)
                 const destination = audioContext.createMediaStreamDestination();
 
-                // Gain을 목적지에 연결 (중요!)
+                // Gain을 목적지에 연결
                 localGain.connect(destination);
                 remoteGain.connect(destination);
 
@@ -556,7 +557,7 @@
                             text: sttText
                         };
 
-                        const response = await fetch('http://34.64.181.41:8000/api/keyword', {
+                        const response = await fetch('http://34.158.203.193:8000/api/keyword', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'
@@ -644,7 +645,6 @@
                 }
 
                 setTimeout(() => {
-                    alert(message);
                     window.location.href = "/call";
                 }, 300);
             }
@@ -712,8 +712,13 @@
             });
 
             document.getElementById("endBtn").addEventListener("click", () => {
-                console.log('videocall: End button clicked');
-                closeCallWithRedirect('통화가 종료되었습니다.');
+                openActionModal('cancelConfirmModal',
+                    '정말 통화를 종료하시겠습니까?',
+                    () => {
+                        console.log('videocall: End call confirmed by user');
+                        closeCallWithRedirect('통화가 종료되었습니다.');
+                    }
+                );
             });
 
             if (isInitiator) {
@@ -722,6 +727,43 @@
             } else {
                 console.log('videocall: I am RECEIVER, waiting for OFFER');
             }
+
+            // END_CALL 자동 처리 보강
+            setTimeout(() => {
+                if (!window.globalCallSocket) return;
+
+                const socket = window.globalCallSocket;
+                const originalOnMessage = socket.onmessage;
+
+                socket.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    const msgType = data.type;
+
+                    // END_CALL 우선 처리
+                    if (msgType === 'END_CALL') {
+                        console.log('[END_CALL] 상대방 종료 감지');
+                        if (!isCallEnding) {
+                            isCallEnding = true;
+                            closeCallWithRedirect('상대방이 통화를 종료했습니다.');
+                        }
+                        return;
+                    }
+
+                    // WebRTC 메시지 처리
+                    if (msgType === 'OFFER' || msgType === 'ANSWER' || msgType === 'CANDIDATE') {
+                        if (typeof window.handleWebRTCMessage === 'function') {
+                            window.handleWebRTCMessage(data);
+                        }
+                        return;
+                    }
+
+                    // 나머지는 원래대로
+                    if (typeof originalOnMessage === 'function') {
+                        originalOnMessage.call(socket, event);
+                    }
+                };
+            }, 200);
+
             /*]]>*/
         </script>
     </th:block>

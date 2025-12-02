@@ -10,6 +10,7 @@ import org.springframework.security.core.parameters.P;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface VideoCallRepository extends JpaRepository<VideoCall, Long> {
 
@@ -37,9 +38,10 @@ public interface VideoCallRepository extends JpaRepository<VideoCall, Long> {
 
     @Query("""
     SELECT v FROM VideoCall v
-        WHERE v.caller.id = :userId OR v.receiver.id = :userId
+        WHERE v.caller.id = :userId OR v.receiver.id = :userId AND v.callType = 'COMPLETED'
         ORDER BY v.createdAt DESC
         LIMIT 1
     """)
-    Long findLatestCallIdByUserId(@Param("userId") Long userId);
+    Optional<VideoCall> findLatestCallIdByUserId(@Param("userId") Long userId);
+
 }

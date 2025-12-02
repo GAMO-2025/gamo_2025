@@ -2,6 +2,7 @@ package gamo.web.videocall.controller;
 import gamo.web.auth.UserPrincipal;
 import gamo.web.family.dto.FamilyListDTO;
 import gamo.web.member.service.MemberService;
+import gamo.web.videocall.dto.RecommendDTO;
 import gamo.web.videocall.dto.VideoCallHistoryListResponse;
 import gamo.web.videocall.dto.VideoCallListResponse;
 import gamo.web.videocall.service.VideoCallService;
@@ -91,7 +92,7 @@ public class VideoCallViewController {
 
             } else if ("incoming".equals(mode)) {
                 // 전화 받는 사람 입장
-                FamilyListDTO caller = memberService.getFamilyMember(targetId, currentUserId);
+                FamilyListDTO caller = memberService.getFamilyMember(currentUserId, targetId);
                 if (caller == null) {
                     throw new IllegalArgumentException("존재하지 않는 발신자입니다.");
                 }
@@ -121,6 +122,7 @@ public class VideoCallViewController {
         model.addAttribute("targetId", targetId);
         return "pages/videocall/videocall";
     }
+
 
 
 
