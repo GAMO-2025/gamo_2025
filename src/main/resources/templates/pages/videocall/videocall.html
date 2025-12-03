@@ -89,7 +89,6 @@
                 try {
                     console.log('videocall: Initializing WebRTC...');
 
-                    // Step 1: 카메라/마이크 권한 요청
                     console.log('videocall: Requesting camera/mic access with facingMode=' + currentCamera);
 
                     localStream = await navigator.mediaDevices.getUserMedia({
@@ -106,35 +105,29 @@
 
                     console.log('videocall: Media devices granted - localStream obtained');
 
-                    // Step 2: RTCPeerConnection 생성
                     pc = new RTCPeerConnection({
                         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
                     });
 
                     console.log('videocall: RTCPeerConnection created');
 
-                    // Step 3: 로컬 비디오에 스트림 표시
                     document.getElementById("localVideo").srcObject = localStream;
                     console.log('videocall: Local video element set');
 
-                    // Step 4: 오디오/비디오 트랙 추출
                     audioTracks = localStream.getAudioTracks();
                     videoTracks = localStream.getVideoTracks();
                     console.log('videocall: Audio tracks=' + audioTracks.length + ', Video tracks=' + videoTracks.length);
 
-                    // Step 5: 트랙을 PeerConnection에 추가
                     localStream.getTracks().forEach(track => {
                         pc.addTrack(track, localStream);
                         console.log('videocall: Added track to PeerConnection - kind=' + track.kind);
                     });
 
-                    //  원격 트랙 수신 처리
                     pc.ontrack = (event) => {
                         console.log('videocall: Remote track received - kind=' + event.track.kind);
                         remoteStream = event.streams[0];
                         document.getElementById("remoteVideo").srcObject = remoteStream;
                         console.log('videocall: Remote video element set');
-                        // 한쪽만 녹음을 진행
                         if (!recordingStarted && isInitiator) {
                             console.log('videocall: Remote stream ready, starting recording');
                             startRecordingNow();
@@ -144,7 +137,6 @@
                         }
                     };
 
-                    // ICE Candidate 처리
                     pc.onicecandidate = (event) => {
                         if (event.candidate) {
                             console.log('videocall: ICE candidate generated');
@@ -166,7 +158,6 @@
                     console.error('videocall: Error name=' + error.name);
                     console.error('videocall: Error message=' + error.message);
 
-                    // 에러 유형별 처리
                     if (error.name === 'NotAllowedError') {
                         console.error('videocall: User denied camera/mic permission');
                         alert('카메라와 마이크 접근을 거부했습니다.\n브라우저 설정에서 허용해주세요.');
@@ -362,33 +353,29 @@
                 });
                 console.log('videocall: OFFER sent');
             }
+
             function mergeAudioStreams(localStream, remoteStream) {
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
                 const localSource = audioContext.createMediaStreamSource(localStream);
                 const remoteSource = audioContext.createMediaStreamSource(remoteStream);
 
-                // Gain 노드 생성 (음량 조절)
                 const localGain = audioContext.createGain();
                 const remoteGain = audioContext.createGain();
 
-                // 각각의 음량을 1.0으로 설정
                 localGain.gain.value = 1.0;
                 remoteGain.gain.value = 1.0;
 
-                // 소스를 Gain에 연결
                 localSource.connect(localGain);
                 remoteSource.connect(remoteGain);
 
-                // 목적지 생성 (섞인 오디오 출력)
                 const destination = audioContext.createMediaStreamDestination();
 
-                // Gain을 목적지에 연결
                 localGain.connect(destination);
                 remoteGain.connect(destination);
 
-                console.log('videocall: Audio streams merged - destination tracks:', destination.stream.getTracks().length);
-                console.log('videocall: Audio streams merged - audio tracks:', destination.stream.getAudioTracks().length);
+                console.log('videocall: Audio streams merged - destination tracks=' + destination.stream.getTracks().length);
+                console.log('videocall: Audio streams merged - audio tracks=' + destination.stream.getAudioTracks().length);
 
                 return destination.stream;
             }
@@ -412,11 +399,9 @@
                 try {
                     console.log('videocall: Starting to record both local and remote audio');
 
-                    // 1. 로컬 트랙 확인
                     const localAudioTracks = localStream.getAudioTracks();
                     console.log('videocall: Local audio tracks count=' + localAudioTracks.length);
 
-                    // 2. 원격 트랙 확인
                     const remoteAudioTracks = remoteStream.getAudioTracks();
                     console.log('videocall: Remote audio tracks count=' + remoteAudioTracks.length);
 
@@ -425,12 +410,10 @@
                         return;
                     }
 
-                    // 3. 두 오디오를 Gain으로 섞기
                     const mergedAudio = mergeAudioStreams(localStream, remoteStream);
                     console.log('videocall: Merged audio tracks count=' + mergedAudio.getTracks().length);
                     console.log('videocall: Merged audio audio-tracks count=' + mergedAudio.getAudioTracks().length);
 
-                    // 4. 섞인 오디오만 담기
                     const recordingTracks = [];
                     recordingTracks.push(...mergedAudio.getAudioTracks());
 
@@ -443,7 +426,6 @@
                         return;
                     }
 
-                    // 5. RecordRTC로 녹음 시작
                     recorder = RecordRTC(mixedStream, {
                         type: 'audio',
                         mimeType: 'audio/webm',
@@ -459,7 +441,6 @@
                     console.error('videocall: Error stack - ' + e.stack);
                 }
             }
-
 
             function stopRecording() {
                 return new Promise((resolve) => {
@@ -486,7 +467,6 @@
 
                             console.log('videocall: Sending recording to STT');
 
-                            // STT 변환 요청
                             let response = await fetch('/letter/api/videocall/stt', {
                                 method: 'POST',
                                 body: formData
@@ -500,19 +480,27 @@
                                 return;
                             }
 
-                            // STT 결과 가져오기
                             const data = await response.json();
                             const sttStatus = data.status;
                             const sttText = data.text;
 
-                            // 가장 최근의 videocallId 가져오기
-                            const videCallId = fetchLatestVideoCallId(userId);
+                            console.log('videocall: STT conversion complete - text length=' + (sttText ? sttText.length : 0));
 
+                            console.log('videocall: Fetching latest videoCallId for userId=' + userId);
+                            const videoCallId = await fetchLatestVideoCallId(userId);
 
+                            console.log('videocall: Fetched videoCallId=' + videoCallId);
 
-                            sendToKeywordAPIWithRetry(videCallId, sttText);
+                            if (!videoCallId) {
+                                console.error('videocall: videoCallId is null, cannot proceed with keyword API');
+                                resolve();
+                                return;
+                            }
 
-                            console.log('videocall: STT conversion complete');
+                            console.log('videocall: Starting keyword API call with videoCallId=' + videoCallId + ', sttText length=' + sttText.length);
+                            await sendToKeywordAPIWithRetry(videoCallId, sttText);
+
+                            console.log('videocall: Keyword API process completed');
                             resolve();
 
                         } catch (e) {
@@ -523,16 +511,21 @@
                 });
             }
 
-            // 가장 최근의 videocallId 가져오기
             async function fetchLatestVideoCallId(userId) {
                 try {
+                    console.log('videocall: API request - GET /api/video-calls/latest/' + userId);
                     const response = await fetch(`/api/video-calls/latest/${userId}`);
+
+                    console.log('videocall: API response status=' + response.status);
+
                     if (!response.ok) {
                         console.error('videocall: Failed to fetch latest videocallId - ' + response.statusText);
                         return null;
                     }
+
                     const data = await response.json();
-                    console.log('videocall: Latest videocallId fetched - ' + data.videocallId);
+                    console.log('videocall: Latest videocallId fetched - videoCallId=' + data.videocallId);
+
                     return data.videocallId;
                 } catch (e) {
                     console.error('videocall: Error fetching latest videocallId - ' + e.message);
@@ -540,11 +533,12 @@
                 }
             }
 
-            // 키워드 조회 API 호출
             async function sendToKeywordAPIWithRetry(videoCallId, sttText) {
                 const maxRetries = 5;
                 let currentRetry = 0;
                 const fetchTimeout = 10000;
+
+                console.log('videocall: Keyword API initialization - videoCallId=' + videoCallId + ', textLength=' + sttText.length);
 
                 while(currentRetry < maxRetries) {
                     try{
@@ -557,6 +551,9 @@
                             text: sttText
                         };
 
+                        console.log('videocall: Keyword API payload - call_id=' + payload.call_id + ', text length=' + payload.text.length);
+                        console.log('videocall: Sending POST request');
+
                         const response = await fetch('http://34.158.203.193:8000/api/keyword', {
                             method: 'POST',
                             headers: {
@@ -565,40 +562,50 @@
                             body: JSON.stringify(payload),
                             signal: controller.signal
                         });
+
                         clearTimeout(timeoutId);
+                        console.log('videocall: Keyword API HTTP response received - status code=' + response.status);
 
                         const responseData = await response.json();
                         const status = responseData.status;
 
-                        console.log('videocall: Keyword API response status=' + status);
+                        console.log('videocall: Keyword API response parsed - status=' + status);
+                        console.log('videocall: Keyword API full response=' + JSON.stringify(responseData));
+
                         if (status === 200) {
                             console.log('videocall: Keyword API success - STT processing complete');
                             return;
                         } else if (status === 500) {
-                            console.warn('videocall: Keyword API server error - ' + responseData.detail);
+                            console.warn('videocall: Keyword API server error - detail=' + (responseData.detail || 'no detail provided'));
                             currentRetry++;
 
                             if (currentRetry < maxRetries) {
                                 const waitTime = Math.pow(2, currentRetry) * 1000;
-                                console.log('videocall: Retrying in ' + waitTime + 'ms (' + currentRetry + '/' + maxRetries + ')');
+                                console.log('videocall: Retrying in ' + waitTime + 'ms - attempt ' + currentRetry + '/' + maxRetries);
                                 await new Promise(resolve => setTimeout(resolve, waitTime));
                             } else {
-                                console.error('videocall: Max retries reached (5/5)');
+                                console.error('videocall: Max retries reached - attempt ' + maxRetries + '/' + maxRetries);
                             }
                         } else {
                             console.error('videocall: Unexpected keyword API status=' + status);
+                            console.error('videocall: Response detail=' + JSON.stringify(responseData));
                             return;
                         }
                     } catch (e) {
-                        console.error('videocall: Keyword API request error - ' + e.message);
+                        console.error('videocall: Keyword API request error - error name=' + e.name + ', message=' + e.message);
+
+                        if (e.name === 'AbortError') {
+                            console.error('videocall: Request timeout after ' + fetchTimeout + 'ms');
+                        }
+
                         currentRetry++;
 
                         if (currentRetry < maxRetries) {
                             const waitTime = Math.pow(2, currentRetry) * 1000;
-                            console.log('videocall: Retrying after error in ' + waitTime + 'ms (' + currentRetry + '/' + maxRetries + ')');
+                            console.log('videocall: Retrying after error in ' + waitTime + 'ms - attempt ' + currentRetry + '/' + maxRetries);
                             await new Promise(resolve => setTimeout(resolve, waitTime));
                         } else {
-                            console.error('videocall: Keyword API failed');
+                            console.error('videocall: Keyword API failed after all retries - max attempts ' + maxRetries + ' exceeded');
                             return;
                         }
                     }
@@ -728,7 +735,6 @@
                 console.log('videocall: I am RECEIVER, waiting for OFFER');
             }
 
-            // END_CALL 자동 처리 보강
             setTimeout(() => {
                 if (!window.globalCallSocket) return;
 
@@ -739,9 +745,8 @@
                     const data = JSON.parse(event.data);
                     const msgType = data.type;
 
-                    // END_CALL 우선 처리
                     if (msgType === 'END_CALL') {
-                        console.log('[END_CALL] 상대방 종료 감지');
+                        console.log('videocall: END_CALL message detected');
                         if (!isCallEnding) {
                             isCallEnding = true;
                             closeCallWithRedirect('상대방이 통화를 종료했습니다.');
@@ -749,7 +754,6 @@
                         return;
                     }
 
-                    // WebRTC 메시지 처리
                     if (msgType === 'OFFER' || msgType === 'ANSWER' || msgType === 'CANDIDATE') {
                         if (typeof window.handleWebRTCMessage === 'function') {
                             window.handleWebRTCMessage(data);
@@ -757,7 +761,6 @@
                         return;
                     }
 
-                    // 나머지는 원래대로
                     if (typeof originalOnMessage === 'function') {
                         originalOnMessage.call(socket, event);
                     }
