@@ -22,11 +22,6 @@ public class TopicService {
     private static final int MAX_RETRY_COUNT = 3;
     private static final long INITIAL_DELAY_MS = 2000;
 
-
-    /* ===========================
-           🔹 Public API Methods
-       =========================== */
-
     public RecommendDTO.RecommendResponse getRecommendedTopic(RecommendDTO.RecommendRequest request) {
         log.info("TopicService: 추천 주제 요청 시작 - videoCallIds={}", request.getVideoCallIds());
         return callApiWithRetry(AJENDA_API_URL, request, 1);
@@ -37,9 +32,6 @@ public class TopicService {
         callApiWithRetry(TOPIC_API_URL, request, 1);
     }
 
-    /* ===========================
-           🔹 공통 API 호출 로직
-       =========================== */
 
     private RecommendDTO.RecommendResponse callApiWithRetry(
             String url,
@@ -118,9 +110,6 @@ public class TopicService {
         return null;
     }
 
-    /* ===========================
-           🔹 Retry 딜레이 적용
-       =========================== */
 
     private void sleepForRetry(int attempt) {
         long delay = INITIAL_DELAY_MS * (long) Math.pow(2, attempt - 1);

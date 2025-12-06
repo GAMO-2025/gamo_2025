@@ -1,10 +1,7 @@
 package gamo.web.videocall.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 
@@ -52,6 +49,11 @@ public class RecommendDTO {
         @JsonProperty("call_id")
         private Long callId;
         @JsonProperty("text")
+        private String text;
+    }
+    @AllArgsConstructor
+    @Getter
+    public static class TopicProxyRequest {
         private String text;
     }
 

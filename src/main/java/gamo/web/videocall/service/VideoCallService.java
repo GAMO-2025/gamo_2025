@@ -75,8 +75,9 @@ public class VideoCallService {
     // 가장 최근의 통화 기록 조회
     @Transactional(readOnly = true)
     public Long getLatestCallId(Long userId) {
-        Long latestCallId = videoCallRepository.findLatestCallIdByUserId(userId).get().getId();
-        return latestCallId;
+        return videoCallRepository.findLatestCallIdByUserId(userId)
+                .map(VideoCall::getId)
+                .orElseThrow(() -> new CustomException(ErrorCode.VIDEO_CALL_NOT_FOUND));
     }
 
     /**
@@ -106,6 +107,17 @@ public class VideoCallService {
         RecommendDTO.KeywordResponse keywordResponse = new RecommendDTO.KeywordResponse(true, response.getRecommendedTopic());
         return keywordResponse;
     }
+
+    @Transactional
+    public void resolveTopicWithRecentCallId(RecommendDTO.TopicProxyRequest request, Long userId) {
+        Long callId = getLatestCallId(userId);
+        if (callId == null) {
+            throw new CustomException(ErrorCode.VIDEO_CALL_NOT_FOUND);
+        }
+        RecommendDTO.TopicRequest topicRequest = new RecommendDTO.TopicRequest(callId,request.getText());
+        topicService.sendTopicRequest(topicRequest);
+    }
+
 
     // 홈화면 - 가장 최근에 통화한 사람과의 키워드 조회
     @Transactional(readOnly = true)
