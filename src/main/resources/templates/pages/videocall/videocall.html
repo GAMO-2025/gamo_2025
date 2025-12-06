@@ -554,7 +554,7 @@
                         console.log('videocall: Keyword API payload - call_id=' + payload.call_id + ', text length=' + payload.text.length);
                         console.log('videocall: Sending POST request');
 
-                        const response = await fetch('http://34.158.203.193:8000/api/keyword', {
+                        const response = await fetch('/api/topics/proxy', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'
