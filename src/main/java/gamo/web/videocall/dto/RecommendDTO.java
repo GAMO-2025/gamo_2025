@@ -46,4 +46,13 @@ public class RecommendDTO {
         private String topic;
     }
 
+    @AllArgsConstructor
+    @Getter
+    public static class TopicRequest {
+        @JsonProperty("call_id")
+        private Long callId;
+        @JsonProperty("text")
+        private String text;
+    }
+
 }

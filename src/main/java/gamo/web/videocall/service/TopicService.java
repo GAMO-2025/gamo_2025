@@ -12,99 +12,124 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
+@RequiredArgsConstructor
 public class TopicService {
 
     private static final String AJENDA_API_URL = "http://34.158.203.193:8000/api/ajenda";
+    private static final String TOPIC_API_URL = "http://34.158.203.193:8000/api/keyword";
+
     private static final int MAX_RETRY_COUNT = 3;
     private static final long INITIAL_DELAY_MS = 2000;
 
-    public RecommendDTO.RecommendResponse getRecommendedTopic(
-            RecommendDTO.RecommendRequest request) {
-        log.info("TopicService: 추천 주제 조회 시작 - videoCallIds={}", request.getVideoCallIds());
-        return retryApiCall(request, 1);
+
+    /* ===========================
+           🔹 Public API Methods
+       =========================== */
+
+    public RecommendDTO.RecommendResponse getRecommendedTopic(RecommendDTO.RecommendRequest request) {
+        log.info("TopicService: 추천 주제 요청 시작 - videoCallIds={}", request.getVideoCallIds());
+        return callApiWithRetry(AJENDA_API_URL, request, 1);
     }
 
-    private RecommendDTO.RecommendResponse retryApiCall(
-            RecommendDTO.RecommendRequest request,
-            int attemptCount) {
-        log.info("TopicService: API 호출 시도 - {}/{}", attemptCount, MAX_RETRY_COUNT);
+    public void sendTopicRequest(RecommendDTO.TopicRequest request) {
+        log.info("TopicService: 키워드 분석 요청 시작 - videoCallId={}", request.getCallId());
+        callApiWithRetry(TOPIC_API_URL, request, 1);
+    }
 
-        long startTime = System.currentTimeMillis();
+    /* ===========================
+           🔹 공통 API 호출 로직
+       =========================== */
+
+    private RecommendDTO.RecommendResponse callApiWithRetry(
+            String url,
+            Object requestBody,
+            int attempt
+    ) {
+        log.info("TopicService: API 호출 시도 {}/{}", attempt, MAX_RETRY_COUNT);
 
         try {
-            RestTemplate restTemplate = new RestTemplate();
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<RecommendDTO.RecommendRequest> entity = new HttpEntity<>(request, headers);
-            log.info("TopicService: 요청 전송 - URL={}, 요청본문={}", AJENDA_API_URL, request.getVideoCallIds());
-
-            ResponseEntity<Map> response = restTemplate.exchange(
-                    AJENDA_API_URL,
-                    HttpMethod.POST,
-                    entity,
-                    Map.class
-            );
-
-            long duration = System.currentTimeMillis() - startTime;
-            log.info("TopicService: API 응답 수신 - statusCode={}, 소요시간={}ms",
-                    response.getStatusCode(), duration);
-
-            Map<String, Object> responseBody = response.getBody();
-
-            if (responseBody == null) {
-                log.error("TopicService: 응답 본문이 비어있습니다");
-                return handleRetryOrFail(request, attemptCount, "응답 본문이 null입니다");
-            }
-
-            RecommendDTO.RecommendResponse result = RecommendDTO.RecommendResponse.builder()
-                    .status((Integer) responseBody.getOrDefault("status", null))
-                    .recommendedTopic((String) responseBody.getOrDefault("recommended_topic", null))
-                    .build();
-
-            if (result.getStatus() == 200) {
-                log.info("TopicService: 추천 주제 조회 성공 - topic={}", result.getRecommendedTopic());
-                return result;
-            }
-
-            if (result.getStatus() == 500) {
-                log.warn("TopicService: API 서버 에러 발생 - status=500");
-                return handleRetryOrFail(request, attemptCount, "API 서버 에러");
-            }
-
-            log.error("TopicService: 예상치 못한 상태코드 - status={}", result.getStatus());
-            throw new CustomException(ErrorCode.TOPIC_RECOMMENDATION_FAILED);
+            Map<String, Object> responseBody = sendPost(url, requestBody);
+            return parseRecommendResponse(responseBody);
 
         } catch (Exception e) {
-            long duration = System.currentTimeMillis() - startTime;
-            log.error("TopicService: API 요청 중 오류 발생 - type={}, message={}, 소요시간={}ms",
-                    e.getClass().getSimpleName(), e.getMessage(), duration, e);
+            log.error("API 요청 실패 (attempt {}): {}", attempt, e.getMessage());
 
-            return handleRetryOrFail(request, attemptCount, e.getMessage());
+            if (attempt >= MAX_RETRY_COUNT) {
+                throw new CustomException(ErrorCode.TOPIC_RECOMMENDATION_FAILED);
+            }
+
+            sleepForRetry(attempt);
+            return callApiWithRetry(url, requestBody, attempt + 1);
         }
     }
 
-    private RecommendDTO.RecommendResponse handleRetryOrFail(
-            RecommendDTO.RecommendRequest request,
-            int attemptCount,
-            String errorMessage) {
+    // post 호출 공통 함수
+    private Map<String, Object> sendPost(String url, Object requestBody) {
+        log.info("TopicService: 요청 전송 - URL={}, body={}", url, requestBody);
 
-        if (attemptCount < MAX_RETRY_COUNT) {
-            long delayMs = INITIAL_DELAY_MS * (long) Math.pow(2, attemptCount - 1);
-            log.warn("TopicService: {}ms 후 재시도 예정 ({}/{})", delayMs, attemptCount, MAX_RETRY_COUNT);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
 
-            try {
-                Thread.sleep(delayMs);
-            } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-                log.error("TopicService: 재시도 대기 중 인터럽트 발생");
-            }
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<Map> response = restTemplate.exchange(
+                url,
+                HttpMethod.POST,
+                new HttpEntity<>(requestBody, headers),
+                Map.class
+        );
 
-            return retryApiCall(request, attemptCount + 1);
+        log.info("TopicService: 응답 수신 - statusCode={}", response.getStatusCode());
+
+        return response.getBody();
+    }
+
+    // 응답 파싱 공통 함수
+    private RecommendDTO.RecommendResponse parseRecommendResponse(Map<String, Object> body) {
+
+        if (body == null) {
+            throw new CustomException(ErrorCode.TOPIC_RECOMMENDATION_FAILED);
         }
 
-        log.error("TopicService: 최대 재시도 횟수 초과 ({}회) - {}", MAX_RETRY_COUNT, errorMessage);
-        throw new CustomException(ErrorCode.TOPIC_RECOMMENDATION_FAILED);
+        Integer status = extractStatus(body);
+        String topic = (String) body.get("recommended_topic");
+
+        log.info("TopicService: 응답 파싱 완료 - status={}, topic={}", status, topic);
+
+        return RecommendDTO.RecommendResponse.builder()
+                .status(status)
+                .recommendedTopic(topic)
+                .build();
+    }
+
+    private Integer extractStatus(Map<String, Object> body) {
+        Object rawStatus = body.get("status");
+
+        if (rawStatus instanceof Integer) {
+            return (Integer) rawStatus;
+        }
+        if (rawStatus instanceof Number) {
+            return ((Number) rawStatus).intValue();
+        }
+        if (rawStatus instanceof String) {
+            return Integer.parseInt((String) rawStatus);
+        }
+
+        return null;
+    }
+
+    /* ===========================
+           🔹 Retry 딜레이 적용
+       =========================== */
+
+    private void sleepForRetry(int attempt) {
+        long delay = INITIAL_DELAY_MS * (long) Math.pow(2, attempt - 1);
+
+        try {
+            log.warn("TopicService: {}ms 후 재시도 예정...", delay);
+            Thread.sleep(delay);
+        } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
+        }
     }
 }
