@@ -41,7 +41,10 @@ public enum ErrorCode implements BaseCode {
     PHOTO_ACCESS_FORBIDDEN(HttpStatus.INTERNAL_SERVER_ERROR, "PHOTO-403", "이미지에 접근할 권한이 없습니다."),
 
     // TOPIC 추천 관련
-    TOPIC_RECOMMENDATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "TOPIC-500", "주제 추천에 실패했습니다." );
+    TOPIC_RECOMMENDATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "TOPIC-500", "주제 추천에 실패했습니다." ),
+
+    // 영상통화 관련
+    VIDEO_CALL_NOT_FOUND(HttpStatus.NOT_FOUND,"VIDEOCALL-404" ,"영상통화 기록이 없습니다." );
 
     private final HttpStatus httpStatus;
     private final String code;

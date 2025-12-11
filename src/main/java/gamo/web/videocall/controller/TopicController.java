@@ -2,6 +2,8 @@ package gamo.web.videocall.controller;
 
 import gamo.web.auth.UserPrincipal;
 import gamo.web.videocall.dto.RecommendDTO;
+import gamo.web.videocall.dto.VideoCallHistoryDTO;
+import gamo.web.videocall.dto.VideoCallResponseDTO;
 import gamo.web.videocall.service.TopicService;
 import gamo.web.videocall.service.VideoCallService;
 import lombok.RequiredArgsConstructor;
@@ -29,9 +31,9 @@ public class TopicController {
         return videoCallService.viewLatestRecommendedKeywords(user.getMember());
     }
 
-    @PostMapping("/proxy")
-    public ResponseEntity<String> getProxyTopic(@RequestBody RecommendDTO.TopicRequest request) {
-        topicService.sendTopicRequest(request);
+    @PostMapping("/proxy/{userId}")
+    public ResponseEntity<String> getProxyTopic(@RequestBody RecommendDTO.TopicProxyRequest request, @PathVariable Long userId) {
+        videoCallService.resolveTopicWithRecentCallId(request, userId);
         return ResponseEntity.ok().build();
     }
 

@@ -445,7 +445,6 @@
             function stopRecording() {
                 return new Promise((resolve) => {
                     if (!recorder) {
-                        console.log('videocall: No recorder, skipping');
                         resolve();
                         return;
                     }
@@ -454,86 +453,45 @@
                         try {
                             const blob = recorder.getBlob();
 
-                            console.log('videocall: DEBUG - Blob size=' + blob.size + ' bytes');
-
                             if (blob.size === 0) {
-                                console.warn('videocall: WARNING - Blob is empty, no recording data was captured');
                                 resolve();
                                 return;
                             }
 
                             const formData = new FormData();
-                            formData.append('voiceFile', blob, 'call_recording_' + userId + '_' + targetId + '.webm');
+                            formData.append('voiceFile', blob, `call_${userId}_${targetId}.webm`);
 
-                            console.log('videocall: Sending recording to STT');
-
-                            let response = await fetch('/letter/api/videocall/stt', {
+                            // STT 요청
+                            const sttResponse = await fetch('/letter/api/videocall/stt', {
                                 method: 'POST',
                                 body: formData
                             });
 
-                            console.log('videocall: DEBUG - STT response status=' + response.status);
-
-                            if (!response.ok) {
-                                console.error('videocall: STT failed - ' + response.statusText);
+                            if (!sttResponse.ok) {
+                                console.error("STT 실패");
                                 resolve();
                                 return;
                             }
 
-                            const data = await response.json();
-                            const sttStatus = data.status;
-                            const sttText = data.text;
+                            const sttData = await sttResponse.json();
+                            const sttText = sttData.text;
 
-                            console.log('videocall: STT conversion complete - text length=' + (sttText ? sttText.length : 0));
+                            // keyword API 요청
+                            await sendToKeywordAPIWithRetry(sttText);
 
-                            console.log('videocall: Fetching latest videoCallId for userId=' + userId);
-                            const videoCallId = await fetchLatestVideoCallId(userId);
-
-                            console.log('videocall: Fetched videoCallId=' + videoCallId);
-
-                            if (!videoCallId) {
-                                console.error('videocall: videoCallId is null, cannot proceed with keyword API');
-                                resolve();
-                                return;
-                            }
-
-                            console.log('videocall: Starting keyword API call with videoCallId=' + videoCallId + ', sttText length=' + sttText.length);
-                            await sendToKeywordAPIWithRetry(videoCallId, sttText);
-
-                            console.log('videocall: Keyword API process completed');
+                            // 모든 비동기 끝난 후 resolve 호출
                             resolve();
 
                         } catch (e) {
-                            console.error('videocall: Error saving recording - ' + e.message);
+                            console.error("녹음 저장 중 에러:", e);
                             resolve();
                         }
                     });
                 });
             }
 
-            async function fetchLatestVideoCallId(userId) {
-                try {
-                    console.log('videocall: API request - GET /api/video-calls/latest/' + userId);
-                    const response = await fetch(`/api/video-calls/latest/${userId}`);
 
-                    console.log('videocall: API response status=' + response.status);
-
-                    if (!response.ok) {
-                        console.error('videocall: Failed to fetch latest videocallId - ' + response.statusText);
-                        return null;
-                    }
-
-                    const data = await response.json();
-                    console.log('videocall: Latest videocallId fetched - videoCallId=' + data.videocallId);
-
-                    return data.videocallId;
-                } catch (e) {
-                    console.error('videocall: Error fetching latest videocallId - ' + e.message);
-                    return null;
-                }
-            }
-
-            async function sendToKeywordAPIWithRetry(videoCallId, sttText) {
+            async function sendToKeywordAPIWithRetry(sttText) {
                 const maxRetries = 5;
                 let currentRetry = 0;
                 const fetchTimeout = 10000;
@@ -547,14 +505,13 @@
                         const timeoutId = setTimeout(() => controller.abort(), fetchTimeout);
 
                         const payload = {
-                            call_id: videoCallId,
                             text: sttText
                         };
 
                         console.log('videocall: Keyword API payload - call_id=' + payload.call_id + ', text length=' + payload.text.length);
                         console.log('videocall: Sending POST request');
 
-                        const response = await fetch('/api/topics/proxy', {
+                        const response = await fetch(`/api/topics/proxy/${userId}`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'
