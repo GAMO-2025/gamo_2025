@@ -4,7 +4,6 @@ import gamo.web.auth.UserPrincipal;
 import gamo.web.auth.refresh.RefreshTokenRepository;
 import gamo.web.common.exception.CustomException;
 import gamo.web.common.response.ErrorCode;
-import gamo.web.family.domain.Family;
 import gamo.web.member.domain.DeletedMember;
 import gamo.web.member.domain.Member;
 import gamo.web.member.domain.Nickname;
