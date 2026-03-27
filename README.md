@@ -5,7 +5,7 @@
 
 <img src="https://github.com/user-attachments/assets/a164e657-8ca5-4b80-bfe4-2494e8a5e32d" width="70%" />
 
-### 🤦‍♀️ 팀원 소개
+### 💁 팀원 소개
 
 <div align="center">
 
